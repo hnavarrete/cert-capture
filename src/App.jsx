@@ -78,6 +78,22 @@ function Login({ onDemo }) {
   )
 }
 
+// Estado D del contrato de acceso (kit #02): cuenta del ecosistema SIN acceso al encuestador.
+// No se la manda al login de nuevo; se le ofrece solicitar acceso. La identidad es la misma del resto.
+function SinAcceso({ email, onSalir }) {
+  const msg = encodeURIComponent('Hola, soy ' + email + '. Solicito acceso al Encuestador de Certificaciones (EUDR) de Visión Geográfica.')
+  return (
+    <div className="wrap"><div className="card login">
+      <h1>Encuestador de Certificaciones</h1>
+      <p className="muted">Tu cuenta <b>{email}</b> ya es parte del ecosistema VG, pero todavía no tiene
+        acceso al Encuestador. Pídeselo a tu administrador y lo activamos al instante.</p>
+      <a className="google" style={{ textDecoration: 'none', color: '#1f2937' }} target="_blank" rel="noopener"
+        href={'https://wa.me/?text=' + msg}>Solicitar acceso</a>
+      <button type="button" className="link" style={{ marginTop: 10 }} onClick={onSalir}>Cambiar de cuenta</button>
+    </div></div>
+  )
+}
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [demo, setDemo] = useState(false)
@@ -88,6 +104,7 @@ export default function App() {
   // contexto piloto (en producción viene del tenant + visor)
   const [slug, setSlug] = useState(() => localStorage.getItem('vg_slug') || '')
   const [misFincas, setMisFincas] = useState([])
+  const [accesoEudr, setAccesoEudr] = useState(null) // null=cargando, true, false (contrato de acceso, kit #02)
   const [productor, setProductor] = useState(() => localStorage.getItem('vg_prod') || '')
   const [finca, setFinca] = useState(() => localStorage.getItem('vg_finca') || '')
   const [certSel, setCertSel] = useState('EUDR')
@@ -105,13 +122,15 @@ export default function App() {
   // Carga las fincas REALES del usuario (sus client_slugs de user_products, las mismas que tiene en el
   // visor/ERP). Materializa la relación cross-product: el encuestador no es una isla, comparte la finca.
   useEffect(() => {
-    if (!user) { setMisFincas([]); return }
+    if (!user) { setMisFincas([]); setAccesoEudr(null); return }
     supabase.from('user_products').select('client_slugs').eq('product', 'eudr')
       .then(({ data }) => {
+        const filas = data || []
         const s = new Set()
-        for (const r of (data || [])) for (const c of (r.client_slugs || [])) s.add(c)
+        for (const r of filas) for (const c of (r.client_slugs || [])) s.add(c)
         setMisFincas([...s].sort())
-      }).catch(() => setMisFincas([]))
+        setAccesoEudr(filas.length > 0)
+      }).catch(() => { setMisFincas([]); setAccesoEudr(false) })
   }, [user])
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
@@ -132,6 +151,7 @@ export default function App() {
 
   if (!ready) return <div className="wrap"><div className="card">Cargando…</div></div>
   if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} /></div>
+  if (user && accesoEudr === false) return <SinAcceso email={user.email} onSalir={() => supabase.auth.signOut()} />
 
   return (
     <div className="wrap">
