@@ -149,7 +149,12 @@ export default function App() {
             engine={engine}
             productor_id={productor || null}
             finca_id={finca || null}
-            onConnectPolygon={() => alert('En producción: se abre el visor y se conecta el polígono existente de la finca (no se recaptura).')}
+            onConnectPolygon={async () => {
+              // En el APK, el shell abre el mapa del visor (bridge SSO #07/#11) y devuelve el polígono real.
+              // En esta PWA suelta (piloto) devolvemos un polígono de ejemplo para mostrar el flujo.
+              const demo = { type: 'Polygon', coordinates: [[[-79.46, -1.47], [-79.455, -1.47], [-79.455, -1.465], [-79.46, -1.465], [-79.46, -1.47]]] }
+              return { geoshape: demo, origen: 'capturado_aqui' }
+            }}
             onSaved={(res) => { /* el badge refleja el estado; el sync es automático */ }}
           />
           <div className="export-bar">

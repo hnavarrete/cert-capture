@@ -27,6 +27,41 @@ function visible(showIf, data) {
   return true
 }
 
+// Campo de polígono. Delega al host vía onConnectPolygon(field) → el shell abre el mapa del VISOR
+// (MapView + editor de geometría, vía el bridge SSO de #07/#11) y devuelve el geoshape. El polígono se
+// REUSA del visor (no se recaptura, no hay otro mapa embebido ni cache de tiles propio). El host puede
+// devolver un GeoJSON/geoshape directo o { geoshape, origen }. Se guarda el geoshape + poligono_origen.
+function CampoPoligono({ campo, dataField, valor, onConnectPolygon }) {
+  const [geo, setGeo] = useState(valor ? (typeof valor === 'string' ? valor : JSON.stringify(valor)) : '')
+  const [origen, setOrigen] = useState('')
+  const [busy, setBusy] = useState(false)
+  async function conectar() {
+    if (!onConnectPolygon) return
+    setBusy(true)
+    try {
+      const res = await onConnectPolygon(dataField)
+      if (res) {
+        const gj = res.geoshape ?? res.geojson ?? res.geom ?? res
+        setGeo(typeof gj === 'string' ? gj : JSON.stringify(gj))
+        setOrigen(res.origen || 'visor_existente')
+      }
+    } finally { setBusy(false) }
+  }
+  return (
+    <div className="vg-field vg-poly">
+      <label>{campo.label}{campo.required ? ' *' : ''}</label>
+      <button type="button" onClick={conectar} disabled={busy}>
+        {busy ? 'Abriendo el mapa…' : (geo ? '🗺️ Polígono listo · cambiar' : '🗺️ Conectar polígono del visor')}
+      </button>
+      <input type="hidden" data-field={dataField} id={dataField} value={geo} readOnly />
+      <input type="hidden" data-field={`${dataField}__origen`} value={origen} readOnly />
+      {geo
+        ? <small className="vg-poly-ok">✓ Polígono {origen === 'capturado_aqui' ? 'dibujado en campo' : 'conectado del visor'}.</small>
+        : <small>Si la finca ya está digitalizada en el visor, se reutiliza el polígono (no se recaptura).</small>}
+    </div>
+  )
+}
+
 function Campo({ seccionKey, campo, valor, onPhoto, onConnectPolygon }) {
   const dataField = fieldKey(seccionKey, campo.key)
   const tipo = campo.tipo || 'text'
@@ -52,16 +87,7 @@ function Campo({ seccionKey, campo, valor, onPhoto, onConnectPolygon }) {
   }
 
   if (tipo === 'gps_polygon') {
-    return (
-      <div className="vg-field vg-poly">
-        <label htmlFor={dataField}>{campo.label}</label>
-        <button type="button" onClick={() => onConnectPolygon && onConnectPolygon(dataField)}>
-          🗺️ Conectar polígono del visor
-        </button>
-        <input type="hidden" data-field={dataField} id={dataField} defaultValue={valor ?? ''} />
-        <small>Si la finca ya está digitalizada en el visor, se reutiliza el polígono (no se recaptura).</small>
-      </div>
-    )
+    return <CampoPoligono campo={campo} dataField={dataField} valor={valor} onConnectPolygon={onConnectPolygon} />
   }
 
   if (tipo === 'photo') {
