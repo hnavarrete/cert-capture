@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CertForm, useCertCapture } from './eudr-react/index.js'
+import { CertForm, useCertCapture, readFormFromContainer } from './eudr-react/index.js'
+import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
 import { engine, setCaptureSession } from './engine.js'
 import { supabase } from './supabase.js'
 import bundle from './schemas.bundle.json'
@@ -71,6 +72,7 @@ export default function App() {
   const [finca, setFinca] = useState(() => localStorage.getItem('vg_finca') || '')
   const [certSel, setCertSel] = useState('EUDR')
   const [formKey, setFormKey] = useState('')
+  const [preview, setPreview] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user || null); setReady(true) })
@@ -85,6 +87,16 @@ export default function App() {
   const grouped = useMemo(() => groupByCert(SCHEMAS), [])
   const formsForCert = grouped[certSel] || []
   const schema = SCHEMAS.find(s => s.form_key === formKey)
+
+  function handlePreview() {
+    if (!schema) return
+    const cont = document.querySelector('.vg-certform')
+    const data = cont ? readFormFromContainer(cont) : {}
+    // plan 'free' en piloto/demo => preview con marca de agua. En producción vendría del tier del usuario.
+    const html = buildCertReadyPreviewHtml(schema, { data, certificacion: schema.certificacion },
+      { plan: 'free', productor_id: productor, finca_id: finca })
+    setPreview(html)
+  }
 
   if (!ready) return <div className="wrap"><div className="card">Cargando…</div></div>
   if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} /></div>
@@ -140,12 +152,28 @@ export default function App() {
             onConnectPolygon={() => alert('En producción: se abre el visor y se conecta el polígono existente de la finca (no se recaptura).')}
             onSaved={(res) => { /* el badge refleja el estado; el sync es automático */ }}
           />
+          <div className="export-bar">
+            <button type="button" className="primary" onClick={handlePreview}>📄 Vista previa para el certificador</button>
+            <span className="muted">Borrador con marca de agua. El entregable válido para entregar requiere un plan de pago.</span>
+          </div>
         </div>
       ) : <div className="card muted">Elige una certificación y un formulario para empezar a capturar.</div>}
 
       <footer className="foot muted">
         {SCHEMAS.length} formularios · {bundle.totales?.n_control_points || '—'} puntos de control · datos sellados con cadena de integridad. noindex.
       </footer>
+
+      {preview ? (
+        <div className="overlay" onClick={() => setPreview(null)}>
+          <div className="sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-head">
+              <strong>Vista previa para el certificador</strong>
+              <button className="link" onClick={() => setPreview(null)}>Cerrar ✕</button>
+            </div>
+            <iframe className="sheet-frame" srcDoc={preview} title="Vista previa cert-ready" />
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
