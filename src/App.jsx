@@ -88,7 +88,7 @@ function SinAcceso({ email, onSalir }) {
       <p className="muted">Tu cuenta <b>{email}</b> ya es parte del ecosistema VG, pero todavía no tiene
         acceso al Encuestador. Pídeselo a tu administrador y lo activamos al instante.</p>
       <a className="google" style={{ textDecoration: 'none', color: '#1f2937' }} target="_blank" rel="noopener"
-        href={'https://wa.me/?text=' + msg}>Solicitar acceso</a>
+        href={'https://wa.me/593967216547?text=' + msg}>Solicitar acceso por WhatsApp</a>
       <button type="button" className="link" style={{ marginTop: 10 }} onClick={onSalir}>Cambiar de cuenta</button>
     </div></div>
   )
