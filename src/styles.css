@@ -138,6 +138,9 @@ button.primary, .vg-certform-foot button[type=submit] {
 .vg-cp-oficial summary { font-size: 11.5px; color: var(--blue); cursor: pointer; font-weight: 600; }
 .vg-cp-texto { font-size: 12px; color: var(--muted); margin: 8px 0; line-height: 1.5; }
 .vg-foto { background: #eef3f8; color: var(--navy); font-size: 12px; font-weight: 600; padding: 6px 11px; margin-top: 8px; border-radius: 9px; }
+.vg-foto-box { margin-top: 6px; }
+.vg-foto-prev { display: block; max-width: 180px; max-height: 140px; object-fit: cover; border-radius: 10px; margin-top: 8px; border: 1px solid var(--line); }
+.vg-foto-name { display: inline-block; font-size: 11.5px; color: var(--forest); margin-top: 5px; font-weight: 600; margin-left: 8px; }
 .vg-poly { background: #f4fbfe; border: 1.5px dashed #a9dcef; border-radius: 12px; padding: 12px 14px; }
 .vg-poly button { background: var(--grad); color: #06222b; margin-top: 6px; }
 .vg-poly-ok { color: var(--forest) !important; font-weight: 600; }

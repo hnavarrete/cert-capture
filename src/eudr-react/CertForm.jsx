@@ -62,7 +62,35 @@ function CampoPoligono({ campo, dataField, valor, onConnectPolygon }) {
   )
 }
 
-function Campo({ seccionKey, campo, valor, onPhoto, onConnectPolygon }) {
+// Captura de foto/evidencia OFFLINE-FIRST. Abre la cámara o el explorador de archivos (input file con
+// capture), muestra una vista previa, y registra el blob vía addFoto(fieldKey, file). El blob se persiste
+// en IDB al guardar (el engine ya lo soporta). En el campo va un input hidden con el nombre del archivo
+// para que readFormFromContainer registre que hay evidencia.
+function FotoEvidencia({ fieldKey: fk, label, addFoto, compacto }) {
+  const inputRef = useRef(null)
+  const [preview, setPreview] = useState(null)
+  const [nombre, setNombre] = useState('')
+  function onPick(e) {
+    const file = e.target.files && e.target.files[0]
+    if (!file) return
+    setNombre(file.name)
+    if (addFoto) addFoto(fk, file)
+    try { const r = new FileReader(); r.onload = () => setPreview(r.result); r.readAsDataURL(file) } catch {}
+  }
+  return (
+    <div className="vg-foto-box">
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={onPick} />
+      <input type="hidden" data-field={fk} value={nombre} readOnly />
+      <button type="button" className="vg-foto" onClick={() => inputRef.current && inputRef.current.click()}>
+        📷 {preview ? 'Cambiar foto' : (compacto ? 'Tomar / cargar evidencia' : (label ? 'Tomar / cargar: ' + label : 'Tomar foto o cargar archivo'))}
+      </button>
+      {preview ? <img className="vg-foto-prev" src={preview} alt="evidencia" /> : null}
+      {nombre ? <span className="vg-foto-name">✓ {nombre}</span> : null}
+    </div>
+  )
+}
+
+function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
   const dataField = fieldKey(seccionKey, campo.key)
   const tipo = campo.tipo || 'text'
   const common = { 'data-field': dataField, id: dataField, defaultValue: valor ?? '' }
@@ -83,7 +111,7 @@ function Campo({ seccionKey, campo, valor, onPhoto, onConnectPolygon }) {
           <option value="na">No aplica</option>
         </select>
         {campo.requiere_evidencia ? (
-          <button type="button" className="vg-foto" onClick={() => onPhoto && onPhoto(dataField)}>📷 Evidencia</button>
+          <FotoEvidencia fieldKey={`${dataField}__evidencia`} addFoto={addFoto} compacto />
         ) : null}
       </div>
     )
@@ -96,9 +124,9 @@ function Campo({ seccionKey, campo, valor, onPhoto, onConnectPolygon }) {
   if (tipo === 'photo') {
     return (
       <div className="vg-field">
-        <label>{campo.label}</label>
-        <input type="file" accept="image/*" capture="environment" data-field={dataField} id={dataField}
-          onChange={e => onPhoto && onPhoto(dataField, e.target.files && e.target.files[0])} />
+        <label>{campo.label}{campo.required ? ' *' : ''}</label>
+        <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} />
+        {campo.help ? <small>{campo.help}</small> : null}
       </div>
     )
   }
@@ -204,22 +232,29 @@ export function readFormFromContainer(containerEl) {
  */
 export default function CertForm({ schema, engine, value = {}, onSave, onSaved, onConnectPolygon, onPhoto, productor_id, finca_id, readonly = false }) {
   const containerRef = useRef(null)
+  const fotosRef = useRef({})
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState(null)
+
+  // registra el blob de una foto/evidencia por campo (offline-first; se persiste en IDB al guardar)
+  const addFoto = useCallback((field, file) => {
+    fotosRef.current[field] = { field, blob: file, mime: file.type || 'image/jpeg', name: file.name }
+  }, [])
 
   const handleSave = useCallback(async () => {
     if (!containerRef.current) return
     setSaving(true)
     try {
       const data = readFormFromContainer(containerRef.current)
+      const fotos = Object.values(fotosRef.current).map(f => ({ field: f.field, blob: f.blob, mime: f.mime }))
       let result
       if (engine && typeof engine.saveResponse === 'function') {
         result = await engine.saveResponse({
           form_key: schema.form_key, certificacion: schema.certificacion,
-          data, productor_id, finca_id
+          data, fotos, productor_id, finca_id
         })
       } else if (onSave) {
-        result = await onSave(data)
+        result = await onSave(data, fotos)
       }
       setStatus(result || { ok: true })
       if (onSaved) onSaved(result, data)
@@ -247,7 +282,7 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
             {(sec.campos || []).map(campo => (
               <Campo key={campo.key} seccionKey={sec.key} campo={campo}
                 valor={value[fieldKey(sec.key, campo.key)]}
-                onPhoto={onPhoto} onConnectPolygon={onConnectPolygon} />
+                addFoto={addFoto} onConnectPolygon={onConnectPolygon} />
             ))}
           </section>
         )

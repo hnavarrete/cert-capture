@@ -87,6 +87,7 @@ export default function App() {
 
   // contexto piloto (en producción viene del tenant + visor)
   const [slug, setSlug] = useState(() => localStorage.getItem('vg_slug') || '')
+  const [misFincas, setMisFincas] = useState([])
   const [productor, setProductor] = useState(() => localStorage.getItem('vg_prod') || '')
   const [finca, setFinca] = useState(() => localStorage.getItem('vg_finca') || '')
   const [certSel, setCertSel] = useState('EUDR')
@@ -100,6 +101,18 @@ export default function App() {
   }, [])
 
   useEffect(() => { setCaptureSession({ slug, email: effEmail }); localStorage.setItem('vg_slug', slug) }, [slug, effEmail])
+
+  // Carga las fincas REALES del usuario (sus client_slugs de user_products, las mismas que tiene en el
+  // visor/ERP). Materializa la relación cross-product: el encuestador no es una isla, comparte la finca.
+  useEffect(() => {
+    if (!user) { setMisFincas([]); return }
+    supabase.from('user_products').select('client_slugs').eq('product', 'eudr')
+      .then(({ data }) => {
+        const s = new Set()
+        for (const r of (data || [])) for (const c of (r.client_slugs || [])) s.add(c)
+        setMisFincas([...s].sort())
+      }).catch(() => setMisFincas([]))
+  }, [user])
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
 
@@ -138,7 +151,16 @@ export default function App() {
       <div className="card ctx">
         <h3>Contexto del levantamiento</h3>
         <div className="grid3">
-          <label>Finca (client_slug)<input value={slug} onChange={e => setSlug(e.target.value)} placeholder="ej. demo-cert" /></label>
+          <label>Finca {misFincas.length ? `(tus ${misFincas.length} fincas)` : ''}
+            {misFincas.length ? (
+              <select value={slug} onChange={e => setSlug(e.target.value)}>
+                <option value="">— elige tu finca —</option>
+                {misFincas.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            ) : (
+              <input value={slug} onChange={e => setSlug(e.target.value)} placeholder="ej. demo-cert" />
+            )}
+          </label>
           <label>Productor (producer_id)<input value={productor} onChange={e => setProductor(e.target.value)} placeholder="PRD-001" /></label>
           <label>Finca/Lote (finca_id)<input value={finca} onChange={e => setFinca(e.target.value)} placeholder="GY-001" /></label>
         </div>
