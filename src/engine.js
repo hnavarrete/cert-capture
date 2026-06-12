@@ -22,25 +22,41 @@ db.version(1).stores({
 })
 
 // transport: sube cada fila a la RPC public.cert_upsert_response (upsert por local_id + sellado server-side).
-async function transport({ rows }) {
+async function transport({ rows, photos }) {
   // sin sesión autenticada (p. ej. modo demo) no se intenta el RPC: el dato queda en IDB (no se
   // pierde, R2) y se sincroniza cuando el usuario inicie sesión con acceso a la finca.
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { ok: false, reason: 'sin sesión' }
   const serverIds = {}
   for (const row of rows) {
+    const clientSlug = row.client_slug || row.company_id || session.slug || null
+    // 1) Subir las EVIDENCIAS/fotos al bucket privado de Supabase Storage (cert-evidencias).
+    //    Path: <client_slug>/<local_id>/<field>.<ext> -> la RLS valida acceso a la finca con el path.
+    //    Aseguradas en el servidor + respaldadas; la referencia (path) va en cert_responses.fotos.
+    const fotoRefs = []
+    for (const p of (photos || []).filter(x => x.local_id === row.local_id)) {
+      const mime = p.mime || 'image/jpeg'
+      const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('pdf') ? 'pdf' : 'jpg'
+      const safe = String(p.field || p.photo_id || 'evidencia').replace(/[^\w.-]/g, '_')
+      const path = `${clientSlug || 'sin-slug'}/${row.local_id}/${safe}.${ext}`
+      const { error: upErr } = await supabase.storage.from('cert-evidencias')
+        .upload(path, p.blob, { upsert: true, contentType: mime })
+      if (upErr) { console.warn('[sync] foto a Storage:', upErr.message); return { ok: false } }
+      fotoRefs.push({ field: p.field, path, photo_id: p.photo_id, bucket: 'cert-evidencias' })
+    }
+    // 2) Subir la respuesta (con las referencias de las fotos ya en Storage).
     const payload = {
       local_id: row.local_id,
-      client_slug: row.client_slug || row.company_id || session.slug,
+      client_slug: clientSlug,
       form_key: row.form_key,
       certificacion: row.certificacion,
       cultivo: row.cultivo || null,
       producer_id: row.productor_id || null,
       finca_id: row.finca_id || null,
       data: row.data || {},
-      fotos: row.fotos || [],
+      fotos: fotoRefs.length ? fotoRefs : (row.fotos || []),
       geom: row.geom ? JSON.stringify(row.geom) : null,
-      email_usuario: row.Email_Usuario || session.email || null,
+      email_usuario: row.Email_Usuario || session.user?.email || null,
       timestamp_creacion: row.Timestamp_Creacion || null
     }
     const { data, error } = await supabase.rpc('cert_upsert_response', { p: payload })
