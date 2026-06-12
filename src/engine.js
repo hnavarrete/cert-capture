@@ -23,6 +23,10 @@ db.version(1).stores({
 
 // transport: sube cada fila a la RPC public.cert_upsert_response (upsert por local_id + sellado server-side).
 async function transport({ rows }) {
+  // sin sesión autenticada (p. ej. modo demo) no se intenta el RPC: el dato queda en IDB (no se
+  // pierde, R2) y se sincroniza cuando el usuario inicie sesión con acceso a la finca.
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { ok: false, reason: 'sin sesión' }
   const serverIds = {}
   for (const row of rows) {
     const payload = {

@@ -26,7 +26,7 @@ function SyncBadge({ status }) {
   )
 }
 
-function Login() {
+function Login({ onDemo }) {
   const [email, setEmail] = useState('')
   const [pass, setPass] = useState('')
   const [msg, setMsg] = useState(null)
@@ -46,14 +46,19 @@ function Login() {
       <label>Contraseña<input type="password" value={pass} onChange={e => setPass(e.target.value)} required /></label>
       <button disabled={busy}>{busy ? 'Ingresando…' : 'Ingresar'}</button>
       {msg ? <div className="err">{msg}</div> : null}
+      <button type="button" className="link" style={{ marginTop: 10 }} onClick={onDemo}>
+        Explorar en modo demo (captura local, sin sincronizar) →
+      </button>
     </form>
   )
 }
 
 export default function App() {
   const [user, setUser] = useState(null)
+  const [demo, setDemo] = useState(false)
   const [ready, setReady] = useState(false)
   const { status } = useCertCapture(engine)
+  const effEmail = user?.email || (demo ? 'demo@vg.local' : null)
 
   // contexto piloto (en producción viene del tenant + visor)
   const [slug, setSlug] = useState(() => localStorage.getItem('vg_slug') || '')
@@ -68,7 +73,7 @@ export default function App() {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  useEffect(() => { setCaptureSession({ slug, email: user?.email || null }); localStorage.setItem('vg_slug', slug) }, [slug, user])
+  useEffect(() => { setCaptureSession({ slug, email: effEmail }); localStorage.setItem('vg_slug', slug) }, [slug, effEmail])
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
 
@@ -77,15 +82,21 @@ export default function App() {
   const schema = SCHEMAS.find(s => s.form_key === formKey)
 
   if (!ready) return <div className="wrap"><div className="card">Cargando…</div></div>
-  if (!user) return <div className="wrap"><Login /></div>
+  if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} /></div>
 
   return (
     <div className="wrap">
       <header className="topbar">
         <strong>VG · Certificaciones</strong>
         <SyncBadge status={status} />
-        <button className="link" onClick={() => supabase.auth.signOut()}>Salir ({user.email})</button>
+        <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir ({effEmail})</button>
       </header>
+      {demo && !user ? (
+        <div className="card" style={{ background: '#fdf3e3', borderColor: '#f0d9a8' }}>
+          <strong>Modo demo.</strong> <span className="muted">Captura local real (offline-first + antifraude +
+          nivel de verificación) sin sincronizar al servidor. Para sincronizar de verdad, ingresa con una cuenta VG con acceso a la finca.</span>
+        </div>
+      ) : null}
 
       <div className="card ctx">
         <h3>Contexto del levantamiento</h3>
