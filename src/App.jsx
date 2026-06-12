@@ -142,15 +142,16 @@ function MiPerfilGate({ email, onListo, onOmitir }) {
     if (!consent) { setMsg('Necesitamos tu autorización para guardar tus datos.'); return }
     setBusy(true); setMsg(null)
     try {
-      // Consume el contrato CANÓNICO de identidad (bus B2, dueño #03): upsert_my_profile + ensure_producer_self.
+      // Contrato CANÓNICO de identidad (bus B2, dueño #03). Orden indicado por #03: ensure_producer_self
+      // (crea/enlaza el producer por email del JWT + consent base) → upsert_my_profile (identidad real con cédula).
       // R23: no reimplementar identidad; la misma "Mi perfil" del visor/ERP, una sola fuente.
+      await supabase.rpc('ensure_producer_self', { p_display_name: (nombre + ' ' + apellido).trim(), p_tenant_slug_origin: 'eudr' })
       const { error } = await supabase.rpc('upsert_my_profile', {
         p_nombre: nombre.trim(), p_apellido: apellido.trim(),
         p_tipo_documento: tipo, p_numero_documento: ident.trim(),
         p_telefono: telefono.trim() || null
       })
       if (error) throw error
-      await supabase.rpc('ensure_producer_self', { p_display_name: (nombre + ' ' + apellido).trim(), p_tenant_slug_origin: 'eudr' })
       onListo(true)
     } catch (err) {
       // offline: guardamos en el dispositivo y dejamos avanzar (R1: no bloquear). Se sincroniza al volver la señal.
@@ -314,29 +315,21 @@ export default function App() {
   // (client_slugs, las mismas del visor/ERP) y los module_flags (estado C: lock por módulo). Materializa la
   // relación cross-product: el encuestador no es una isla, comparte la finca y la cuenta del resto.
   useEffect(() => {
-    if (!user) { setMisFincas([]); setAccesoEudr(null); setModuleFlags([]); return }
+    if (!user) { setMisFincas([]); setAccesoEudr(null); setModuleFlags([]); setRol(null); return }
     supabase.rpc('my_products')
       .then(({ data }) => {
         const eudr = (data || []).find(p => p.product === 'eudr')
-        if (!eudr) { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]); return }
+        if (!eudr) { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]); setRol(null); return }
+        // my_products() ahora trae role + sku_tier (mig 093, #03): fincas + permisos + rol en UNA llamada.
         setMisFincas([...new Set(eudr.client_slugs || [])].sort())
         setModuleFlags(eudr.module_flags || [])
+        setRol(eudr.role || null)
         setAccesoEudr(true)
-      }).catch(() => { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]) })
+      }).catch(() => { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]); setRol(null) })
   }, [user])
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
 
-  // Rol del usuario en eudr (gating de UI). Consume el bus de roles canónico (#03): RPC get_my_role
-  // (R23: reusar > construir; antes consultaba user_products directo, ahora usa el contrato del dueño).
-  useEffect(() => {
-    if (!user) { setRol(null); return }
-    let on = true
-    supabase.rpc('get_my_role', { p_product: 'eudr' })
-      .then(({ data, error }) => { if (on) setRol(error ? null : (data || null)) })
-      .catch(() => { if (on) setRol(null) })
-    return () => { on = false }
-  }, [user])
 
   // ¿el productor ya tiene su perfil Capa 0? (onboarding F1). Si la RPC get_my_profile aún no existe
   // (la construye #03) o no hay señal, NO bloqueamos: el gate queda dormido hasta que el backend exista.
