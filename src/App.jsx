@@ -27,6 +27,7 @@ const ROLES = {
   field_worker: { label: 'Trabajador de campo', nivel: 'captura' },
   tecnico: { label: 'Técnico', nivel: 'captura' },
   fumigador: { label: 'Fumigador', nivel: 'captura' },
+  packhouse_operator: { label: 'Operador de empacadora', nivel: 'captura' }, // 13º canónico (A6, #03 G1)
   lector: { label: 'Solo lectura', nivel: 'lectura' }
 }
 // Capacidades derivadas del nivel (gating de UI). El servidor es la fuente de verdad; esto es UX.
