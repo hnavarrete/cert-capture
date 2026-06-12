@@ -170,5 +170,25 @@ button.primary, .vg-certform-foot button[type=submit] {
 .sheet-head .link { color: #cfe6f3; }
 .sheet-frame { border: 0; width: 100%; flex: 1; background: #fff; }
 
+/* ---- tablero de progreso (gamificación) ---- */
+.tablero { padding: 14px 16px; overflow-y: auto; }
+.tablero-resumen { margin: 0 0 12px; }
+.tcert { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.tcert:last-child { border-bottom: 0; }
+.tcert-head { width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 4px 0; cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+.tcert-head .ic { font-size: 17px; }
+.tcert-name { font-weight: 600; }
+.tcert-meta { flex: 1; text-align: right; font-size: 12px; }
+.tcert-pct { font-weight: 700; min-width: 42px; text-align: right; color: var(--navy); }
+.pbar { height: 8px; border-radius: 999px; background: var(--bg); overflow: hidden; margin: 6px 0 2px; }
+.pfill { display: block; height: 100%; border-radius: 999px; background: var(--grad); transition: width .35s ease; }
+.pfill.full { background: var(--lime); }
+.tforms { margin: 6px 0 2px; padding-left: 26px; display: flex; flex-direction: column; gap: 4px; }
+.tform { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 5px 0; cursor: pointer; font: inherit; color: var(--ink); text-align: left; }
+.tform:hover .tform-name { color: var(--blue); }
+.tform-name { flex: 1; font-size: 13px; }
+.tform-bar { width: 90px; height: 6px; border-radius: 999px; background: var(--bg); overflow: hidden; }
+.tform-pct { min-width: 44px; text-align: right; font-size: 12px; }
+
 /* ---- footer ---- */
 .foot { text-align: center; padding: 16px 10px; font-size: 12px; }

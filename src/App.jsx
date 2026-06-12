@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CertForm, useCertCapture, readFormFromContainer } from './eudr-react/index.js'
+import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './eudr-react/index.js'
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
-import { engine, setCaptureSession } from './engine.js'
+import { engine, setCaptureSession, db } from './engine.js'
 import { supabase } from './supabase.js'
 import bundle from './schemas.bundle.json'
 
@@ -94,6 +94,99 @@ function SinAcceso({ email, onSalir }) {
   )
 }
 
+// Tablero de progreso de TODAS las certificaciones del productor (gamificación, paso 2).
+// Lee los borradores guardados en IndexedDB del contexto actual (finca/productor) y, por cada
+// certificación, hace el rollup de avance con el MISMO progresoDe del formulario (una sola fuente de
+// verdad del cálculo). Offline-first: no consulta al servidor, sirve sin señal.
+function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, onClose }) {
+  const [best, setBest] = useState(null)
+  const [abierta, setAbierta] = useState(null)
+  useEffect(() => {
+    let on = true
+    ;(async () => {
+      const all = await db.cert_responses.toArray()
+      const ctx = all.filter(r => {
+        const rs = r.client_slug || r.company_id
+        if (slug && rs && rs !== slug) return false
+        if (productor && r.productor_id && r.productor_id !== productor) return false
+        if (finca && r.finca_id && r.finca_id !== finca) return false
+        return true
+      })
+      // por cada formulario, el borrador más avanzado (heurística: más campos respondidos)
+      const m = {}
+      for (const r of ctx) {
+        const d = r.data || {}
+        const score = Object.keys(d).length
+        if (!m[r.form_key] || score > m[r.form_key].score) m[r.form_key] = { data: d, score, sync: r.sync_status }
+      }
+      if (on) setBest(m)
+    })()
+    return () => { on = false }
+  }, [slug, productor, finca])
+
+  const filas = useMemo(() => (certKeys || []).map(cert => {
+    const schemas = grouped[cert] || []
+    let total = 0, hechas = 0, iniciados = 0, vendibles = 0
+    const forms = schemas.map(s => {
+      const data = best?.[s.form_key]?.data || {}
+      const p = progresoDe(s, data)
+      total += p.total; hechas += p.hechas
+      if (p.hechas > 0) iniciados++
+      if (p.vendible) vendibles++
+      return { form_key: s.form_key, titulo: s.titulo, p, sync: best?.[s.form_key]?.sync }
+    })
+    const pct = total ? Math.round(100 * hechas / total) : 0
+    return { cert, pct, total, hechas, forms, nForms: schemas.length, iniciados, vendibles }
+  }), [certKeys, grouped, best])
+
+  const totalForms = filas.reduce((a, f) => a + f.nForms, 0)
+  const iniciadosTot = filas.reduce((a, f) => a + f.iniciados, 0)
+  const vendiblesTot = filas.reduce((a, f) => a + f.vendibles, 0)
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="sheet" onClick={e => e.stopPropagation()}>
+        <div className="sheet-head">
+          <strong>📊 Mi progreso{slug ? ` · ${slug}` : ''}</strong>
+          <button className="link" onClick={onClose}>Cerrar ✕</button>
+        </div>
+        <div className="tablero">
+          {best === null ? <p className="muted">Cargando tu avance…</p> : (
+            <>
+              <p className="muted tablero-resumen">
+                {iniciadosTot}/{totalForms} formularios iniciados · {vendiblesTot} listos para entregar ·
+                avance guardado sin conexión.
+              </p>
+              {filas.map(f => (
+                <div key={f.cert} className="tcert">
+                  <button className="tcert-head" onClick={() => setAbierta(a => a === f.cert ? null : f.cert)}>
+                    <span className="ic">{CERT_ICON[f.cert] || '📄'}</span>
+                    <span className="tcert-name">{CERT_LABEL[f.cert] || f.cert}</span>
+                    <span className="tcert-meta muted">{f.iniciados}/{f.nForms} form · {f.hechas}/{f.total} campos</span>
+                    <span className="tcert-pct">{f.pct}%</span>
+                  </button>
+                  <div className="pbar"><span className={'pfill' + (f.pct >= 100 ? ' full' : '')} style={{ width: f.pct + '%' }} /></div>
+                  {abierta === f.cert ? (
+                    <div className="tforms">
+                      {f.forms.map(fm => (
+                        <button key={fm.form_key} className="tform" onClick={() => onPick(f.cert, fm.form_key)}>
+                          <span className="tform-name">{fm.titulo}</span>
+                          <span className="tform-bar"><span className="pfill" style={{ width: fm.p.pct + '%' }} /></span>
+                          <span className="tform-pct muted">{fm.p.pct}%{fm.p.vendible ? ' ✓' : ''}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [demo, setDemo] = useState(false)
@@ -111,6 +204,7 @@ export default function App() {
   const [certSel, setCertSel] = useState('EUDR')
   const [formKey, setFormKey] = useState('')
   const [preview, setPreview] = useState(null)
+  const [tablero, setTablero] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user || null); setReady(true) })
@@ -175,6 +269,7 @@ export default function App() {
       <header className="topbar">
         <span className="brand"><span className="dot" /> VG · Certificaciones</span>
         <span className="spacer" />
+        <button className="link" onClick={() => setTablero(true)}>📊 Mi progreso</button>
         <SyncBadge status={status} />
         <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
       </header>
@@ -245,6 +340,15 @@ export default function App() {
       <footer className="foot muted">
         {SCHEMAS.length} formularios · {bundle.totales?.n_control_points || '—'} puntos de control · datos sellados con cadena de integridad. noindex.
       </footer>
+
+      {tablero ? (
+        <TableroProgreso
+          grouped={grouped} certKeys={certKeys}
+          slug={slug} productor={productor} finca={finca}
+          onPick={(cert, fk) => { setCertSel(cert); setFormKey(fk); setTablero(false); window.scrollTo(0, 0) }}
+          onClose={() => setTablero(false)}
+        />
+      ) : null}
 
       {preview ? (
         <div className="overlay" onClick={() => setPreview(null)}>

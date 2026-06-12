@@ -4,7 +4,7 @@
 // AUTOCONTENIDO: la capa de captura (engine + antifraude + integridad) vive en ./capture (copia del
 // repo del producto; mantener sincronizada con frontend/src/form-schemas/capture/ — fuente de verdad).
 
-export { default as CertForm, readFormFromContainer } from './CertForm.jsx'
+export { default as CertForm, readFormFromContainer, progresoDe } from './CertForm.jsx'
 export { useCertCapture, buildAntifraudeCtxEUDR } from './useCertCapture.js'
 
 export * as offlineEngine from './capture/cert-offline-engine.js'

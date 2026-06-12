@@ -17,7 +17,7 @@ function fieldKey(seccionKey, campoKey) { return `${seccionKey}.${campoKey}` }
 // Progreso de completitud del formulario (gamificación seria): cuenta campos respondidos vs total.
 // Distingue Major Must / Minor Must (control_points por nivel) para el umbral vendible del marketplace
 // (100% Major + ≥95% Minor — ver export-policy / marco antifraude).
-function progresoDe(schema, data) {
+export function progresoDe(schema, data) {
   let total = 0, hechas = 0, major = 0, majorOk = 0, minor = 0, minorOk = 0
   for (const sec of (schema.secciones || [])) {
     for (const c of (sec.campos || [])) {
@@ -37,8 +37,11 @@ function progresoDe(schema, data) {
   const pct = total ? Math.round((100 * hechas) / total) : 0
   const majorPct = major ? Math.round((100 * majorOk) / major) : 100
   const minorPct = minor ? Math.round((100 * minorOk) / minor) : 100
-  // umbral vendible/certificable: 100% Major + >=95% Minor
-  const vendible = majorPct >= 100 && minorPct >= 95
+  // umbral vendible/certificable: 100% Major + >=95% Minor. Un formulario vacío NUNCA es vendible
+  // (hechas>0), y si no tiene puntos de control se exige completitud total (pct>=100) para no dar por
+  // "listo" un formulario en blanco (los porcentajes Major/Minor caen a 100 por defecto sin controles).
+  const tieneControles = major + minor > 0
+  const vendible = hechas > 0 && (tieneControles ? majorPct >= 100 && minorPct >= 95 : pct >= 100)
   return { total, hechas, pct, major, majorOk, majorPct, minor, minorOk, minorPct, vendible }
 }
 
