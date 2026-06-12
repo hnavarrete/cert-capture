@@ -129,7 +129,8 @@ function MiPerfilGate({ email, onListo, onOmitir }) {
   const [tipo, setTipo] = useState('cedula')
   const [ident, setIdent] = useState('')
   const [nombre, setNombre] = useState('')
-  const [cultivo, setCultivo] = useState('')
+  const [apellido, setApellido] = useState('')
+  const [telefono, setTelefono] = useState('')
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
@@ -137,23 +138,25 @@ function MiPerfilGate({ email, onListo, onOmitir }) {
 
   async function guardar(e) {
     e.preventDefault()
-    if (!ident.trim() || !nombre.trim()) { setMsg('Completa tu identificación y tu nombre.'); return }
+    if (!ident.trim() || !nombre.trim() || !apellido.trim()) { setMsg('Completa tu identificación, nombre y apellido.'); return }
     if (!consent) { setMsg('Necesitamos tu autorización para guardar tus datos.'); return }
     setBusy(true); setMsg(null)
     try {
-      const { data, error } = await supabase.rpc('upsert_my_profile', {
-        p_identificacion: ident.trim(), p_tipo_id: tipo, p_country_code: 'EC',
-        p_display_name: nombre.trim(), p_primary_crop: cultivo.trim() || null,
-        p_email: email || null, p_consent: consent, p_consent_version: 'v1'
+      // Consume el contrato CANÓNICO de identidad (bus B2, dueño #03): upsert_my_profile + ensure_producer_self.
+      // R23: no reimplementar identidad; la misma "Mi perfil" del visor/ERP, una sola fuente.
+      const { error } = await supabase.rpc('upsert_my_profile', {
+        p_nombre: nombre.trim(), p_apellido: apellido.trim(),
+        p_tipo_documento: tipo, p_numero_documento: ident.trim(),
+        p_telefono: telefono.trim() || null
       })
       if (error) throw error
-      localStorage.setItem('vg_perfil', JSON.stringify({ tipo, ident: ident.trim(), nombre: nombre.trim() }))
-      onListo(data)
+      await supabase.rpc('ensure_producer_self', { p_display_name: (nombre + ' ' + apellido).trim(), p_tenant_slug_origin: 'eudr' })
+      onListo(true)
     } catch (err) {
-      // offline o RPC aún no disponible: guardamos en el dispositivo y dejamos avanzar (R1: no bloquear).
-      localStorage.setItem('vg_perfil_pendiente', JSON.stringify({ tipo, ident: ident.trim(), nombre: nombre.trim(), cultivo: cultivo.trim(), consent, email }))
+      // offline: guardamos en el dispositivo y dejamos avanzar (R1: no bloquear). Se sincroniza al volver la señal.
+      localStorage.setItem('vg_perfil_pendiente', JSON.stringify({ tipo, ident: ident.trim(), nombre: nombre.trim(), apellido: apellido.trim(), telefono: telefono.trim(), consent }))
       setMsg('Guardamos tu perfil en este dispositivo; se registrará al volver la señal.')
-      setTimeout(() => onListo(null), 1200)
+      setTimeout(() => onListo(true), 1200)
     } finally { setBusy(false) }
   }
 
@@ -171,8 +174,9 @@ function MiPerfilGate({ email, onListo, onOmitir }) {
           </select>
         </label>
         <label>{LABELS[tipo]}<input value={ident} onChange={e => setIdent(e.target.value)} placeholder="Número de identificación" required /></label>
-        <label>Nombre o razón social<input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Como aparece en tu documento" required /></label>
-        <label>Cultivo principal (opcional)<input value={cultivo} onChange={e => setCultivo(e.target.value)} placeholder="ej. banano, cacao" /></label>
+        <label>Nombre<input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tus nombres" required /></label>
+        <label>Apellido<input value={apellido} onChange={e => setApellido(e.target.value)} placeholder="Tus apellidos" required /></label>
+        <label>Teléfono (opcional)<input value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="+593…" /></label>
         <label className="check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
           <span>Autorizo a VG a guardar mis datos para gestionar mis certificaciones. Mis datos son míos; yo decido con quién los comparto.</span></label>
         {msg ? <div className="err">{msg}</div> : null}
@@ -323,13 +327,13 @@ export default function App() {
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
 
-  // Rol del usuario en el producto eudr (gating de UI). Lo lee directo de user_products (policy
-  // select_own) porque my_products() todavía NO devuelve el rol (handoff a #03 para exponerlo ahí).
+  // Rol del usuario en eudr (gating de UI). Consume el bus de roles canónico (#03): RPC get_my_role
+  // (R23: reusar > construir; antes consultaba user_products directo, ahora usa el contrato del dueño).
   useEffect(() => {
     if (!user) { setRol(null); return }
     let on = true
-    supabase.from('user_products').select('role').eq('product', 'eudr').limit(1)
-      .then(({ data }) => { if (on) setRol(data && data[0] ? data[0].role : null) })
+    supabase.rpc('get_my_role', { p_product: 'eudr' })
+      .then(({ data, error }) => { if (on) setRol(error ? null : (data || null)) })
       .catch(() => { if (on) setRol(null) })
     return () => { on = false }
   }, [user])
@@ -343,7 +347,7 @@ export default function App() {
       if (!on) return
       if (error) { setPerfil('ok'); return } // RPC no disponible todavía → dormido, no molesta en producción
       const p = Array.isArray(data) ? data[0] : data
-      setPerfil(p && (p.producer_id || p.id) ? 'ok' : 'necesita')
+      setPerfil(p && (p.has_profile || p.profile_completo) ? 'ok' : 'necesita') // contrato canónico get_my_profile (B2)
     }).catch(() => { if (on) setPerfil('ok') })
     return () => { on = false }
   }, [user])
