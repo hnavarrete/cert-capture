@@ -170,6 +170,11 @@ button.primary, .vg-certform-foot button[type=submit] {
 .sheet-head .link { color: #cfe6f3; }
 .sheet-frame { border: 0; width: 100%; flex: 1; background: #fff; }
 
+/* ---- gate Mi perfil: checkbox de consentimiento ---- */
+.login .check { flex-direction: row; align-items: flex-start; gap: 9px; cursor: pointer; }
+.login .check input { width: auto; margin: 2px 0 0; flex: none; }
+.login .check span { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+
 /* ---- tablero de progreso (gamificación) ---- */
 .tablero { padding: 14px 16px; overflow-y: auto; }
 .tablero-resumen { margin: 0 0 12px; }

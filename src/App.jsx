@@ -94,6 +94,67 @@ function SinAcceso({ email, onSalir }) {
   )
 }
 
+// Gate "Mi perfil" — identidad Capa 0 del productor (onboarding F1). La identificación (cédula/RUC/
+// pasaporte) es el ancla única anti-duplicados que hace las certificaciones tuyas y auditables.
+// R1-safe: "Completar luego" nunca bloquea. R2: si no hay señal o la RPC aún no existe, guarda local y avanza.
+function MiPerfilGate({ email, onListo, onOmitir }) {
+  const [tipo, setTipo] = useState('cedula')
+  const [ident, setIdent] = useState('')
+  const [nombre, setNombre] = useState('')
+  const [cultivo, setCultivo] = useState('')
+  const [consent, setConsent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState(null)
+  const LABELS = { cedula: 'Cédula', ruc: 'RUC', pasaporte: 'Pasaporte' }
+
+  async function guardar(e) {
+    e.preventDefault()
+    if (!ident.trim() || !nombre.trim()) { setMsg('Completa tu identificación y tu nombre.'); return }
+    if (!consent) { setMsg('Necesitamos tu autorización para guardar tus datos.'); return }
+    setBusy(true); setMsg(null)
+    try {
+      const { data, error } = await supabase.rpc('upsert_my_profile', {
+        p_identificacion: ident.trim(), p_tipo_id: tipo, p_country_code: 'EC',
+        p_display_name: nombre.trim(), p_primary_crop: cultivo.trim() || null,
+        p_email: email || null, p_consent: consent, p_consent_version: 'v1'
+      })
+      if (error) throw error
+      localStorage.setItem('vg_perfil', JSON.stringify({ tipo, ident: ident.trim(), nombre: nombre.trim() }))
+      onListo(data)
+    } catch (err) {
+      // offline o RPC aún no disponible: guardamos en el dispositivo y dejamos avanzar (R1: no bloquear).
+      localStorage.setItem('vg_perfil_pendiente', JSON.stringify({ tipo, ident: ident.trim(), nombre: nombre.trim(), cultivo: cultivo.trim(), consent, email }))
+      setMsg('Guardamos tu perfil en este dispositivo; se registrará al volver la señal.')
+      setTimeout(() => onListo(null), 1200)
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="wrap"><div className="card login">
+      <h1>Tu perfil de productor</h1>
+      <p className="muted">Antes de empezar, dinos quién eres. Tu identificación (cédula, RUC o pasaporte)
+        es tu ancla única: evita duplicados y hace que tus certificaciones sean tuyas y auditables.</p>
+      <form onSubmit={guardar}>
+        <label>Tipo de identificación
+          <select value={tipo} onChange={e => setTipo(e.target.value)}>
+            <option value="cedula">Cédula</option>
+            <option value="ruc">RUC</option>
+            <option value="pasaporte">Pasaporte</option>
+          </select>
+        </label>
+        <label>{LABELS[tipo]}<input value={ident} onChange={e => setIdent(e.target.value)} placeholder="Número de identificación" required /></label>
+        <label>Nombre o razón social<input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Como aparece en tu documento" required /></label>
+        <label>Cultivo principal (opcional)<input value={cultivo} onChange={e => setCultivo(e.target.value)} placeholder="ej. banano, cacao" /></label>
+        <label className="check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
+          <span>Autorizo a VG a guardar mis datos para gestionar mis certificaciones. Mis datos son míos; yo decido con quién los comparto.</span></label>
+        {msg ? <div className="err">{msg}</div> : null}
+        <button disabled={busy}>{busy ? 'Guardando…' : 'Guardar mi perfil'}</button>
+      </form>
+      <button type="button" className="link" style={{ marginTop: 10 }} onClick={onOmitir}>Completar luego</button>
+    </div></div>
+  )
+}
+
 // Tablero de progreso de TODAS las certificaciones del productor (gamificación, paso 2).
 // Lee los borradores guardados en IndexedDB del contexto actual (finca/productor) y, por cada
 // certificación, hace el rollup de avance con el MISMO progresoDe del formulario (una sola fuente de
@@ -199,6 +260,7 @@ export default function App() {
   const [misFincas, setMisFincas] = useState([])
   const [accesoEudr, setAccesoEudr] = useState(null) // null=cargando, true, false (contrato de acceso, kit #02)
   const [moduleFlags, setModuleFlags] = useState([]) // estado C del kit: lock por módulo (convención cert_<key>)
+  const [perfil, setPerfil] = useState('checking') // checking | ok | necesita | omitido (gate identidad Capa 0, F1)
   const [productor, setProductor] = useState(() => localStorage.getItem('vg_prod') || '')
   const [finca, setFinca] = useState(() => localStorage.getItem('vg_finca') || '')
   const [certSel, setCertSel] = useState('EUDR')
@@ -232,6 +294,20 @@ export default function App() {
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
 
+  // ¿el productor ya tiene su perfil Capa 0? (onboarding F1). Si la RPC get_my_profile aún no existe
+  // (la construye #03) o no hay señal, NO bloqueamos: el gate queda dormido hasta que el backend exista.
+  useEffect(() => {
+    if (!user) { setPerfil('checking'); return }
+    let on = true
+    supabase.rpc('get_my_profile').then(({ data, error }) => {
+      if (!on) return
+      if (error) { setPerfil('ok'); return } // RPC no disponible todavía → dormido, no molesta en producción
+      const p = Array.isArray(data) ? data[0] : data
+      setPerfil(p && (p.producer_id || p.id) ? 'ok' : 'necesita')
+    }).catch(() => { if (on) setPerfil('ok') })
+    return () => { on = false }
+  }, [user])
+
   const grouped = useMemo(() => groupByCert(SCHEMAS), [])
   // Estado C (kit #02): si el grant trae module_flags, solo se ven las certificaciones habilitadas por un
   // flag `cert_<key>`. Comodín `*` (convención del ecosistema, lo usan tablero/visor) = todas. Sin flags =
@@ -263,6 +339,8 @@ export default function App() {
   if (!ready) return <div className="wrap"><div className="card">Cargando…</div></div>
   if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} /></div>
   if (user && accesoEudr === false) return <SinAcceso email={user.email} onSalir={() => supabase.auth.signOut()} />
+  if (user && accesoEudr && perfil === 'necesita')
+    return <MiPerfilGate email={user.email} onListo={() => setPerfil('ok')} onOmitir={() => setPerfil('omitido')} />
 
   return (
     <div className="wrap">
