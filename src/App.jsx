@@ -37,6 +37,15 @@ function Login({ onDemo }) {
   const [pass, setPass] = useState('')
   const [msg, setMsg] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [verCorreo, setVerCorreo] = useState(false)
+  async function signInGoogle() {
+    setBusy(true); setMsg(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname }
+    })
+    if (error) { setMsg(error.message); setBusy(false) }
+  }
   async function signIn(e) {
     e.preventDefault(); setBusy(true); setMsg(null)
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass })
@@ -44,18 +53,28 @@ function Login({ onDemo }) {
     setBusy(false)
   }
   return (
-    <form className="card login" onSubmit={signIn}>
+    <div className="card login">
       <h1>VG · Captura de Certificaciones</h1>
       <p className="muted">Ingresa con tu cuenta del ecosistema VG. El acceso a cada finca lo controla
-        el servidor (RLS). Captura offline; sincroniza al volver la conexión.</p>
-      <label>Correo<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-      <label>Contraseña<input type="password" value={pass} onChange={e => setPass(e.target.value)} required /></label>
-      <button disabled={busy}>{busy ? 'Ingresando…' : 'Ingresar'}</button>
+        el servidor. Captura sin conexión; sincroniza al volver la señal.</p>
+      <button type="button" className="google" disabled={busy} onClick={signInGoogle}>
+        <span className="g">G</span> Continuar con Google
+      </button>
+      <button type="button" className="link" style={{ marginTop: 10 }} onClick={() => setVerCorreo(v => !v)}>
+        {verCorreo ? 'Ocultar el ingreso por correo' : 'Ingresar con correo y contraseña'}
+      </button>
+      {verCorreo ? (
+        <form onSubmit={signIn} style={{ marginTop: 8 }}>
+          <label>Correo<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+          <label>Contraseña<input type="password" value={pass} onChange={e => setPass(e.target.value)} required /></label>
+          <button disabled={busy}>{busy ? 'Ingresando…' : 'Ingresar'}</button>
+        </form>
+      ) : null}
       {msg ? <div className="err">{msg}</div> : null}
       <button type="button" className="link demo-link" onClick={onDemo}>
         Explorar en modo demo (captura local, sin sincronizar) →
       </button>
-    </form>
+    </div>
   )
 }
 

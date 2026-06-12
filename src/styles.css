@@ -106,6 +106,9 @@ button.primary, .vg-certform-foot button[type=submit] {
   content: ""; display: block; width: 46px; height: 46px; border-radius: 13px; background: var(--grad);
   margin-bottom: 14px; box-shadow: 0 8px 20px rgba(27,171,225,.35);
 }
+.login .google { width: 100%; background: #fff; color: #1f2937; border: 1.5px solid var(--line); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; box-shadow: var(--shadow); }
+.login .google:hover { border-color: #cdd8e6; }
+.login .google .g { font-weight: 800; color: #4285F4; font-size: 16px; }
 .login .demo-link { width: 100%; text-align: center; color: var(--blue); margin-top: 12px; font-weight: 600; }
 .login .demo-link:hover { color: var(--forest); }
 
