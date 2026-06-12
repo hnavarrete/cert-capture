@@ -8,11 +8,39 @@
 //  - R22: el campo gps_polygon ofrece CONECTAR el polígono del visor (no recapturar) vía onConnectPolygon.
 //  - Antifraude: si el engine devuelve flags/nivel, se muestran (la UI no miente sobre el estado del dato).
 
-import React, { useRef, useState, useCallback } from 'react'
+import React, { useRef, useState, useCallback, useEffect } from 'react'
 
 const TIPOS_TEXTO = new Set(['text', 'email', 'tel', 'number', 'decimal', 'date'])
 
 function fieldKey(seccionKey, campoKey) { return `${seccionKey}.${campoKey}` }
+
+// Progreso de completitud del formulario (gamificación seria): cuenta campos respondidos vs total.
+// Distingue Major Must / Minor Must (control_points por nivel) para el umbral vendible del marketplace
+// (100% Major + ≥95% Minor — ver export-policy / marco antifraude).
+function progresoDe(schema, data) {
+  let total = 0, hechas = 0, major = 0, majorOk = 0, minor = 0, minorOk = 0
+  for (const sec of (schema.secciones || [])) {
+    for (const c of (sec.campos || [])) {
+      const tipo = c.tipo || 'text'
+      if (tipo === 'nota' || tipo === 'info') continue
+      const base = fieldKey(sec.key, c.key)
+      const v = tipo === 'control_point' ? data[base + '.estado'] : data[base]
+      const lleno = v != null && v !== '' && !(Array.isArray(v) && v.length === 0)
+      total++; if (lleno) hechas++
+      if (tipo === 'control_point') {
+        const niv = (c.nivel || '').toString().toLowerCase()
+        if (/major|mayor|obligaci.n mayor/.test(niv)) { major++; if (lleno) majorOk++ }
+        else if (/minor|menor|obligaci.n menor/.test(niv)) { minor++; if (lleno) minorOk++ }
+      }
+    }
+  }
+  const pct = total ? Math.round((100 * hechas) / total) : 0
+  const majorPct = major ? Math.round((100 * majorOk) / major) : 100
+  const minorPct = minor ? Math.round((100 * minorOk) / minor) : 100
+  // umbral vendible/certificable: 100% Major + >=95% Minor
+  const vendible = majorPct >= 100 && minorPct >= 95
+  return { total, hechas, pct, major, majorOk, majorPct, minor, minorOk, minorPct, vendible }
+}
 
 // --- evaluación mínima de show_if (soporta { campo, igual_a } o null) ---
 function visible(showIf, data) {
@@ -241,6 +269,14 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
     fotosRef.current[field] = { field, blob: file, mime: file.type || 'image/jpeg', name: file.name }
   }, [])
 
+  // progreso de completitud en vivo (gamificación)
+  const [prog, setProg] = useState({ total: 0, hechas: 0, pct: 0, vendible: false, major: 0, majorPct: 100, minorPct: 100 })
+  const recalc = useCallback(() => {
+    if (!containerRef.current) return
+    try { setProg(progresoDe(schema, readFormFromContainer(containerRef.current))) } catch {}
+  }, [schema])
+  useEffect(() => { recalc() }, [recalc])
+
   const handleSave = useCallback(async () => {
     if (!containerRef.current) return
     setSaving(true)
@@ -266,11 +302,21 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
   if (!schema) return null
 
   return (
-    <form ref={containerRef} className="vg-certform" onSubmit={e => { e.preventDefault(); handleSave() }}>
+    <form ref={containerRef} className="vg-certform" onInput={recalc} onChange={recalc} onSubmit={e => { e.preventDefault(); handleSave() }}>
       <header className="vg-certform-head">
         <h2>{schema.titulo}</h2>
         {schema.descripcion ? <p>{schema.descripcion}</p> : null}
         <span className="vg-cert-tag">{schema.certificacion}</span>
+        <div className="vg-progreso">
+          <div className="vg-prog-bar"><span className={prog.vendible ? 'ok' : ''} style={{ width: prog.pct + '%' }} /></div>
+          <div className="vg-prog-info">
+            <strong>{prog.pct}% completo</strong> · {prog.hechas}/{prog.total} preguntas
+            {prog.major ? <span> · obligaciones mayores {prog.majorPct}%</span> : null}
+            {prog.vendible
+              ? <span className="vg-prog-badge ok">✓ Listo para certificar</span>
+              : <span className="vg-prog-badge">Complétalo para certificar y poder compartir</span>}
+          </div>
+        </div>
       </header>
 
       {(schema.secciones || []).map(sec => {
