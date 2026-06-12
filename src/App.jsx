@@ -7,6 +7,10 @@ import bundle from './schemas.bundle.json'
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
 const CERTS = bundle.certificaciones || []
 const CERT_LABEL = Object.fromEntries(CERTS.map(c => [c.key, c.titulo]))
+const CERT_ICON = {
+  GENERAL: '📋', EUDR: '🛡️', FSC: '🌲', FSC_FM: '🌲', FSC_CoC: '🔗', RFA: '🐸',
+  USDA_ORGANIC: '🌱', GLOBAL_GAP: '✅', MARBETE_AGROCALIDAD: '🏷️', COMPARTIDO: '🔗'
+}
 
 function groupByCert(schemas) {
   const g = {}
@@ -21,7 +25,8 @@ function SyncBadge({ status }) {
   const { pending = 0, failed = 0, synced = 0, offline } = status || {}
   return (
     <div className={'badge ' + (offline ? 'off' : 'on')}>
-      {offline ? '◌ sin conexión' : '● en línea'} · pendientes {pending} · fallidas {failed} · sincronizadas {synced}
+      <span className="pulse" />{offline ? 'sin conexión' : 'en línea'}
+      <small>· {pending} pend · {failed} fall · {synced} sync</small>
     </div>
   )
 }
@@ -46,7 +51,7 @@ function Login({ onDemo }) {
       <label>Contraseña<input type="password" value={pass} onChange={e => setPass(e.target.value)} required /></label>
       <button disabled={busy}>{busy ? 'Ingresando…' : 'Ingresar'}</button>
       {msg ? <div className="err">{msg}</div> : null}
-      <button type="button" className="link" style={{ marginTop: 10 }} onClick={onDemo}>
+      <button type="button" className="link demo-link" onClick={onDemo}>
         Explorar en modo demo (captura local, sin sincronizar) →
       </button>
     </form>
@@ -87,9 +92,10 @@ export default function App() {
   return (
     <div className="wrap">
       <header className="topbar">
-        <strong>VG · Certificaciones</strong>
+        <span className="brand"><span className="dot" /> VG · Certificaciones</span>
+        <span className="spacer" />
         <SyncBadge status={status} />
-        <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir ({effEmail})</button>
+        <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
       </header>
       {demo && !user ? (
         <div className="card" style={{ background: '#fdf3e3', borderColor: '#f0d9a8' }}>
@@ -113,7 +119,9 @@ export default function App() {
         <div className="chips">
           {Object.keys(grouped).map(c => (
             <button key={c} className={'chip ' + (certSel === c ? 'sel' : '')}
-              onClick={() => { setCertSel(c); setFormKey('') }}>{CERT_LABEL[c] || c}</button>
+              onClick={() => { setCertSel(c); setFormKey('') }}>
+              <span className="ic">{CERT_ICON[c] || '📄'}</span>{CERT_LABEL[c] || c}
+            </button>
           ))}
         </div>
         <select value={formKey} onChange={e => setFormKey(e.target.value)}>
