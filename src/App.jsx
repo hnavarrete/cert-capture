@@ -13,6 +13,34 @@ const CERT_ICON = {
   USDA_ORGANIC: '🌱', GLOBAL_GAP: '✅', MARBETE_AGROCALIDAD: '🏷️', COMPARTIDO: '🔗'
 }
 
+// Roles canónicos del ecosistema (fn_is_canonical_role) mapeados a nivel operativo del encuestador.
+// nivel: admin (god) · gestion · supervision · captura · lectura. De aquí salen las capacidades de la UI.
+const ROLES = {
+  god: { label: 'Administrador VG', nivel: 'admin' },
+  producer_admin: { label: 'Productor (dueño)', nivel: 'gestion' },
+  gerente_general: { label: 'Gerente general', nivel: 'gestion' },
+  gerente_agricola: { label: 'Gerente agrícola', nivel: 'gestion' },
+  gerente_sostenibilidad: { label: 'Gerente de sostenibilidad', nivel: 'gestion' },
+  gerente_hacienda: { label: 'Gerente de hacienda', nivel: 'gestion' },
+  manager: { label: 'Gerente', nivel: 'gestion' },
+  supervisor: { label: 'Supervisor', nivel: 'supervision' },
+  field_worker: { label: 'Trabajador de campo', nivel: 'captura' },
+  tecnico: { label: 'Técnico', nivel: 'captura' },
+  fumigador: { label: 'Fumigador', nivel: 'captura' },
+  lector: { label: 'Solo lectura', nivel: 'lectura' }
+}
+// Capacidades derivadas del nivel (gating de UI). El servidor es la fuente de verdad; esto es UX.
+function capsDeRol(rol) {
+  const nivel = (ROLES[rol] || {}).nivel || 'captura'
+  return {
+    nivel,
+    puedeCapturar: nivel !== 'lectura',                 // lector no escribe
+    puedeExportar: nivel === 'gestion' || nivel === 'admin' || nivel === 'lectura', // entregables: gestión/auditor
+    esLector: nivel === 'lectura',
+    esAdmin: nivel === 'admin'
+  }
+}
+
 function groupByCert(schemas) {
   const g = {}
   for (const s of schemas) {
@@ -261,6 +289,7 @@ export default function App() {
   const [accesoEudr, setAccesoEudr] = useState(null) // null=cargando, true, false (contrato de acceso, kit #02)
   const [moduleFlags, setModuleFlags] = useState([]) // estado C del kit: lock por módulo (convención cert_<key>)
   const [perfil, setPerfil] = useState('checking') // checking | ok | necesita | omitido (gate identidad Capa 0, F1)
+  const [rol, setRol] = useState(null) // rol canónico del grant eudr (gating de UI por rol)
   const [productor, setProductor] = useState(() => localStorage.getItem('vg_prod') || '')
   const [finca, setFinca] = useState(() => localStorage.getItem('vg_finca') || '')
   const [certSel, setCertSel] = useState('EUDR')
@@ -294,6 +323,17 @@ export default function App() {
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
 
+  // Rol del usuario en el producto eudr (gating de UI). Lo lee directo de user_products (policy
+  // select_own) porque my_products() todavía NO devuelve el rol (handoff a #03 para exponerlo ahí).
+  useEffect(() => {
+    if (!user) { setRol(null); return }
+    let on = true
+    supabase.from('user_products').select('role').eq('product', 'eudr').limit(1)
+      .then(({ data }) => { if (on) setRol(data && data[0] ? data[0].role : null) })
+      .catch(() => { if (on) setRol(null) })
+    return () => { on = false }
+  }, [user])
+
   // ¿el productor ya tiene su perfil Capa 0? (onboarding F1). Si la RPC get_my_profile aún no existe
   // (la construye #03) o no hay señal, NO bloqueamos: el gate queda dormido hasta que el backend exista.
   useEffect(() => {
@@ -320,6 +360,7 @@ export default function App() {
   }, [grouped, moduleFlags])
   const formsForCert = grouped[certSel] || []
   const schema = SCHEMAS.find(s => s.form_key === formKey)
+  const caps = capsDeRol(rol) // capacidades de UI según el rol (lector=solo lectura, etc.)
 
   // si la cert seleccionada deja de estar permitida (cambió el grant), salta a la primera visible
   useEffect(() => {
@@ -346,6 +387,7 @@ export default function App() {
     <div className="wrap">
       <header className="topbar">
         <span className="brand"><span className="dot" /> VG · Certificaciones</span>
+        {rol && ROLES[rol] ? <span className={'rolbadge ' + caps.nivel}>{ROLES[rol].label}</span> : null}
         <span className="spacer" />
         <button className="link" onClick={() => setTablero(true)}>📊 Mi progreso</button>
         <SyncBadge status={status} />
@@ -395,9 +437,13 @@ export default function App() {
 
       {schema ? (
         <div className="card">
+          {caps.esLector ? (
+            <div className="rol-aviso lectura">👁️ Modo solo lectura. Tu rol puede revisar y previsualizar, pero no editar ni guardar capturas.</div>
+          ) : null}
           <CertForm
             schema={schema}
             engine={engine}
+            readonly={caps.esLector}
             productor_id={productor || null}
             finca_id={finca || null}
             onConnectPolygon={async () => {
