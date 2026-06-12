@@ -72,7 +72,10 @@ function Campo({ seccionKey, campo, valor, onPhoto, onConnectPolygon }) {
       <div className="vg-cp">
         <div className="vg-cp-criterio"><strong>{campo.key}</strong> · {campo.label}
           {campo.nivel ? <span className="vg-cp-nivel"> [{campo.nivel}]</span> : null}</div>
-        {campo.criterio ? <div className="vg-cp-texto">{campo.criterio}</div> : null}
+        {campo.criterio ? (
+          <details className="vg-cp-oficial"><summary>Ver texto oficial de la norma (referencia)</summary>
+            <div className="vg-cp-texto">{campo.criterio}</div></details>
+        ) : null}
         <select data-field={`${dataField}.estado`} id={`${dataField}.estado`} defaultValue={(valor && valor.estado) || ''}>
           <option value="">— sin responder —</option>
           <option value="cumple">Cumple</option>
