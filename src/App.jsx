@@ -105,6 +105,7 @@ export default function App() {
   const [slug, setSlug] = useState(() => localStorage.getItem('vg_slug') || '')
   const [misFincas, setMisFincas] = useState([])
   const [accesoEudr, setAccesoEudr] = useState(null) // null=cargando, true, false (contrato de acceso, kit #02)
+  const [moduleFlags, setModuleFlags] = useState([]) // estado C del kit: lock por módulo (convención cert_<key>)
   const [productor, setProductor] = useState(() => localStorage.getItem('vg_prod') || '')
   const [finca, setFinca] = useState(() => localStorage.getItem('vg_finca') || '')
   const [certSel, setCertSel] = useState('EUDR')
@@ -119,25 +120,41 @@ export default function App() {
 
   useEffect(() => { setCaptureSession({ slug, email: effEmail }); localStorage.setItem('vg_slug', slug) }, [slug, effEmail])
 
-  // Carga las fincas REALES del usuario (sus client_slugs de user_products, las mismas que tiene en el
-  // visor/ERP). Materializa la relación cross-product: el encuestador no es una isla, comparte la finca.
+  // Carga el producto EUDR del usuario vía la RPC canónica public.my_products() (#03): misma fuente que
+  // /api/identity/me, respeta expiración y es RLS-safe (no expone otros usuarios). De ahí salen sus fincas
+  // (client_slugs, las mismas del visor/ERP) y los module_flags (estado C: lock por módulo). Materializa la
+  // relación cross-product: el encuestador no es una isla, comparte la finca y la cuenta del resto.
   useEffect(() => {
-    if (!user) { setMisFincas([]); setAccesoEudr(null); return }
-    supabase.from('user_products').select('client_slugs').eq('product', 'eudr')
+    if (!user) { setMisFincas([]); setAccesoEudr(null); setModuleFlags([]); return }
+    supabase.rpc('my_products')
       .then(({ data }) => {
-        const filas = data || []
-        const s = new Set()
-        for (const r of filas) for (const c of (r.client_slugs || [])) s.add(c)
-        setMisFincas([...s].sort())
-        setAccesoEudr(filas.length > 0)
-      }).catch(() => { setMisFincas([]); setAccesoEudr(false) })
+        const eudr = (data || []).find(p => p.product === 'eudr')
+        if (!eudr) { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]); return }
+        setMisFincas([...new Set(eudr.client_slugs || [])].sort())
+        setModuleFlags(eudr.module_flags || [])
+        setAccesoEudr(true)
+      }).catch(() => { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]) })
   }, [user])
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
 
   const grouped = useMemo(() => groupByCert(SCHEMAS), [])
+  // Estado C (kit #02): si el grant trae module_flags, solo se ven las certificaciones habilitadas por un
+  // flag `cert_<key>`. Comodín `*` (convención del ecosistema, lo usan tablero/visor) = todas. Sin flags =
+  // acceso total a todas (caso actual de los grants eudr).
+  const certKeys = useMemo(() => {
+    const all = Object.keys(grouped)
+    if (!moduleFlags.length || moduleFlags.includes('*')) return all
+    const permitidas = all.filter(c => moduleFlags.includes('cert_' + c.toLowerCase()))
+    return permitidas.length ? permitidas : all // failsafe: nunca lockear todo por un flag mal sembrado
+  }, [grouped, moduleFlags])
   const formsForCert = grouped[certSel] || []
   const schema = SCHEMAS.find(s => s.form_key === formKey)
+
+  // si la cert seleccionada deja de estar permitida (cambió el grant), salta a la primera visible
+  useEffect(() => {
+    if (certKeys.length && !certKeys.includes(certSel)) { setCertSel(certKeys[0]); setFormKey('') }
+  }, [certKeys, certSel])
 
   function handlePreview() {
     if (!schema) return
@@ -190,7 +207,7 @@ export default function App() {
       <div className="card ctx">
         <h3>Certificación</h3>
         <div className="chips">
-          {Object.keys(grouped).map(c => (
+          {certKeys.map(c => (
             <button key={c} className={'chip ' + (certSel === c ? 'sel' : '')}
               onClick={() => { setCertSel(c); setFormKey('') }}>
               <span className="ic">{CERT_ICON[c] || '📄'}</span>{CERT_LABEL[c] || c}
