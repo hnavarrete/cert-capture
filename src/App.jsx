@@ -3,6 +3,7 @@ import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './e
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
 import { engine, setCaptureSession, db } from './engine.js'
 import { supabase } from './supabase.js'
+import { adoptShellSessionIfEmbedded } from './shell-bridge.js'
 import bundle from './schemas.bundle.json'
 
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
@@ -304,9 +305,16 @@ export default function App() {
   const [tablero, setTablero] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user || null); setReady(true) })
+    let mounted = true
+    ;(async () => {
+      // Si estamos embebidos en el shell del APK, adopta la sesión del shell (postMessage) ANTES de leerla.
+      // Fuera del iframe es no-op → la app standalone sigue igual (login Google normal).
+      try { await adoptShellSessionIfEmbedded() } catch { /* nunca bloquea */ }
+      const { data } = await supabase.auth.getSession()
+      if (mounted) { setUser(data.session?.user || null); setReady(true) }
+    })()
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user || null))
-    return () => sub.subscription.unsubscribe()
+    return () => { mounted = false; sub.subscription.unsubscribe() }
   }, [])
 
   useEffect(() => { setCaptureSession({ slug, email: effEmail }); localStorage.setItem('vg_slug', slug) }, [slug, effEmail])
