@@ -15,7 +15,7 @@ const SHELL_ORIGINS = [
   'http://localhost:5180'
 ]
 
-function estamosEmbebidos() {
+export function estamosEmbebidos() {
   try { return typeof window !== 'undefined' && window.parent && window.parent !== window } catch { return false }
 }
 

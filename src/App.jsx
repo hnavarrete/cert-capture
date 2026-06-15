@@ -3,7 +3,11 @@ import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './e
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
 import { engine, setCaptureSession, db } from './engine.js'
 import { supabase } from './supabase.js'
-import { adoptShellSessionIfEmbedded } from './shell-bridge.js'
+import { adoptShellSessionIfEmbedded, estamosEmbebidos } from './shell-bridge.js'
+
+// ¿corremos embebidos en el shell del APK? (iframe). Gatea el comportamiento que NO aplica embebido:
+// el shell es dueño de la sesión y de la navegación → no cerramos sesión ni mostramos login propio.
+const EMBEBIDO = estamosEmbebidos()
 import bundle from './schemas.bundle.json'
 
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
@@ -384,8 +388,19 @@ export default function App() {
   }
 
   if (!ready) return <div className="wrap"><div className="card">Cargando…</div></div>
+  // Embebido en el shell SIN sesión adoptada: NO mostramos el login Google (el OAuth de Google no corre
+  // dentro de un iframe). El shell es dueño de la sesión → ofrecemos reintentar/reabrir el módulo.
+  if (EMBEBIDO && !user) return (
+    <div className="wrap"><div className="card login">
+      <h1>Sesión no disponible</h1>
+      <p className="muted">No se pudo cargar tu sesión desde la app. Vuelve a abrir “Certificaciones” desde el
+        menú de VG Suite, o reintenta.</p>
+      <button type="button" className="google" onClick={() => window.location.reload()}>Reintentar</button>
+    </div></div>
+  )
   if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} /></div>
-  if (user && accesoEudr === false) return <SinAcceso email={user.email} onSalir={() => supabase.auth.signOut()} />
+  // En embebido, "cambiar de cuenta" NO cierra la sesión (es compartida con el shell); recarga el módulo.
+  if (user && accesoEudr === false) return <SinAcceso email={user.email} onSalir={() => EMBEBIDO ? window.location.reload() : supabase.auth.signOut()} />
   if (user && accesoEudr && perfil === 'necesita')
     return <MiPerfilGate email={user.email} onListo={() => setPerfil('ok')} onOmitir={() => setPerfil('omitido')} />
 
@@ -397,7 +412,9 @@ export default function App() {
         <span className="spacer" />
         <button className="link" onClick={() => setTablero(true)}>📊 Mi progreso</button>
         <SyncBadge status={status} />
-        <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
+        {!EMBEBIDO ? (
+          <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
+        ) : null}
       </header>
       {demo && !user ? (
         <div className="card" style={{ background: '#fdf3e3', borderColor: '#f0d9a8' }}>
