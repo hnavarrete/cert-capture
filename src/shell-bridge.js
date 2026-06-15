@@ -11,6 +11,8 @@ const SHELL_ORIGINS = [
   'https://app.visiongeografica.com',
   'https://visor.visiongeografica.com',
   'https://piloto.visorgeografico.com',
+  'https://localhost',       // APK Android (WebView Capacitor, scheme https por defecto) — #07 confirmó capacitor.config
+  'capacitor://localhost',   // APK iOS (futuro, no estorba)
   'http://localhost:5173',
   'http://localhost:5180'
 ]
