@@ -329,16 +329,31 @@ export default function App() {
   // relación cross-product: el encuestador no es una isla, comparte la finca y la cuenta del resto.
   useEffect(() => {
     if (!user) { setMisFincas([]); setAccesoEudr(null); setModuleFlags([]); setRol(null); return }
-    supabase.rpc('my_products')
-      .then(({ data }) => {
-        const eudr = (data || []).find(p => p.product === 'eudr')
-        if (!eudr) { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]); setRol(null); return }
-        // my_products() ahora trae role + sku_tier (mig 093, #03): fincas + permisos + rol en UNA llamada.
-        setMisFincas([...new Set(eudr.client_slugs || [])].sort())
-        setModuleFlags(eudr.module_flags || [])
-        setRol(eudr.role || null)
-        setAccesoEudr(true)
-      }).catch(() => { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]); setRol(null) })
+    let cancelado = false
+    ;(async () => {
+      // Embebido en el APK la sesión llega por postMessage (setSession) y el token puede tardar un tick en
+      // propagarse → my_products correría como ANÓNIMO y devolvería [] (RPC: uid null → '[]'). Eso NO es
+      // "sin acceso" (bug #06): reintentamos ante error o lista vacía teniendo sesión, y solo NEGAMOS si
+      // tras los reintentos hay productos SIN eudr. Error persistente ⇒ 'error' (reintentar), no negar.
+      let data = null, err = null
+      for (let intento = 0; intento < 3 && !cancelado; intento++) {
+        const res = await supabase.rpc('my_products')
+        if (cancelado) return
+        data = res.data; err = res.error
+        if (!err && Array.isArray(data) && data.length > 0) break
+        if (intento < 2) await new Promise(r => setTimeout(r, 600))
+      }
+      if (cancelado) return
+      if (err) { setAccesoEudr('error'); setMisFincas([]); setModuleFlags([]); setRol(null); return }
+      const eudr = (data || []).find(p => p.product === 'eudr')
+      if (!eudr) { setMisFincas([]); setAccesoEudr(false); setModuleFlags([]); setRol(null); return }
+      // my_products() trae role + sku_tier (mig 093, #03): fincas + permisos + rol en UNA llamada.
+      setMisFincas([...new Set(eudr.client_slugs || [])].sort())
+      setModuleFlags(eudr.module_flags || [])
+      setRol(eudr.role || null)
+      setAccesoEudr(true)
+    })().catch(() => { if (!cancelado) { setAccesoEudr('error'); setMisFincas([]); setModuleFlags([]); setRol(null) } })
+    return () => { cancelado = true }
   }, [user])
   useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
   useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
@@ -399,6 +414,16 @@ export default function App() {
     </div></div>
   )
   if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} /></div>
+  // No pudimos LEER los permisos (error/timeout de my_products) ≠ "no tiene acceso". NO mandamos a pedir
+  // acceso por WhatsApp a quien SÍ tiene el grant (bug #06): ofrecemos reintentar.
+  if (user && accesoEudr === 'error') return (
+    <div className="wrap"><div className="card login">
+      <h1>No pudimos cargar tus permisos</h1>
+      <p className="muted">Tu sesión está activa, pero no se pudo leer tu acceso al Encuestador. Suele ser
+        temporal — reintenta.</p>
+      <button type="button" className="google" onClick={() => window.location.reload()}>Reintentar</button>
+    </div></div>
+  )
   // En embebido, "cambiar de cuenta" NO cierra la sesión (es compartida con el shell); recarga el módulo.
   if (user && accesoEudr === false) return <SinAcceso email={user.email} onSalir={() => EMBEBIDO ? window.location.reload() : supabase.auth.signOut()} />
   if (user && accesoEudr && perfil === 'necesita')
