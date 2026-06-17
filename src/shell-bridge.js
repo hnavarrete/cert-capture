@@ -4,7 +4,44 @@
 // Supabase. FUERA del iframe es no-op total → la app standalone (cert.visiongeografica.com) sigue con su
 // login Google normal, sin cambios. Contrato verificado contra @vgsdk/auth@0.4.0 (dist/sso.d.ts).
 import { createSsoGuest } from '@vgsdk/auth/sso'
-import { supabase } from './supabase.js'
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase.js'
+
+const HANDOFF_PARAM = 'vg_handoff'
+
+/**
+ * Handoff SSO "Abrir aparte": cuando el APK abre cert STANDALONE en el navegador, la URL trae
+ * `?vg_handoff=<code>` (code opaco one-time; el JWT JAMÁS va en la URL). Lo canjea por una sesión
+ * Supabase y la inyecta → no re-login. Inline (sin @vgsdk@0.6); contrato confirmado por #01/#03/#11
+ * (from-01-to-05-…-DESBLOQUEO-handoff-inline; espejo de consumeSsoHandoff de #06 commit 7da0ad6).
+ * NUNCA lanza: ante error degrada al login normal (cero regresión). Single-use: limpia la URL siempre.
+ * Devuelve true si adoptó una sesión por handoff.
+ */
+export async function consumeHandoffIfPresent() {
+  try {
+    if (typeof window === 'undefined') return false
+    const url = new URL(window.location.href)
+    const code = url.searchParams.get(HANDOFF_PARAM)
+    if (!code) return false
+    // limpia el code de la URL SIEMPRE (single-use, anti-leak), pase lo que pase con el canje
+    url.searchParams.delete(HANDOFF_PARAM)
+    try { window.history.replaceState({}, document.title, url.toString()) } catch {}
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/sso-handoff-exchange`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_PUBLISHABLE_KEY, 'content-type': 'text/plain' },
+      body: code
+    })
+    if (!resp.ok) { console.warn('[handoff] exchange', resp.status, '→ login normal'); return false }
+    const s = await resp.json()
+    const access_token = s?.access_token || s?.session?.access_token
+    const refresh_token = s?.refresh_token || s?.session?.refresh_token
+    if (access_token && refresh_token) {
+      const { error } = await supabase.auth.setSession({ access_token, refresh_token })
+      if (error) { console.warn('[handoff] setSession:', error.message); return false }
+      return true
+    }
+    return false
+  } catch (e) { console.warn('[handoff] sin canje (login normal):', e?.message || e); return false }
+}
 
 // Orígenes de shell aceptados (whitelist que valida el guest). PROD + staging + local.
 const SHELL_ORIGINS = [

@@ -3,7 +3,7 @@ import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './e
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
 import { engine, setCaptureSession, db } from './engine.js'
 import { supabase } from './supabase.js'
-import { adoptShellSessionIfEmbedded, estamosEmbebidos } from './shell-bridge.js'
+import { adoptShellSessionIfEmbedded, estamosEmbebidos, consumeHandoffIfPresent } from './shell-bridge.js'
 
 // ¿corremos embebidos en el shell del APK? (iframe). Gatea el comportamiento que NO aplica embebido:
 // el shell es dueño de la sesión y de la navegación → no cerramos sesión ni mostramos login propio.
@@ -321,6 +321,9 @@ export default function App() {
   useEffect(() => {
     let mounted = true
     ;(async () => {
+      // Handoff SSO "Abrir aparte": si el APK abrió cert standalone con ?vg_handoff=<code>, canjea el
+      // code por sesión ANTES de leerla → no re-login. Si no hay code o falla, es no-op (login normal).
+      try { await consumeHandoffIfPresent() } catch { /* nunca bloquea */ }
       // Si estamos embebidos en el shell del APK, adopta la sesión del shell (postMessage) ANTES de leerla.
       // Fuera del iframe es no-op → la app standalone sigue igual (login Google normal).
       try { await adoptShellSessionIfEmbedded() } catch { /* nunca bloquea */ }
