@@ -9,12 +9,17 @@ import { adoptShellSessionIfEmbedded, estamosEmbebidos } from './shell-bridge.js
 // el shell es dueño de la sesión y de la navegación → no cerramos sesión ni mostramos login propio.
 const EMBEBIDO = estamosEmbebidos()
 import bundle from './schemas.bundle.json'
+import RoadmapCert from './RoadmapCert.jsx'
 
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
 const CERTS = bundle.certificaciones || []
-const CERT_LABEL = Object.fromEntries(CERTS.map(c => [c.key, c.titulo]))
+const CERT_LABEL = Object.assign(
+  Object.fromEntries(CERTS.map(c => [c.key, c.titulo])),
+  { FSC: 'FSC — Manejo forestal', PEFC: 'PEFC — Manejo forestal' }
+)
 const CERT_ICON = {
   GENERAL: '📋', EUDR: '🛡️', FSC: '🌲', FSC_FM: '🌲', FSC_CoC: '🔗', RFA: '🐸',
+  PEFC: '🌲', PEFC_FM: '🌲',
   USDA_ORGANIC: '🌱', GLOBAL_GAP: '✅', MARBETE_AGROCALIDAD: '🏷️', COMPARTIDO: '🔗'
 }
 
@@ -50,7 +55,9 @@ function capsDeRol(rol) {
 function groupByCert(schemas) {
   const g = {}
   for (const s of schemas) {
-    const c = (s.certificacion === 'FSC_FM' || s.certificacion === 'FSC_CoC') ? 'FSC' : s.certificacion
+    const c = (s.certificacion === 'FSC_FM' || s.certificacion === 'FSC_CoC') ? 'FSC'
+      : (s.certificacion === 'PEFC_FM' || s.certificacion === 'PEFC_CoC') ? 'PEFC'
+      : s.certificacion
     ;(g[c] = g[c] || []).push(s)
   }
   return g
@@ -307,6 +314,7 @@ export default function App() {
   const [formKey, setFormKey] = useState('')
   const [preview, setPreview] = useState(null)
   const [tablero, setTablero] = useState(false)
+  const [estadoPorForm, setEstadoPorForm] = useState({}) // progreso por formulario del cert actual (hoja de ruta)
 
   useEffect(() => {
     let mounted = true
@@ -386,6 +394,34 @@ export default function App() {
   const formsForCert = grouped[certSel] || []
   const schema = SCHEMAS.find(s => s.form_key === formKey)
   const caps = capsDeRol(rol) // capacidades de UI según el rol (lector=solo lectura, etc.)
+
+  // Progreso por formulario del cert seleccionado (alimenta los estados de la hoja de ruta).
+  // Misma fuente de verdad que el tablero: borradores en IDB del contexto + progresoDe.
+  useEffect(() => {
+    let on = true
+    ;(async () => {
+      const all = await db.cert_responses.toArray()
+      const ctx = all.filter(r => {
+        const rs = r.client_slug || r.company_id
+        if (slug && rs && rs !== slug) return false
+        if (productor && r.productor_id && r.productor_id !== productor) return false
+        if (finca && r.finca_id && r.finca_id !== finca) return false
+        return true
+      })
+      const best = {}
+      for (const r of ctx) {
+        const d = r.data || {}; const sc = Object.keys(d).length
+        if (!best[r.form_key] || sc > best[r.form_key].score) best[r.form_key] = { data: d, score: sc }
+      }
+      const map = {}
+      for (const s of (grouped[certSel] || [])) {
+        const p = progresoDe(s, best[s.form_key]?.data || {})
+        map[s.form_key] = { pct: p.total ? Math.round(100 * p.hechas / p.total) : 0, vendible: !!p.vendible }
+      }
+      if (on) setEstadoPorForm(map)
+    })().catch(() => {})
+    return () => { on = false }
+  }, [certSel, slug, productor, finca, formKey, grouped])
 
   // si la cert seleccionada deja de estar permitida (cambió el grant), salta a la primera visible
   useEffect(() => {
@@ -507,7 +543,15 @@ export default function App() {
             <span className="muted">Borrador con marca de agua. El entregable válido para entregar requiere un plan de pago.</span>
           </div>
         </div>
-      ) : <div className="card muted">Elige una certificación y un formulario para empezar a capturar.</div>}
+      ) : (
+        <RoadmapCert
+          cert={CERT_LABEL[certSel] || certSel}
+          ruta={(bundle.rutas || {})[certSel]}
+          forms={formsForCert}
+          estadoPorForm={estadoPorForm}
+          onPick={(fk) => { setFormKey(fk); window.scrollTo(0, 0) }}
+        />
+      )}
 
       <footer className="foot muted">
         {SCHEMAS.length} formularios · {bundle.totales?.n_control_points || '—'} puntos de control · datos sellados con cadena de integridad. noindex.
