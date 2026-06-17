@@ -19,7 +19,7 @@ const CERT_LABEL = Object.assign(
 )
 const CERT_ICON = {
   GENERAL: '📋', EUDR: '🛡️', FSC: '🌲', FSC_FM: '🌲', FSC_CoC: '🔗', RFA: '🐸',
-  PEFC: '🌲', PEFC_FM: '🌲',
+  PEFC: '🌲', PEFC_FM: '🌲', PEFC_CoC: '🔗', RSPO: '🌴', ISCC: '🌴',
   USDA_ORGANIC: '🌱', GLOBAL_GAP: '✅', MARBETE_AGROCALIDAD: '🏷️', COMPARTIDO: '🔗'
 }
 

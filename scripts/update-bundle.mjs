@@ -23,7 +23,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const BUNDLE = path.join(__dirname, '..', 'src', 'schemas.bundle.json')
 const SRC = '../../encuestador-eudr/frontend/src/form-schemas'
 
-const { SCHEMA_BY_KEY, CERTIFICACIONES, CERT_USA_CORE } = await import(`${SRC}/_index.js`)
+const { SCHEMA_BY_KEY, ALL_SCHEMAS, CERTIFICACIONES, CERT_USA_CORE } = await import(`${SRC}/_index.js`)
 const { roadmap } = await import(`${SRC}/_roadmap.js`)
 
 const bundle = JSON.parse(fs.readFileSync(BUNDLE, 'utf8'))
@@ -60,8 +60,12 @@ function aShapeBundle(s) {
   }
 }
 
-// ── 1+2. Agregar schemas nuevos (idempotente) ──────────────────────────────
-const NUEVOS = ['pefc_manejo_forestal']
+// ── 1. Agregar schemas nuevos (idempotente, transform genérico) ────────────
+const NUEVOS = [
+  'pefc_manejo_forestal', 'pefc_cadena_custodia',
+  'rspo_pc_hacienda', 'rspo_ish_smallholder',
+  'iscc_eu_hacienda', 'iscc_ish_smallholder'
+]
 let agregados = 0
 for (const key of NUEVOS) {
   if (bundle.schemas.some(x => x.form_key === key)) continue
@@ -69,26 +73,39 @@ for (const key of NUEVOS) {
   if (!src) { console.warn('· no encontrado en fuente:', key); continue }
   bundle.schemas.push(aShapeBundle(src))
   agregados++
-  // manifiesto (grupo PEFC) + reuso + certificaciones
-  if (key === 'pefc_manejo_forestal') {
-    const core = CERT_USA_CORE.PEFC_FM || []
-    bundle.manifiestos.PEFC = {
-      titulo: 'Programme for the Endorsement of Forest Certification',
-      cultivos: ['FORESTAL_TECA', 'FORESTAL_GMELINA'],
-      propios: ['pefc_manejo_forestal'],
-      compartidos: core
-    }
-    for (const sharedKey of core) {
-      bundle.reuso_compartidos[sharedKey] = bundle.reuso_compartidos[sharedKey] || []
-      if (!bundle.reuso_compartidos[sharedKey].includes('PEFC')) bundle.reuso_compartidos[sharedKey].push('PEFC')
-    }
-    const certDef = CERTIFICACIONES.find(c => c.key === 'PEFC_FM')
-    if (certDef && !bundle.certificaciones.some(c => c.key === 'PEFC_FM')) bundle.certificaciones.push(certDef)
+}
+
+// ── 2. Manifiestos + reuso + certificaciones de los grupos nuevos ──────────
+// Genérico y SOLO para grupos oficiales (nunca contratante → preserva #02).
+const grupoDe = c => (c === 'FSC_FM' || c === 'FSC_CoC') ? 'FSC' : (c === 'PEFC_FM' || c === 'PEFC_CoC') ? 'PEFC' : c
+const TITULOS_GRUPO = {
+  PEFC: 'Programme for the Endorsement of Forest Certification',
+  RSPO: 'RSPO — Roundtable on Sustainable Palm Oil',
+  ISCC: 'ISCC — International Sustainability and Carbon Certification'
+}
+const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'] }
+for (const grupo of ['PEFC', 'RSPO', 'ISCC']) {
+  const schemas = ALL_SCHEMAS.filter(s => grupoDe(s.certificacion) === grupo)
+  if (!schemas.length) continue
+  const compartidos = [...new Set((CORE_KEYS_GRUPO[grupo] || []).flatMap(k => CERT_USA_CORE[k] || []))]
+  bundle.manifiestos[grupo] = {
+    titulo: TITULOS_GRUPO[grupo],
+    cultivos: [...new Set(schemas.map(s => s.cultivo).filter(Boolean))],
+    propios: schemas.map(s => s.form_key),
+    compartidos
   }
+  for (const sk of compartidos) {
+    bundle.reuso_compartidos[sk] = bundle.reuso_compartidos[sk] || []
+    if (!bundle.reuso_compartidos[sk].includes(grupo)) bundle.reuso_compartidos[sk].push(grupo)
+  }
+}
+for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC']) {
+  const cd = CERTIFICACIONES.find(c => c.key === key)
+  if (cd && !bundle.certificaciones.some(c => c.key === key)) bundle.certificaciones.push(cd)
 }
 
 // ── 3. rutas precomputadas (solo certs oficiales públicas) ─────────────────
-const CERTS_RUTA = ['EUDR', 'FSC', 'PEFC', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD']
+const CERTS_RUTA = ['EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD']
 bundle.rutas = {}
 for (const cert of CERTS_RUTA) {
   try { bundle.rutas[cert] = roadmap(cert) } catch (e) { console.warn('· ruta falló para', cert, e.message) }
