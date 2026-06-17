@@ -211,10 +211,13 @@ function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
 
   if (tipo === 'boolean') {
     return (
-      <label className="vg-field vg-check">
-        <input type="checkbox" data-field={dataField} id={dataField} data-bool="1" defaultChecked={!!valor} />
-        {campo.label}
-      </label>
+      <div className="vg-field vg-bool">
+        <label className="vg-check">
+          <input type="checkbox" data-field={dataField} id={dataField} data-bool="1" defaultChecked={!!valor} />
+          {campo.label}
+        </label>
+        {campo.help ? <small className="vg-oficial">{campo.help}</small> : null}
+      </div>
     )
   }
 

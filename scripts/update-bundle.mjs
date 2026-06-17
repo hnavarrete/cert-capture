@@ -105,7 +105,7 @@ for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC']) {
 }
 
 // ── 3. rutas precomputadas (solo certs oficiales públicas) ─────────────────
-const CERTS_RUTA = ['EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD']
+const CERTS_RUTA = ['GENERAL', 'EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD']
 bundle.rutas = {}
 for (const cert of CERTS_RUTA) {
   try { bundle.rutas[cert] = roadmap(cert) } catch (e) { console.warn('· ruta falló para', cert, e.message) }
