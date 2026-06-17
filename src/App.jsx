@@ -10,6 +10,7 @@ import { adoptShellSessionIfEmbedded, estamosEmbebidos } from './shell-bridge.js
 const EMBEBIDO = estamosEmbebidos()
 import bundle from './schemas.bundle.json'
 import RoadmapCert from './RoadmapCert.jsx'
+import Boveda from './Boveda.jsx'
 
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
 const CERTS = bundle.certificaciones || []
@@ -298,7 +299,7 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [demo, setDemo] = useState(false)
   const [ready, setReady] = useState(false)
-  const { status } = useCertCapture(engine)
+  const { status, flush } = useCertCapture(engine)
   const effEmail = user?.email || (demo ? 'demo@vg.local' : null)
 
   // contexto piloto (en producción viene del tenant + visor)
@@ -314,6 +315,7 @@ export default function App() {
   const [formKey, setFormKey] = useState('')
   const [preview, setPreview] = useState(null)
   const [tablero, setTablero] = useState(false)
+  const [boveda, setBoveda] = useState(false)
   const [estadoPorForm, setEstadoPorForm] = useState({}) // progreso por formulario del cert actual (hoja de ruta)
 
   useEffect(() => {
@@ -472,6 +474,7 @@ export default function App() {
         {rol && ROLES[rol] ? <span className={'rolbadge ' + caps.nivel}>{ROLES[rol].label}</span> : null}
         <span className="spacer" />
         <button className="link" onClick={() => setTablero(true)}>📊 Mi progreso</button>
+        <button className="link" onClick={() => setBoveda(true)}>🔒 Mi bóveda</button>
         <SyncBadge status={status} />
         {!EMBEBIDO ? (
           <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
@@ -563,6 +566,14 @@ export default function App() {
           slug={slug} productor={productor} finca={finca}
           onPick={(cert, fk) => { setCertSel(cert); setFormKey(fk); setTablero(false); window.scrollTo(0, 0) }}
           onClose={() => setTablero(false)}
+        />
+      ) : null}
+
+      {boveda ? (
+        <Boveda
+          slug={slug} productor={productor} finca={finca}
+          status={status} onFlush={flush}
+          onClose={() => setBoveda(false)}
         />
       ) : null}
 

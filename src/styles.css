@@ -204,5 +204,14 @@ button.primary, .vg-certform-foot button[type=submit] {
 .tform-bar { width: 90px; height: 6px; border-radius: 999px; background: var(--bg); overflow: hidden; }
 .tform-pct { min-width: 44px; text-align: right; font-size: 12px; }
 
+/* ---- bóveda de sincronización ---- */
+.bov-list { display: flex; flex-direction: column; gap: 6px; }
+.bov-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fcfdfe; }
+.bov-form { font-size: 13px; font-weight: 600; color: var(--ink); word-break: break-word; }
+.bov-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.bov-badge.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.bov-badge.pend { background: var(--warn-bg); color: var(--warn-ink); }
+.bov-badge.err { background: var(--err-bg); color: var(--err-ink); }
+
 /* ---- footer ---- */
 .foot { text-align: center; padding: 16px 10px; font-size: 12px; }
