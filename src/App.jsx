@@ -11,6 +11,7 @@ const EMBEBIDO = estamosEmbebidos()
 import bundle from './schemas.bundle.json'
 import RoadmapCert from './RoadmapCert.jsx'
 import Boveda from './Boveda.jsx'
+import { VGLogin } from '@vgsdk/auth-ui'
 
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
 const CERTS = bundle.certificaciones || []
@@ -20,7 +21,7 @@ const CERT_LABEL = Object.assign(
 )
 const CERT_ICON = {
   GENERAL: '📋', EUDR: '🛡️', FSC: '🌲', FSC_FM: '🌲', FSC_CoC: '🔗', RFA: '🐸',
-  PEFC: '🌲', PEFC_FM: '🌲', PEFC_CoC: '🔗', RSPO: '🌴', ISCC: '🌴',
+  PEFC: '🌲', PEFC_FM: '🌲', PEFC_CoC: '🔗', RSPO: '🌴', ISCC: '🌴', CARBONO: '🌿',
   USDA_ORGANIC: '🌱', GLOBAL_GAP: '✅', MARBETE_AGROCALIDAD: '🏷️', COMPARTIDO: '🔗'
 }
 
@@ -74,46 +75,35 @@ function SyncBadge({ status }) {
   )
 }
 
+// Login único del ecosistema VG: componente compartido <VGLogin> (@vgsdk/auth-ui).
+// Mismas vías + look que visor/erp/campo (Google + correo/contraseña + magic-link),
+// branding por tenant, marca VG siempre. cert SOLO inyecta sus handlers Supabase
+// (desacoplado). El modo demo se conserva debajo (gancho de exploración sin sesión).
 function Login({ onDemo }) {
-  const [email, setEmail] = useState('')
-  const [pass, setPass] = useState('')
-  const [msg, setMsg] = useState(null)
-  const [busy, setBusy] = useState(false)
-  const [verCorreo, setVerCorreo] = useState(false)
-  async function signInGoogle() {
-    setBusy(true); setMsg(null)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + window.location.pathname }
-    })
-    if (error) { setMsg(error.message); setBusy(false) }
-  }
-  async function signIn(e) {
-    e.preventDefault(); setBusy(true); setMsg(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass })
-    if (error) setMsg(error.message)
-    setBusy(false)
-  }
   return (
-    <div className="card login">
-      <h1>VG · Captura de Certificaciones</h1>
-      <p className="muted">Ingresa con tu cuenta del ecosistema VG. El acceso a cada finca lo controla
-        el servidor. Captura sin conexión; sincroniza al volver la señal.</p>
-      <button type="button" className="google" disabled={busy} onClick={signInGoogle}>
-        <span className="g">G</span> Continuar con Google
-      </button>
-      <button type="button" className="link" style={{ marginTop: 10 }} onClick={() => setVerCorreo(v => !v)}>
-        {verCorreo ? 'Ocultar el ingreso por correo' : 'Ingresar con correo y contraseña'}
-      </button>
-      {verCorreo ? (
-        <form onSubmit={signIn} style={{ marginTop: 8 }}>
-          <label>Correo<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-          <label>Contraseña<input type="password" value={pass} onChange={e => setPass(e.target.value)} required /></label>
-          <button disabled={busy}>{busy ? 'Ingresando…' : 'Ingresar'}</button>
-        </form>
-      ) : null}
-      {msg ? <div className="err">{msg}</div> : null}
-      <button type="button" className="link demo-link" onClick={onDemo}>
+    <div style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
+      <VGLogin
+        branding={{ tenantName: 'VG · Certificaciones' }}
+        onGoogle={async () => {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin + window.location.pathname }
+          })
+          if (error) throw new Error(error.message)
+        }}
+        onPassword={async (email, password) => {
+          const { error } = await supabase.auth.signInWithPassword({ email, password })
+          if (error) throw new Error(error.message)
+        }}
+        onMagicLink={async (email) => {
+          const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: { emailRedirectTo: window.location.origin + window.location.pathname }
+          })
+          if (error) throw new Error(error.message)
+        }}
+      />
+      <button type="button" className="link demo-link" style={{ marginTop: 12, display: 'block', width: '100%', textAlign: 'center' }} onClick={onDemo}>
         Explorar en modo demo (captura local, sin sincronizar) →
       </button>
     </div>

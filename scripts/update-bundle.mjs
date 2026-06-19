@@ -64,7 +64,8 @@ function aShapeBundle(s) {
 const NUEVOS = [
   'pefc_manejo_forestal', 'pefc_cadena_custodia',
   'rspo_pc_hacienda', 'rspo_ish_smallholder',
-  'iscc_eu_hacienda', 'iscc_ish_smallholder'
+  'iscc_eu_hacienda', 'iscc_ish_smallholder',
+  'carbono_arr_mrv'
 ]
 let agregados = 0
 for (const key of NUEVOS) {
@@ -81,10 +82,11 @@ const grupoDe = c => (c === 'FSC_FM' || c === 'FSC_CoC') ? 'FSC' : (c === 'PEFC_
 const TITULOS_GRUPO = {
   PEFC: 'Programme for the Endorsement of Forest Certification',
   RSPO: 'RSPO — Roundtable on Sustainable Palm Oil',
-  ISCC: 'ISCC — International Sustainability and Carbon Certification'
+  ISCC: 'ISCC — International Sustainability and Carbon Certification',
+  CARBONO: 'Carbono — Proyecto ARR (MRV sobre FSC)'
 }
-const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'] }
-for (const grupo of ['PEFC', 'RSPO', 'ISCC']) {
+const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'], CARBONO: ['CARBONO'] }
+for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO']) {
   const schemas = ALL_SCHEMAS.filter(s => grupoDe(s.certificacion) === grupo)
   if (!schemas.length) continue
   const compartidos = [...new Set((CORE_KEYS_GRUPO[grupo] || []).flatMap(k => CERT_USA_CORE[k] || []))]
@@ -99,13 +101,13 @@ for (const grupo of ['PEFC', 'RSPO', 'ISCC']) {
     if (!bundle.reuso_compartidos[sk].includes(grupo)) bundle.reuso_compartidos[sk].push(grupo)
   }
 }
-for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC']) {
+for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC', 'CARBONO']) {
   const cd = CERTIFICACIONES.find(c => c.key === key)
   if (cd && !bundle.certificaciones.some(c => c.key === key)) bundle.certificaciones.push(cd)
 }
 
 // ── 3. rutas precomputadas (solo certs oficiales públicas) ─────────────────
-const CERTS_RUTA = ['GENERAL', 'EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD']
+const CERTS_RUTA = ['GENERAL', 'EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'CARBONO', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD']
 bundle.rutas = {}
 for (const cert of CERTS_RUTA) {
   try { bundle.rutas[cert] = roadmap(cert) } catch (e) { console.warn('· ruta falló para', cert, e.message) }
