@@ -66,11 +66,11 @@ const NUEVOS = [
   'rspo_pc_hacienda', 'rspo_ish_smallholder',
   'iscc_eu_hacienda', 'iscc_ish_smallholder',
   'carbono_arr_mrv',
-  'globalgap_fv_gfs', 'globalgap_qms', 'globalgap_coc'
+  'globalgap_fv_gfs', 'globalgap_qms', 'globalgap_fv_smart', 'globalgap_coc'
 ]
-// Reestructuración GLOBAL_GAP: remover los schemas genéricos viejos (reemplazados por los oficiales).
-const REMOVIDOS = ['globalgap_v6_farm', 'globalgap_all_farm_base', 'globalgap_crop_base', 'globalgap_producto_banano', 'globalgap_producto_cacao']
-bundle.schemas = bundle.schemas.filter(s => !REMOVIDOS.includes(s.form_key))
+// Reestructuración GLOBAL_GAP: dropear TODOS los globalgap_* del bundle para re-agregarlos frescos
+// desde la fuente (así entran los cambios: nuevos puntos, verifica[]/evidencia del Modo Auditoría).
+bundle.schemas = bundle.schemas.filter(s => !s.form_key.startsWith('globalgap_'))
 let agregados = 0
 for (const key of NUEVOS) {
   if (bundle.schemas.some(x => x.form_key === key)) continue

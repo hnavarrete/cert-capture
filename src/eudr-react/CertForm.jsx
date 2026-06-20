@@ -14,6 +14,18 @@ const TIPOS_TEXTO = new Set(['text', 'email', 'tel', 'number', 'decimal', 'date'
 
 function fieldKey(seccionKey, campoKey) { return `${seccionKey}.${campoKey}` }
 
+// Conteo respondidas/total por sección (badge del acordeón — gamificación seria)
+function contarSeccion(sec, value = {}) {
+  let total = 0, hechas = 0
+  for (const c of (sec.campos || [])) {
+    total++
+    const v = value[fieldKey(sec.key, c.key)]
+    const resp = (c.tipo === 'control_point') ? (v && v.estado) : v
+    if (resp !== undefined && resp !== null && resp !== '') hechas++
+  }
+  return { total, hechas }
+}
+
 // Progreso de completitud del formulario (gamificación seria): cuenta campos respondidos vs total.
 // Distingue Major Must / Minor Must (control_points por nivel) para el umbral vendible del marketplace
 // (100% Major + ≥95% Minor — ver export-policy / marco antifraude).
@@ -129,11 +141,19 @@ function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
   if (tipo === 'control_point') {
     return (
       <div className="vg-cp">
-        <div className="vg-cp-criterio"><strong>{campo.key}</strong> · {campo.label}
+        <div className="vg-cp-criterio"><strong>{campo.code || campo.key}</strong> · {campo.label}
           {campo.nivel ? <span className="vg-cp-nivel"> [{campo.nivel}]</span> : null}</div>
         {campo.criterio ? (
           <details className="vg-cp-oficial"><summary>Ver texto oficial de la norma (referencia)</summary>
             <div className="vg-cp-texto">{campo.criterio}</div></details>
+        ) : null}
+        {Array.isArray(campo.verifica) && campo.verifica.length ? (
+          <details className="vg-cp-verifica"><summary>Qué revisa el auditor · {campo.verifica.length}</summary>
+            <ul className="vg-cp-checklist">{campo.verifica.map((v, i) => <li key={i}>{v}</li>)}</ul>
+            {Array.isArray(campo.evidencia_requerida) && campo.evidencia_requerida.length ? (
+              <div className="vg-cp-evid"><strong>Evidencia:</strong> {campo.evidencia_requerida.join(' · ')}</div>
+            ) : null}
+          </details>
         ) : null}
         <select data-field={`${dataField}.estado`} id={`${dataField}.estado`} defaultValue={(valor && valor.estado) || ''}>
           <option value="">— sin responder —</option>
@@ -275,6 +295,30 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
     fotosRef.current[field] = { field, blob: file, mime: file.type || 'image/jpeg', name: file.name }
   }, [])
 
+  // acordeón de secciones (virtualización): solo la sección abierta se PINTA; TODO queda montado
+  // (display:none) para que el guardado siga leyendo del DOM (R1/R2 offline-safe). 1ª sección abierta.
+  const primeraSec = schema?.secciones?.[0]?.key
+  const [abiertas, setAbiertas] = useState(() => new Set(primeraSec ? [primeraSec] : []))
+  // montadas = secciones a renderizar (las demás NO se montan = DOM mínimo = perf). Se MONTAN al abrir y
+  // se quedan montadas (display:none al cerrar) para no perder lo editado en el guardado-desde-DOM.
+  // De entrada: la 1ª sección + TODA sección que ya tenga datos (así un form guardado no se trunca al re-guardar).
+  const [montadas, setMontadas] = useState(() => {
+    const s = new Set(primeraSec ? [primeraSec] : [])
+    for (const sec of (schema?.secciones || [])) {
+      const conDato = (sec.campos || []).some(c => {
+        const v = value[fieldKey(sec.key, c.key)]
+        const r = c.tipo === 'control_point' ? (v && v.estado) : v
+        return r !== undefined && r !== null && r !== ''
+      })
+      if (conDato) s.add(sec.key)
+    }
+    return s
+  })
+  const toggleSeccion = useCallback((k) => {
+    setAbiertas(prev => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n })
+    setMontadas(prev => prev.has(k) ? prev : new Set(prev).add(k))
+  }, [])
+
   // progreso de completitud en vivo (gamificación)
   const [prog, setProg] = useState({ total: 0, hechas: 0, pct: 0, vendible: false, major: 0, majorPct: 100, minorPct: 100 })
   const recalc = useCallback(() => {
@@ -327,15 +371,30 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
 
       {(schema.secciones || []).map(sec => {
         if (!visible(sec.show_if, value)) return null
+        const abierta = abiertas.has(sec.key)
+        const cont = contarSeccion(sec, value)
+        const completa = cont.total > 0 && cont.hechas === cont.total
         return (
-          <section key={sec.key} className="vg-seccion">
-            <h3>{sec.titulo}</h3>
-            {sec.descripcion ? <p className="vg-seccion-desc">{sec.descripcion}</p> : null}
-            {(sec.campos || []).map(campo => (
-              <Campo key={campo.key} seccionKey={sec.key} campo={campo}
-                valor={value[fieldKey(sec.key, campo.key)]}
-                addFoto={addFoto} onConnectPolygon={onConnectPolygon} />
-            ))}
+          <section key={sec.key} className={'vg-seccion' + (abierta ? ' abierta' : '')}>
+            <h3 className="vg-seccion-head" role="button" tabIndex={0} aria-expanded={abierta}
+              onClick={() => toggleSeccion(sec.key)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSeccion(sec.key) } }}>
+              <span className="vg-seccion-caret" aria-hidden="true">{abierta ? '▾' : '▸'}</span>
+              <span className="vg-seccion-titulo">{sec.titulo}</span>
+              <span className={'vg-seccion-cont' + (completa ? ' ok' : '')}>{cont.hechas}/{cont.total}</span>
+            </h3>
+            <div className="vg-seccion-body" style={{ display: abierta ? '' : 'none' }}>
+              {montadas.has(sec.key) ? (
+                <>
+                  {sec.descripcion ? <p className="vg-seccion-desc">{sec.descripcion}</p> : null}
+                  {(sec.campos || []).map(campo => (
+                    <Campo key={campo.key} seccionKey={sec.key} campo={campo}
+                      valor={value[fieldKey(sec.key, campo.key)]}
+                      addFoto={addFoto} onConnectPolygon={onConnectPolygon} />
+                  ))}
+                </>
+              ) : null}
+            </div>
           </section>
         )
       })}
