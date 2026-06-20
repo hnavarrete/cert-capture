@@ -65,8 +65,12 @@ const NUEVOS = [
   'pefc_manejo_forestal', 'pefc_cadena_custodia',
   'rspo_pc_hacienda', 'rspo_ish_smallholder',
   'iscc_eu_hacienda', 'iscc_ish_smallholder',
-  'carbono_arr_mrv'
+  'carbono_arr_mrv',
+  'globalgap_fv_gfs', 'globalgap_qms', 'globalgap_coc'
 ]
+// Reestructuración GLOBAL_GAP: remover los schemas genéricos viejos (reemplazados por los oficiales).
+const REMOVIDOS = ['globalgap_v6_farm', 'globalgap_all_farm_base', 'globalgap_crop_base', 'globalgap_producto_banano', 'globalgap_producto_cacao']
+bundle.schemas = bundle.schemas.filter(s => !REMOVIDOS.includes(s.form_key))
 let agregados = 0
 for (const key of NUEVOS) {
   if (bundle.schemas.some(x => x.form_key === key)) continue
@@ -83,10 +87,11 @@ const TITULOS_GRUPO = {
   PEFC: 'Programme for the Endorsement of Forest Certification',
   RSPO: 'RSPO — Roundtable on Sustainable Palm Oil',
   ISCC: 'ISCC — International Sustainability and Carbon Certification',
-  CARBONO: 'Carbono — Proyecto ARR (MRV sobre FSC)'
+  CARBONO: 'Carbono — Proyecto ARR (MRV sobre FSC)',
+  GLOBAL_GAP: 'GLOBAL G.A.P. (IFA Fruta y Verdura + QMS + Cadena de Custodia)'
 }
-const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'], CARBONO: ['CARBONO'] }
-for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO']) {
+const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'], CARBONO: ['CARBONO'], GLOBAL_GAP: ['GLOBAL_GAP'] }
+for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO', 'GLOBAL_GAP']) {
   const schemas = ALL_SCHEMAS.filter(s => grupoDe(s.certificacion) === grupo)
   if (!schemas.length) continue
   const compartidos = [...new Set((CORE_KEYS_GRUPO[grupo] || []).flatMap(k => CERT_USA_CORE[k] || []))]
