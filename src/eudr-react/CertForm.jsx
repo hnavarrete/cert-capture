@@ -57,14 +57,30 @@ export function progresoDe(schema, data) {
   return { total, hechas, pct, major, majorOk, majorPct, minor, minorOk, minorPct, vendible }
 }
 
-// --- evaluación mínima de show_if (soporta { campo, igual_a } o null) ---
+// --- evaluación de show_if (contrato _CONTRATO.md): { campo, op, valor } con op
+// eq/neq/in/not_in/gt/lt/truthy, + and/or anidados, + legacy { campo, igual_a }. ---
 function visible(showIf, data) {
   if (!showIf) return true
   if (typeof showIf === 'function') { try { return !!showIf(data) } catch { return true } }
+  if (Array.isArray(showIf.and)) return showIf.and.every(s => visible(s, data))
+  if (Array.isArray(showIf.or)) return showIf.or.some(s => visible(s, data))
   if (showIf.campo) {
     const v = data[showIf.campo]
     if ('igual_a' in showIf) return v === showIf.igual_a
     if ('distinto_de' in showIf) return v !== showIf.distinto_de
+    if ('op' in showIf) {
+      const t = showIf.valor
+      switch (showIf.op) {
+        case 'eq': return v === t
+        case 'neq': return v !== t
+        case 'in': return Array.isArray(t) && t.includes(v)
+        case 'not_in': return Array.isArray(t) && !t.includes(v)
+        case 'gt': return parseFloat(v) > parseFloat(t)
+        case 'lt': return parseFloat(v) < parseFloat(t)
+        case 'truthy': return !!v
+        default: return true
+      }
+    }
     return !!v
   }
   return true
@@ -207,7 +223,7 @@ function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
         <label htmlFor={dataField}>{campo.label}{campo.required ? ' *' : ''}</label>
         <select data-field={dataField} id={dataField} defaultValue={valor ?? ''}>
           <option value="">— seleccionar —</option>
-          {(campo.opciones || []).map(o => <option key={o.valor} value={o.valor}>{o.label}</option>)}
+          {(campo.opciones || []).map((o, i) => { const op = typeof o === 'string' ? { valor: o, label: o } : o; return <option key={`${op.valor}_${i}`} value={op.valor}>{op.label ?? op.valor}</option> })}
         </select>
         {campo.help ? <small>{campo.help}</small> : null}
       </div>
@@ -321,9 +337,17 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
 
   // progreso de completitud en vivo (gamificación)
   const [prog, setProg] = useState({ total: 0, hechas: 0, pct: 0, vendible: false, major: 0, majorPct: 100, minorPct: 100 })
+  // liveData = valores actuales (value inicial + lectura del DOM en cada cambio) para evaluar show_if
+  // de forma reactiva sin controlar los inputs (mantiene la seguridad-IME). Merge para no perder
+  // valores de secciones colapsadas/no-montadas (controlan condicionales cross-sección).
+  const [liveData, setLiveData] = useState(value)
   const recalc = useCallback(() => {
     if (!containerRef.current) return
-    try { setProg(progresoDe(schema, readFormFromContainer(containerRef.current))) } catch {}
+    try {
+      const d = readFormFromContainer(containerRef.current)
+      setProg(progresoDe(schema, d))
+      setLiveData(prev => ({ ...prev, ...d }))
+    } catch {}
   }, [schema])
   useEffect(() => { recalc() }, [recalc])
 
@@ -370,7 +394,7 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
       </header>
 
       {(schema.secciones || []).map(sec => {
-        if (!visible(sec.show_if, value)) return null
+        if (!visible(sec.show_if, liveData)) return null
         const abierta = abiertas.has(sec.key)
         const cont = contarSeccion(sec, value)
         const completa = cont.total > 0 && cont.hechas === cont.total
@@ -388,9 +412,11 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
                 <>
                   {sec.descripcion ? <p className="vg-seccion-desc">{sec.descripcion}</p> : null}
                   {(sec.campos || []).map(campo => (
-                    <Campo key={campo.key} seccionKey={sec.key} campo={campo}
-                      valor={value[fieldKey(sec.key, campo.key)]}
-                      addFoto={addFoto} onConnectPolygon={onConnectPolygon} />
+                    visible(campo.show_if, liveData) ? (
+                      <Campo key={campo.key} seccionKey={sec.key} campo={campo}
+                        valor={value[fieldKey(sec.key, campo.key)]}
+                        addFoto={addFoto} onConnectPolygon={onConnectPolygon} />
+                    ) : null
                   ))}
                 </>
               ) : null}

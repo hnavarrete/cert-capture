@@ -66,11 +66,13 @@ const NUEVOS = [
   'rspo_pc_hacienda', 'rspo_ish_smallholder',
   'iscc_eu_hacienda', 'iscc_ish_smallholder',
   'carbono_arr_mrv',
-  'globalgap_fv_gfs', 'globalgap_qms', 'globalgap_fv_smart', 'globalgap_coc'
+  'globalgap_fv_gfs', 'globalgap_qms', 'globalgap_fv_smart', 'globalgap_coc',
+  'legacy_fertilizacion', 'legacy_fumigacion', 'legacy_nominas', 'legacy_cosecha', 'legacy_siembra',
+  'legacy_recoleccion_envase', 'legacy_eudr_finca', 'legacy_eudr_check', 'legacy_clmrs'
 ]
 // Reestructuración GLOBAL_GAP: dropear TODOS los globalgap_* del bundle para re-agregarlos frescos
 // desde la fuente (así entran los cambios: nuevos puntos, verifica[]/evidencia del Modo Auditoría).
-bundle.schemas = bundle.schemas.filter(s => !s.form_key.startsWith('globalgap_'))
+bundle.schemas = bundle.schemas.filter(s => !s.form_key.startsWith('globalgap_') && !s.form_key.startsWith('legacy_'))
 let agregados = 0
 for (const key of NUEVOS) {
   if (bundle.schemas.some(x => x.form_key === key)) continue
@@ -88,10 +90,11 @@ const TITULOS_GRUPO = {
   RSPO: 'RSPO — Roundtable on Sustainable Palm Oil',
   ISCC: 'ISCC — International Sustainability and Carbon Certification',
   CARBONO: 'Carbono — Proyecto ARR (MRV sobre FSC)',
-  GLOBAL_GAP: 'GLOBAL G.A.P. (IFA Fruta y Verdura + QMS + Cadena de Custodia)'
+  GLOBAL_GAP: 'GLOBAL G.A.P. (IFA Fruta y Verdura + QMS + Cadena de Custodia)',
+  REGISTROS_CAMPO: 'Registros de campo (EUDR/PV operativo) — portado del legacy Vue/PHP'
 }
-const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'], CARBONO: ['CARBONO'], GLOBAL_GAP: ['GLOBAL_GAP'] }
-for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO', 'GLOBAL_GAP']) {
+const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'], CARBONO: ['CARBONO'], GLOBAL_GAP: ['GLOBAL_GAP'], REGISTROS_CAMPO: [] }
+for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO', 'GLOBAL_GAP', 'REGISTROS_CAMPO']) {
   const schemas = ALL_SCHEMAS.filter(s => grupoDe(s.certificacion) === grupo)
   if (!schemas.length) continue
   const compartidos = [...new Set((CORE_KEYS_GRUPO[grupo] || []).flatMap(k => CERT_USA_CORE[k] || []))]
@@ -106,13 +109,13 @@ for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO', 'GLOBAL_GAP']) {
     if (!bundle.reuso_compartidos[sk].includes(grupo)) bundle.reuso_compartidos[sk].push(grupo)
   }
 }
-for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC', 'CARBONO']) {
+for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC', 'CARBONO', 'REGISTROS_CAMPO']) {
   const cd = CERTIFICACIONES.find(c => c.key === key)
   if (cd && !bundle.certificaciones.some(c => c.key === key)) bundle.certificaciones.push(cd)
 }
 
 // ── 3. rutas precomputadas (solo certs oficiales públicas) ─────────────────
-const CERTS_RUTA = ['GENERAL', 'EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'CARBONO', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD']
+const CERTS_RUTA = ['GENERAL', 'EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'CARBONO', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD', 'REGISTROS_CAMPO']
 bundle.rutas = {}
 for (const cert of CERTS_RUTA) {
   try { bundle.rutas[cert] = roadmap(cert) } catch (e) { console.warn('· ruta falló para', cert, e.message) }
