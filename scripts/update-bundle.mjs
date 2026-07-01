@@ -48,6 +48,10 @@ function aShapeBundle(s) {
     validation_status: s._meta?.validation_status ?? null,
     fuente_normativa: s._meta?.fuente_normativa ?? null,
     disclaimer: s._meta?.disclaimer ?? null,
+    reglas_validacion: s._meta?.reglas_validacion ?? undefined,
+    formato_coordenadas: s._meta?.formato_coordenadas ?? undefined,
+    interoperabilidad: s._meta?.interoperabilidad ?? undefined,
+    flujo: s._meta?.flujo ?? undefined,
     secciones: (s.secciones || []).map(sec => {
       const o = { key: sec.key, titulo: sec.titulo }
       if (sec.descripcion) o.descripcion = sec.descripcion
@@ -73,7 +77,7 @@ const NUEVOS = [
 ]
 // Reestructuración GLOBAL_GAP: dropear TODOS los globalgap_* del bundle para re-agregarlos frescos
 // desde la fuente (así entran los cambios: nuevos puntos, verifica[]/evidencia del Modo Auditoría).
-bundle.schemas = bundle.schemas.filter(s => !s.form_key.startsWith('globalgap_') && !s.form_key.startsWith('legacy_'))
+bundle.schemas = bundle.schemas.filter(s => !s.form_key.startsWith('globalgap_') && !s.form_key.startsWith('legacy_') && !s.form_key.startsWith('guia_'))
 let agregados = 0
 for (const key of NUEVOS) {
   if (bundle.schemas.some(x => x.form_key === key)) continue
