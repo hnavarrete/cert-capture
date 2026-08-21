@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
-    "@vgsdk/auth": "^0.4.0",
-    "@vgsdk/auth-ui": "^0.1.0",
+    "@vgsdk/auth": "^0.6.0",
+    "@vgsdk/auth-ui": "^0.3.1",
     "dexie": "^4.0.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
