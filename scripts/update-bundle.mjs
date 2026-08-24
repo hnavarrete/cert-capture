@@ -78,6 +78,43 @@ const NUEVOS = [
 // Reestructuración GLOBAL_GAP: dropear TODOS los globalgap_* del bundle para re-agregarlos frescos
 // desde la fuente (así entran los cambios: nuevos puntos, verifica[]/evidencia del Modo Auditoría).
 bundle.schemas = bundle.schemas.filter(s => !s.form_key.startsWith('globalgap_') && !s.form_key.startsWith('legacy_') && !s.form_key.startsWith('guia_'))
+
+/* 🔴 CAMPOS SUELTOS QUE SE INYECTAN EN UN SCHEMA QUE YA ESTÁ (24-ago-2026).
+
+   El bucle de abajo es ADITIVO: si el `form_key` ya está en el bundle, lo salta. Eso significa que
+   **un cambio en un schema QUE YA EXISTE nunca llega al bundle**. Me mordió hoy: agregué al
+   `perfil_general_finca` los dos avisos de destino del dato y el script dijo «OK» sin haberlos
+   metido. Un actualizador que informa éxito sin actualizar es peor que uno que falla.
+
+   🔴 Y el primer intento de arreglarlo —re-tomar el schema entero desde la fuente— fue PEOR, y lo
+   cazó el guardián de este mismo archivo: **`ABORTA: posible nombre de cliente → Promise Verified`**.
+   El schema fuente lleva un nombre comercial que el bundle tiene anonimizado por la política #02.
+   Refrescar entero habría filtrado ese nombre a un artefacto que se publica.
+
+   Por eso se inyectan CAMPOS, no schemas: se toma de la fuente solo el campo nombrado y se mete en
+   la sección que le toca del bundle ya anonimizado. Lo demás queda intacto. */
+const INYECTAR = [
+  { form_key: 'perfil_general_finca', seccion: 'origen_consentimiento',
+    campos: ['aviso_destino_corp', 'aviso_destino_organico'] }
+]
+let inyectados = 0
+for (const inj of INYECTAR) {
+  const dest = bundle.schemas.find(s => s.form_key === inj.form_key)
+  const src = SCHEMA_BY_KEY[inj.form_key]
+  if (!dest || !src) { console.warn('· INYECTAR: falta', inj.form_key); continue }
+  const secSrc = (src.secciones || []).find(s => s.key === inj.seccion)
+  const secDst = (dest.secciones || []).find(s => s.key === inj.seccion)
+  if (!secSrc || !secDst) { console.warn('· INYECTAR: falta la sección', inj.seccion); continue }
+  for (const k of inj.campos) {
+    if ((secDst.campos || []).some(c => c.key === k)) continue      // idempotente
+    const campo = (secSrc.campos || []).find(c => c.key === k)
+    if (!campo) { console.warn('· INYECTAR: no está en la fuente el campo', k); continue }
+    secDst.campos.push(JSON.parse(JSON.stringify(campo)))
+    inyectados++
+  }
+}
+if (inyectados) console.log('campos inyectados en schemas existentes:', inyectados)
+
 let agregados = 0
 for (const key of NUEVOS) {
   if (bundle.schemas.some(x => x.form_key === key)) continue

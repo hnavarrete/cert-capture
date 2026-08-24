@@ -154,6 +154,21 @@ function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
   const tipo = campo.tipo || 'text'
   const common = { 'data-field': dataField, id: dataField, defaultValue: valor ?? '' }
 
+  /* 🔴 NOTA / INFO — texto que se LEE, no que se llena (24-ago-2026).
+     Sin esta rama, un campo `nota` caía al <input> genérico del final: una caja de texto vacía
+     donde debe haber un aviso. Peor que no mostrarlo, porque parece que hay que escribir algo.
+     El primer uso son los dos avisos de destino del dato (decisión de Henrry sobre propiedad):
+     el brigadista se los LEE al productor antes de pedirle la firma. `progresoDe` los salta a
+     propósito — una nota no se llena, así que no puede contar en el porcentaje de avance. */
+  if (tipo === 'nota' || tipo === 'info') {
+    return (
+      <div className="vg-field vg-nota" data-field={dataField} role="note">
+        {campo.label ? <strong>{campo.label}</strong> : null}
+        <p style={{ margin: '6px 0 0', lineHeight: 1.5 }}>{campo.texto || campo.help || ''}</p>
+      </div>
+    )
+  }
+
   if (tipo === 'control_point') {
     return (
       <div className="vg-cp">
