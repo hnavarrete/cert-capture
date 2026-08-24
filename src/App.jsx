@@ -91,9 +91,37 @@ function Login({ onDemo }) {
           })
           if (error) throw new Error(error.message)
         }}
+        /* Segundo factor (código de 6 dígitos). Llega con @vgsdk/auth-ui@1.0.0.
+         *
+         * 🔴 EL CONTRATO, y es lo que advirtió #11 al construirlo: el MFA se señala **resolviendo
+         * con "mfa"**, NUNCA lanzando. El componente ya trata `throw` como fallo, y necesitar un
+         * código NO es un fallo: es éxito a medias. Si se lanzara, la ruta de error existente le
+         * diría al usuario que su contraseña falló — cuando fue correcta.
+         *
+         * Cómo se sabe que falta: Supabase compara el nivel de garantía ACTUAL con el SIGUIENTE.
+         * Si difieren (`aal1` vs `aal2`), la cuenta tiene un factor inscrito y todavía no se
+         * verificó en esta sesión. Quien no tenga MFA da los dos iguales y este camino ni se toca:
+         * por eso las cuentas de siempre entran igual que ayer. */
         onPassword={async (email, password) => {
           const { error } = await supabase.auth.signInWithPassword({ email, password })
           if (error) throw new Error(error.message)
+          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+          if (aal && aal.nextLevel && aal.currentLevel !== aal.nextLevel) return 'mfa'
+        }}
+        onTotp={async (codigo) => {
+          /* Se toma el factor TOTP ya verificado de la cuenta. Si hubiera varios, el primero
+             verificado es el que el usuario tiene en su aplicación. */
+          const { data: factores, error: eF } = await supabase.auth.mfa.listFactors()
+          if (eF) throw new Error(eF.message)
+          const factor = (factores?.totp || [])[0]
+          if (!factor) throw new Error('Esta cuenta no tiene configurado un segundo factor.')
+          const { data: reto, error: eR } = await supabase.auth.mfa.challenge({ factorId: factor.id })
+          if (eR) throw new Error(eR.message)
+          const { error: eV } = await supabase.auth.mfa.verify({
+            factorId: factor.id, challengeId: reto.id, code: codigo
+          })
+          /* Aquí sí se lanza, y es correcto: un código equivocado SÍ es un fallo. */
+          if (eV) throw new Error('El código no es válido o ya caducó.')
         }}
         onMagicLink={async (email) => {
           const { error } = await supabase.auth.signInWithOtp({
