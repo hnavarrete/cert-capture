@@ -12,6 +12,10 @@ import bundle from './schemas.bundle.json'
 import RoadmapCert from './RoadmapCert.jsx'
 import Boveda from './Boveda.jsx'
 import { VGLogin } from '@vgsdk/auth-ui'
+/* C1 · comprobacion de contrasenas filtradas. Vive en @vgsdk/auth y se exporta desde la entrada
+   principal (index.ts:83), asi que NO hace falta subruta ni subir de version de auth-ui: el
+   componente pone la caja y el producto trae el motor (inversion de control). Ver CABLEAR-C1.md. */
+import { contrasenaFiltrada, mensajeSiFiltrada } from '@vgsdk/auth'
 
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
 const CERTS = bundle.certificaciones || []
@@ -79,7 +83,7 @@ function SyncBadge({ status }) {
 // Mismas vías + look que visor/erp/campo (Google + correo/contraseña + magic-link),
 // branding por tenant, marca VG siempre. cert SOLO inyecta sus handlers Supabase
 // (desacoplado). El modo demo se conserva debajo (gancho de exploración sin sesión).
-function Login({ onDemo }) {
+function Login({ onDemo, onAvisoC1 }) {
   return (
     <div style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
       <VGLogin
@@ -103,8 +107,27 @@ function Login({ onDemo }) {
          * verificó en esta sesión. Quien no tenga MFA da los dos iguales y este camino ni se toca:
          * por eso las cuentas de siempre entran igual que ayer. */
         onPassword={async (email, password) => {
+          /* 🔴 C1 AVISA, NO BLOQUEA — y me aparto a proposito del recorte de #11, que hace
+           * `if (aviso) throw`. La razon esta medida en el propio motor, no es corazonada:
+           *
+           *   filtradas.ts:148  «bloquear un CAMBIO de contrasena porque no hay senal rompe...»
+           *   filtradas.ts:157  el mensaje termina en «Conviene elegir otra.»
+           *
+           * El motor esta escrito para el momento en que alguien ELIGE una clave. Aqui es un
+           * INICIO DE SESION, y cert no tiene registro ni cambio de clave: `onGoogle`,
+           * `onPassword`, `onTotp`, `onMagicLink` y nada mas. Lanzar dejaria a la persona fuera
+           * de su propia cuenta con un texto que le pide algo que esa pantalla no permite hacer.
+           * Eso no es un control: es una puerta cerrada sin llave, y en campo se traduce en un
+           * tecnico que no puede capturar. Se comprueba, se deja entrar, y se avisa dentro.
+           *
+           * Se mira ANTES del signIn porque es cuando se tiene el texto plano en la mano.
+           * `contrasenaFiltrada` NUNCA lanza por red: devuelve `desconocido`, que deja pasar. */
+          let avisoFiltrada = null
+          try { avisoFiltrada = mensajeSiFiltrada(await contrasenaFiltrada(password)) }
+          catch (e) { /* ni un fallo del propio control puede impedir entrar */ }
           const { error } = await supabase.auth.signInWithPassword({ email, password })
           if (error) throw new Error(error.message)
+          if (avisoFiltrada && onAvisoC1) onAvisoC1(avisoFiltrada)
           const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
           if (aal && aal.nextLevel && aal.currentLevel !== aal.nextLevel) return 'mfa'
         }}
@@ -316,6 +339,7 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
 export default function App() {
   const [user, setUser] = useState(null)
   const [demo, setDemo] = useState(false)
+  const [avisoC1, setAvisoC1] = useState(null)   // C1: contrasena en filtraciones. Avisa, no bloquea.
   const [ready, setReady] = useState(false)
   const { status, flush } = useCertCapture(engine)
   const effEmail = user?.email || (demo ? 'demo@vg.local' : null)
@@ -472,7 +496,7 @@ export default function App() {
       <button type="button" className="google" onClick={() => window.location.reload()}>Reintentar</button>
     </div></div>
   )
-  if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} /></div>
+  if (!user && !demo) return <div className="wrap"><Login onDemo={() => setDemo(true)} onAvisoC1={setAvisoC1} /></div>
   // No pudimos LEER los permisos (error/timeout de my_products) ≠ "no tiene acceso". NO mandamos a pedir
   // acceso por WhatsApp a quien SÍ tiene el grant (bug #06): ofrecemos reintentar.
   if (user && accesoEudr === 'error') return (
@@ -490,6 +514,13 @@ export default function App() {
 
   return (
     <div className="wrap">
+      {avisoC1 && (
+        <div className="card" style={{ borderLeft: '4px solid #d97706', marginBottom: 12 }} role="status">
+          <strong>Conviene cambiar su contraseña</strong>
+          <p className="muted" style={{ margin: '6px 0 10px' }}>{avisoC1}</p>
+          <button type="button" className="link" onClick={() => setAvisoC1(null)}>Entendido</button>
+        </div>
+      )}
       <header className="topbar">
         <span className="brand"><span className="dot" /> VG · Certificaciones</span>
         {rol && ROLES[rol] ? <span className={'rolbadge ' + caps.nivel}>{ROLES[rol].label}</span> : null}
