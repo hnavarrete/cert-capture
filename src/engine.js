@@ -37,8 +37,13 @@ async function transport({ rows, photos }) {
     for (const p of (photos || []).filter(x => x.local_id === row.local_id)) {
       const mime = p.mime || 'image/jpeg'
       const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('pdf') ? 'pdf' : 'jpg'
-      const safe = String(p.field || p.photo_id || 'evidencia').replace(/[^\w.-]/g, '_')
-      const path = `${clientSlug || 'sin-slug'}/${row.local_id}/${safe}.${ext}`
+      /* 🔴 La ruta llevaba solo el nombre del campo y el upload va con upsert:true, así que dos
+         evidencias del MISMO campo se pisaban en el bucket: subía la segunda y la primera
+         desaparecía sin aviso. Se le agrega el identificador de la evidencia. Se puede cambiar
+         el formato sin migrar nada porque cert_responses está en cero. */
+      const safe = String(p.field || 'evidencia').replace(/[^\w.-]/g, '_')
+      const sufijo = String(p.photo_id || '').replace(/[^\w]/g, '').slice(0, 8)
+      const path = `${clientSlug || 'sin-slug'}/${row.local_id}/${safe}${sufijo ? '_' + sufijo : ''}.${ext}`
       const { error: upErr } = await supabase.storage.from('cert-evidencias')
         .upload(path, p.blob, { upsert: true, contentType: mime })
       if (upErr) { console.warn('[sync] foto a Storage:', upErr.message); return { ok: false } }

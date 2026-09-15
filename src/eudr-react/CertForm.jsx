@@ -30,7 +30,7 @@ function contarSeccion(sec, value = {}) {
 // Distingue Major Must / Minor Must (control_points por nivel) para el umbral vendible del marketplace
 // (100% Major + ≥95% Minor — ver export-policy / marco antifraude).
 export function progresoDe(schema, data) {
-  let total = 0, hechas = 0, major = 0, majorOk = 0, minor = 0, minorOk = 0
+  let total = 0, hechas = 0, major = 0, majorOk = 0, minor = 0, minorOk = 0, noConformes = 0
   for (const sec of (schema.secciones || [])) {
     for (const c of (sec.campos || [])) {
       const tipo = c.tipo || 'text'
@@ -40,9 +40,24 @@ export function progresoDe(schema, data) {
       const lleno = v != null && v !== '' && !(Array.isArray(v) && v.length === 0)
       total++; if (lleno) hechas++
       if (tipo === 'control_point') {
+        /* 🔴 RESPONDIDO NO ES CONFORME (14-sep-2026). Antes majorOk/minorOk se incrementaban con
+           `lleno`, que solo dice que el campo tiene valor. Como 'no_cumple' ES un valor, un
+           formulario contestado entero con "No cumple" daba 100% de obligaciones mayores y salía
+           "✓ Listo para certificar". Delante de un auditor eso es peor que no tener indicador:
+           le promete al productor que está listo justo cuando lo que tiene son incumplimientos
+           declarados por él mismo.
+
+           No se exige cero incumplimientos: la norma admite hasta 5% de obligaciones MENORES
+           fallidas. Contando conformidad, un "No cumple" mayor tumba el umbral solo y unos pocos
+           menores siguen tolerados, que es exactamente lo que dice la norma.
+
+           'na' (No aplica) cuenta como conforme: es una respuesta legítima de la norma para un
+           punto fuera de alcance, no una falla. */
+        const conforme = v === 'cumple' || v === 'na'
+        if (lleno && !conforme) noConformes++
         const niv = (c.nivel || '').toString().toLowerCase()
-        if (/major|mayor|obligaci.n mayor/.test(niv)) { major++; if (lleno) majorOk++ }
-        else if (/minor|menor|obligaci.n menor/.test(niv)) { minor++; if (lleno) minorOk++ }
+        if (/major|mayor|obligaci.n mayor/.test(niv)) { major++; if (conforme) majorOk++ }
+        else if (/minor|menor|obligaci.n menor/.test(niv)) { minor++; if (conforme) minorOk++ }
       }
     }
   }
@@ -54,7 +69,7 @@ export function progresoDe(schema, data) {
   // "listo" un formulario en blanco (los porcentajes Major/Minor caen a 100 por defecto sin controles).
   const tieneControles = major + minor > 0
   const vendible = hechas > 0 && (tieneControles ? majorPct >= 100 && minorPct >= 95 : pct >= 100)
-  return { total, hechas, pct, major, majorOk, majorPct, minor, minorOk, minorPct, vendible }
+  return { total, hechas, pct, major, majorOk, majorPct, minor, minorOk, minorPct, vendible, noConformes }
 }
 
 // --- evaluación de show_if (contrato _CONTRATO.md): { campo, op, valor } con op
@@ -121,35 +136,87 @@ function CampoPoligono({ campo, dataField, valor, onConnectPolygon }) {
   )
 }
 
-// Captura de foto/evidencia OFFLINE-FIRST. Abre la cámara o el explorador de archivos (input file con
-// capture), muestra una vista previa, y registra el blob vía addFoto(fieldKey, file). El blob se persiste
-// en IDB al guardar (el engine ya lo soporta). En el campo va un input hidden con el nombre del archivo
-// para que readFormFromContainer registre que hay evidencia.
-function FotoEvidencia({ fieldKey: fk, label, addFoto, compacto }) {
+// Adjuntar evidencia OFFLINE-FIRST. Registra cada blob vía addFoto(clave, file); el blob se persiste
+// en IDB al guardar. En el campo va un input hidden con los nombres para que readFormFromContainer
+// registre que hay evidencia.
+//
+// 🔴 DOS MODOS, Y LA DIFERENCIA NO ES COSMÉTICA (14-sep-2026). Antes había uno solo:
+//    accept="image/*" con capture="environment". En Android ese `capture` NO abre el explorador de
+//    archivos: abre la cámara. Y este mismo componente atiende la evidencia de los 818 puntos de
+//    control con requiere_evidencia, muchos de los cuales piden textualmente «Documento / registro
+//    (verificar vigencia y periodo)». O sea que para adjuntar un procedimiento en PDF la app
+//    ofrecía sacarle una foto.
+//
+//    modo 'documento' -> acepta PDF e imágenes y NO lleva capture, así el teléfono abre el
+//                        explorador y deja elegir un archivo que ya existe.
+//    modo 'foto'      -> se mantiene con capture: es para evidencia que se toma en el momento.
+//
+// 🔴 Y VARIOS ARCHIVOS, SIN PISARSE. Antes era e.target.files[0] y un solo nombre en el state: el
+//    segundo archivo reemplazaba al primero en silencio. Un procedimiento suele venir en varias
+//    partes (el documento, su anexo, la lista de firmas). La clave del PRIMER archivo se mantiene
+//    igual que antes para no cambiar el contrato ya existente; los siguientes llevan sufijo.
+const ACEPTA_DOCUMENTO = 'application/pdf,image/*'
+
+function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo = 'foto' }) {
   const inputRef = useRef(null)
-  const [preview, setPreview] = useState(null)
-  const [nombre, setNombre] = useState('')
+  const [archivos, setArchivos] = useState([])
+  const esDoc = modo === 'documento'
+
   function onPick(e) {
-    const file = e.target.files && e.target.files[0]
-    if (!file) return
-    setNombre(file.name)
-    if (addFoto) addFoto(fk, file)
-    try { const r = new FileReader(); r.onload = () => setPreview(r.result); r.readAsDataURL(file) } catch {}
+    const elegidos = Array.from(e.target.files || [])
+    e.target.value = ''            // permite volver a elegir el MISMO archivo si se quitó por error
+    if (!elegidos.length) return
+    const agregados = elegidos.map((file, i) => {
+      const n = archivos.length + i
+      const clave = n === 0 ? fk : fk + '#' + (n + 1)
+      if (addFoto) addFoto(clave, file)
+      if ((file.type || '').indexOf('image/') === 0) {
+        try {
+          const r = new FileReader()
+          r.onload = () => setArchivos(a => a.map(x => (x.clave === clave ? { ...x, preview: r.result } : x)))
+          r.readAsDataURL(file)
+        } catch {}
+      }
+      return { clave, nombre: file.name, mime: file.type || '', preview: null }
+    })
+    setArchivos(archivos.concat(agregados))
   }
+
+  function quitar(clave) {
+    if (delFoto) delFoto(clave)
+    setArchivos(a => a.filter(x => x.clave !== clave))
+  }
+
+  const etiqueta = archivos.length
+    ? (esDoc ? 'Adjuntar otro archivo' : 'Agregar otra foto')
+    : esDoc
+      ? (compacto ? 'Adjuntar documento o foto' : (label ? 'Adjuntar: ' + label : 'Adjuntar documento o foto'))
+      : (compacto ? 'Tomar / cargar evidencia' : (label ? 'Tomar / cargar: ' + label : 'Tomar foto o cargar archivo'))
+
   return (
     <div className="vg-foto-box">
-      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={onPick} />
-      <input type="hidden" data-field={fk} value={nombre} readOnly />
+      <input ref={inputRef} type="file" multiple
+        accept={esDoc ? ACEPTA_DOCUMENTO : 'image/*'}
+        capture={esDoc ? undefined : 'environment'}
+        style={{ display: 'none' }} onChange={onPick} />
+      <input type="hidden" data-field={fk} value={archivos.map(a => a.nombre).join(' · ')} readOnly />
       <button type="button" className="vg-foto" onClick={() => inputRef.current && inputRef.current.click()}>
-        📷 {preview ? 'Cambiar foto' : (compacto ? 'Tomar / cargar evidencia' : (label ? 'Tomar / cargar: ' + label : 'Tomar foto o cargar archivo'))}
+        {esDoc ? '📎 ' : '📷 '}{etiqueta}
       </button>
-      {preview ? <img className="vg-foto-prev" src={preview} alt="evidencia" /> : null}
-      {nombre ? <span className="vg-foto-name">✓ {nombre}</span> : null}
+      {esDoc && !archivos.length ? <small className="vg-foto-ayuda">PDF o imagen, hasta 15 MB cada uno</small> : null}
+      {archivos.map(a => (
+        <div key={a.clave} className="vg-foto-item">
+          {a.preview ? <img className="vg-foto-prev" src={a.preview} alt="" /> : null}
+          <span className="vg-foto-name">{a.nombre}</span>
+          <button type="button" className="vg-foto-quitar" onClick={() => quitar(a.clave)}
+            title="Quitar este archivo" aria-label={'Quitar ' + a.nombre}>×</button>
+        </div>
+      ))}
     </div>
   )
 }
 
-function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
+function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon }) {
   const dataField = fieldKey(seccionKey, campo.key)
   const tipo = campo.tipo || 'text'
   const common = { 'data-field': dataField, id: dataField, defaultValue: valor ?? '' }
@@ -193,7 +260,9 @@ function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
           <option value="na">No aplica</option>
         </select>
         {campo.requiere_evidencia ? (
-          <FotoEvidencia fieldKey={`${dataField}__evidencia`} addFoto={addFoto} compacto />
+          /* modo documento: lo que un punto de control pide casi siempre es un papel, no una foto */
+          <FotoEvidencia fieldKey={`${dataField}__evidencia`} addFoto={addFoto} delFoto={delFoto}
+            compacto modo="documento" />
         ) : null}
       </div>
     )
@@ -203,11 +272,29 @@ function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
     return <CampoPoligono campo={campo} dataField={dataField} valor={valor} onConnectPolygon={onConnectPolygon} />
   }
 
-  if (tipo === 'photo') {
+  /* 🔴 DOCUMENT — 55 campos en 24 formularios (14-sep-2026). Sin esta rama caían al <input> de
+     texto del final: una caja de texto vacía donde debe ir un adjunto. Entre ellos los que sostienen
+     el lado del auditor — eudr_auditoria_third_party.no_conformidades.evidencia, reporte_auditoria,
+     fsc_no_conformidades.evidencia_accion — y todo procedimiento que un productor quiera subir.
+     Es por donde arranca la Fase 0: el bucket y el transporte ya aceptaban PDF, faltaba el control. */
+  if (tipo === 'document') {
     return (
       <div className="vg-field">
         <label>{campo.label}{campo.required ? ' *' : ''}</label>
-        <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} />
+        <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} delFoto={delFoto}
+          modo="documento" />
+        {campo.help ? <small>{campo.help}</small> : null}
+      </div>
+    )
+  }
+
+  /* foto_evidencia — 32 campos (PEFC, RSPO, ISCC, carbono). Es un alias de photo en el bundle;
+     sin la rama se pintaba como caja de texto y no había forma de adjuntar nada. */
+  if (tipo === 'photo' || tipo === 'foto_evidencia') {
+    return (
+      <div className="vg-field">
+        <label>{campo.label}{campo.required ? ' *' : ''}</label>
+        <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} delFoto={delFoto} />
         {campo.help ? <small>{campo.help}</small> : null}
       </div>
     )
@@ -232,7 +319,9 @@ function Campo({ seccionKey, campo, valor, addFoto, onConnectPolygon }) {
     )
   }
 
-  if (tipo === 'select') {
+  /* picklist_catalogo — 9 campos. Traía sus `opciones` y caía al input de texto, que las perdía:
+     el usuario tenía que adivinar y escribir a mano un valor de catálogo. Se pinta como select. */
+  if (tipo === 'select' || tipo === 'picklist_catalogo') {
     return (
       <div className="vg-field">
         <label htmlFor={dataField}>{campo.label}{campo.required ? ' *' : ''}</label>
@@ -323,8 +412,11 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
 
   // registra el blob de una foto/evidencia por campo (offline-first; se persiste en IDB al guardar)
   const addFoto = useCallback((field, file) => {
-    fotosRef.current[field] = { field, blob: file, mime: file.type || 'image/jpeg', name: file.name }
+    fotosRef.current[field] = { field, blob: file, mime: file.type || 'application/octet-stream', name: file.name }
   }, [])
+  // quitar una evidencia adjuntada por error, ANTES de guardar. No borra nada del servidor: retirar
+  // lo ya guardado es otra cosa y lleva motivo (ver el plan, Fase 2).
+  const delFoto = useCallback((field) => { delete fotosRef.current[field] }, [])
 
   // acordeón de secciones (virtualización): solo la sección abierta se PINTA; TODO queda montado
   // (display:none) para que el guardado siga leyendo del DOM (R1/R2 offline-safe). 1ª sección abierta.
@@ -400,10 +492,14 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
           <div className="vg-prog-bar"><span className={prog.vendible ? 'ok' : ''} style={{ width: prog.pct + '%' }} /></div>
           <div className="vg-prog-info">
             <strong>{prog.pct}% completo</strong> · {prog.hechas}/{prog.total} preguntas
-            {prog.major ? <span> · obligaciones mayores {prog.majorPct}%</span> : null}
+            {prog.major ? <span> · obligaciones mayores conformes {prog.majorPct}%</span> : null}
+            {prog.noConformes ? <span className="vg-prog-nc"> · {prog.noConformes} en No cumple</span> : null}
             {prog.vendible
               ? <span className="vg-prog-badge ok">✓ Listo para certificar</span>
-              : <span className="vg-prog-badge">Complétalo para certificar y poder compartir</span>}
+              : <span className="vg-prog-badge">
+                  {prog.noConformes ? 'Hay puntos en No cumple: resuélvelos antes de certificar'
+                    : 'Complétalo para certificar y poder compartir'}
+                </span>}
           </div>
         </div>
       </header>
@@ -430,7 +526,7 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
                     visible(campo.show_if, liveData) ? (
                       <Campo key={campo.key} seccionKey={sec.key} campo={campo}
                         valor={value[fieldKey(sec.key, campo.key)]}
-                        addFoto={addFoto} onConnectPolygon={onConnectPolygon} />
+                        addFoto={addFoto} delFoto={delFoto} onConnectPolygon={onConnectPolygon} />
                     ) : null
                   ))}
                 </>
