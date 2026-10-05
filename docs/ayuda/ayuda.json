@@ -1,0 +1,392 @@
+{
+ "generado_por": "kit_video.py",
+ "generado": "2026-10-05T18:38:33",
+ "flujos": [
+  {
+   "id": "cuenta-entrar",
+   "actor": "cuenta",
+   "orden": 10,
+   "titulo": "Entrar a Certificaciones",
+   "resumen": "Con Google, con correo y contraseña, o con un enlace que llega al correo.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 26,
+   "pasos": [
+    "Abra cert.visiongeografica.com en el teléfono o en la computadora.",
+    "Entre con su cuenta de Google en un toque.",
+    "O escriba su correo y contraseña y toque «Entrar».",
+    "Sin contraseña: pida un enlace de acceso y ábralo desde su correo.",
+    "Abajo están el modo demostración y esta ayuda en video."
+   ],
+   "nota": "Si su cuenta tiene segundo factor, después de la contraseña se pide el código de 6 dígitos (vea «Entrar con segundo factor»).",
+   "video": "https://vg-cert-videos.pages.dev/cuenta-entrar.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/cuenta-entrar.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/cuenta-entrar-redes.mp4"
+  },
+  {
+   "id": "cuenta-demo",
+   "actor": "cuenta",
+   "orden": 12,
+   "titulo": "Probar la app en modo demostración",
+   "resumen": "Explore todo sin cuenta: lo que capture se queda en su dispositivo y no se envía al servidor.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 24,
+   "pasos": [
+    "En la pantalla de ingreso, debajo de «Entrar», está «Explorar en modo demo».",
+    "Tóquelo: el aviso amarillo confirma que está en modo demostración.",
+    "Lo que capture queda solo en este dispositivo: no se envía al servidor.",
+    "Elija una norma y recorra sus formularios sin miedo a equivocarse."
+   ],
+   "nota": "Para guardar de verdad en el servidor hay que entrar con una cuenta de VG que tenga acceso a la finca.",
+   "video": "https://vg-cert-videos.pages.dev/cuenta-demo.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/cuenta-demo.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/cuenta-demo-redes.mp4"
+  },
+  {
+   "id": "cuenta-segundo-factor",
+   "actor": "cuenta",
+   "orden": 14,
+   "titulo": "Entrar con segundo factor y avisos de contraseña",
+   "resumen": "Si su cuenta tiene verificación en dos pasos, se pide un código de 6 dígitos.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 0,
+   "pasos": [
+    "Escriba su correo y contraseña y toque «Entrar».",
+    "Si su cuenta tiene segundo factor, la app pide el código de 6 dígitos de su aplicación de autenticación.",
+    "Escriba el código antes de que cambie. Si sale «El código no es válido o ya caducó», espere el siguiente y vuelva a escribirlo.",
+    "Si la app avisa «Conviene cambiar su contraseña», es porque esa contraseña apareció en filtraciones públicas: usted entra igual, pero conviene cambiarla."
+   ],
+   "nota": "Este flujo necesita una cuenta real con segundo factor: el video está en preparación.",
+   "video": null,
+   "portada": null
+  },
+  {
+   "id": "cuenta-sin-acceso",
+   "actor": "cuenta",
+   "orden": 16,
+   "titulo": "Mi cuenta no tiene acceso a Certificaciones",
+   "resumen": "Qué hacer si la app dice que su cuenta todavía no tiene acceso, o que no pudo cargar sus permisos.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 0,
+   "pasos": [
+    "Si ve «Su cuenta ya es parte del ecosistema VG, pero todavía no tiene acceso», toque «Solicitar acceso por WhatsApp».",
+    "El mensaje sale escrito con su correo: envíelo y el administrador activa el acceso.",
+    "Si entró con otra cuenta por error, toque «Cambiar de cuenta».",
+    "Si ve «No pudimos cargar tus permisos», su sesión sí está activa: toque «Reintentar». Suele ser una falla pasajera de la conexión."
+   ],
+   "nota": "Este flujo solo aparece con una cuenta real sin acceso: el video está en preparación.",
+   "video": null,
+   "portada": null
+  },
+  {
+   "id": "cuenta-perfil",
+   "actor": "cuenta",
+   "orden": 18,
+   "titulo": "Completar su perfil de productor",
+   "resumen": "La primera vez se pide su identificación: evita duplicados y hace que sus registros sean suyos.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 0,
+   "pasos": [
+    "Elija el tipo de identificación: cédula, RUC o pasaporte, y escriba el número.",
+    "Escriba su nombre y apellido; el teléfono es opcional.",
+    "Marque la autorización para guardar sus datos y toque «Guardar mi perfil».",
+    "Si no tiene señal, el perfil queda guardado en el dispositivo y se registra al volver la conexión.",
+    "Si prefiere hacerlo después, toque «Completar luego»: la app no lo bloquea."
+   ],
+   "nota": "Esta pantalla aparece solo con una cuenta real que aún no tiene perfil: el video está en preparación.",
+   "video": null,
+   "portada": null
+  },
+  {
+   "id": "cuenta-vg-suite",
+   "actor": "cuenta",
+   "orden": 19,
+   "titulo": "Abrir Certificaciones desde VG Suite",
+   "resumen": "Dentro de la app VG Suite, Certificaciones usa la misma sesión: no se vuelve a ingresar.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 0,
+   "pasos": [
+    "En VG Suite, abra «Certificaciones» desde el menú.",
+    "La sesión es la misma de VG Suite: no hace falta volver a entrar, y por eso no aparece el botón «Salir».",
+    "Si ve «Sesión no disponible», toque «Reintentar» o vuelva a abrir Certificaciones desde el menú de VG Suite."
+   ],
+   "nota": "Este flujo ocurre dentro de la app de teléfono VG Suite: el video está en preparación.",
+   "video": null,
+   "portada": null
+  },
+  {
+   "id": "productor-contexto",
+   "actor": "productor",
+   "orden": 20,
+   "titulo": "Indicar la finca, el productor y el lote",
+   "resumen": "Antes de capturar, se indica de qué finca y de qué lote es la información.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 23,
+   "pasos": [
+    "En «Contexto del levantamiento», escriba la finca.",
+    "Escriba el código del productor.",
+    "Y el código de la finca o del lote.",
+    "Todo lo que capture desde ahora queda asociado a ese contexto."
+   ],
+   "nota": "Con una cuenta real, la finca se elige de la lista «tus fincas»: son las mismas del visor y del ERP.",
+   "video": "https://vg-cert-videos.pages.dev/productor-contexto.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-contexto.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-contexto-redes.mp4"
+  },
+  {
+   "id": "productor-hoja-ruta",
+   "actor": "productor",
+   "orden": 22,
+   "titulo": "Elegir la norma y ver su hoja de ruta",
+   "resumen": "Cada norma trae su hoja de ruta: pilares, tramos, preguntas y tiempo estimado.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 33,
+   "pasos": [
+    "En «Certificación», toque la norma que va a preparar.",
+    "La hoja de ruta muestra los tramos, las preguntas y el tiempo estimado.",
+    "Los tramos se agrupan en cuatro pilares: legal, ambiental, social y gestión.",
+    "Cada tramo indica su tiempo y su estado: sin empezar, en progreso o listo.",
+    "Abajo, el tiempo estimado que falta para completar la norma."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-hoja-ruta.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-hoja-ruta.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-hoja-ruta-redes.mp4"
+  },
+  {
+   "id": "productor-nucleo",
+   "actor": "productor",
+   "orden": 24,
+   "titulo": "Núcleo compartido: capturar una vez para varias normas",
+   "resumen": "Los tramos del núcleo se llenan una sola vez y cuentan para todas las normas que los usan.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 34,
+   "pasos": [
+    "Los tramos marcados «núcleo» alimentan varias normas a la vez.",
+    "Ábralo y responda una vez.",
+    "Guárdelo: queda en el dispositivo aunque no haya señal.",
+    "Ahora elija otra norma, por ejemplo Rainforest Alliance.",
+    "«Ventaja inicial»: lo que ya capturó del núcleo cuenta aquí sin volver a llenarlo."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-nucleo.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-nucleo.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-nucleo-redes.mp4"
+  },
+  {
+   "id": "productor-llenar",
+   "actor": "productor",
+   "orden": 30,
+   "titulo": "Llenar un formulario por secciones",
+   "resumen": "Cada tramo es un formulario dividido en secciones que se abren y se cierran.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 40,
+   "pasos": [
+    "En la hoja de ruta, busque el tramo que va a llenar.",
+    "Tóquelo. Arriba ve el avance; cada sección cuenta sus respuestas.",
+    "Responda las preguntas de la sección abierta.",
+    "Toque el título de otra sección para abrirla.",
+    "Al terminar, toque «Guardar (offline)». Se guarda aunque no haya señal.",
+    "Para volver a la hoja de ruta, toque otra vez la norma."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-llenar.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-llenar.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-llenar-redes.mp4"
+  },
+  {
+   "id": "productor-punto-control",
+   "actor": "productor",
+   "orden": 32,
+   "titulo": "Responder un punto de control",
+   "resumen": "Cada punto de control de la norma se responde Cumple, No cumple o No aplica.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 33,
+   "pasos": [
+    "Cada punto trae su código, su texto y su nivel: mayor o menor.",
+    "Toque «Ver texto oficial de la norma» para leer el requisito original.",
+    "«Qué revisa el auditor» le dice qué se va a verificar.",
+    "Responda: Cumple, No cumple o No aplica.",
+    "«No aplica» es para un punto fuera de su alcance; cuenta como conforme."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-punto-control.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-punto-control.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-punto-control-redes.mp4"
+  },
+  {
+   "id": "productor-adjuntar-documento",
+   "actor": "productor",
+   "orden": 34,
+   "titulo": "Adjuntar un documento como evidencia",
+   "resumen": "Los puntos que piden evidencia aceptan PDF o imágenes, varios archivos por punto.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 31,
+   "pasos": [
+    "Los puntos que piden evidencia traen el botón «Adjuntar documento o foto».",
+    "Tóquelo y elija el archivo: PDF o imagen, hasta 15 MB.",
+    "¿Viene en varias partes? Toque «Adjuntar otro archivo».",
+    "Si se equivocó, quítelo con la × antes de guardar.",
+    "Toque «Guardar (offline)»: la evidencia queda junto a su respuesta."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-adjuntar-documento.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-adjuntar-documento.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-adjuntar-documento-redes.mp4"
+  },
+  {
+   "id": "productor-foto",
+   "actor": "productor",
+   "orden": 36,
+   "titulo": "Tomar o cargar una foto de evidencia",
+   "resumen": "Los campos de foto abren la cámara del teléfono, o dejan cargar una foto ya tomada.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 34,
+   "pasos": [
+    "Abra la sección que pide la foto.",
+    "Toque «Tomar / cargar»: en el teléfono se abre la cámara.",
+    "La foto aparece en miniatura junto a su nombre.",
+    "Puede agregar otra foto, o quitar una con la ×.",
+    "Guarde: la foto queda en el dispositivo y se sube con su respuesta."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-foto.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-foto.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-foto-redes.mp4"
+  },
+  {
+   "id": "productor-poligono",
+   "actor": "productor",
+   "orden": 38,
+   "titulo": "Conectar el polígono de la finca",
+   "resumen": "El polígono del predio se toma del visor: no hace falta volver a caminar el lindero.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 28,
+   "pasos": [
+    "Abra la sección «Geometría del predio».",
+    "Elija el tipo: polígono, obligatorio si el predio supera 4 ha.",
+    "Toque «Conectar polígono del visor».",
+    "El polígono queda listo y no se vuelve a capturar."
+   ],
+   "nota": "En la demostración se usa un polígono de ejemplo. Dentro de VG Suite, el botón abre el mapa del visor con el polígono real de la finca.",
+   "video": "https://vg-cert-videos.pages.dev/productor-poligono.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-poligono.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-poligono-redes.mp4"
+  },
+  {
+   "id": "productor-avance",
+   "actor": "productor",
+   "orden": 40,
+   "titulo": "Ver el avance y cuándo está listo para la auditoría",
+   "resumen": "La barra de avance distingue lo respondido de lo conforme: un «No cumple» no cuenta como listo.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 32,
+   "pasos": [
+    "Arriba del formulario ve el porcentaje completo y las preguntas respondidas.",
+    "Al responder, el avance sube.",
+    "Un «No cumple» en una obligación mayor aparece marcado.",
+    "Hay que resolverlo antes de la auditoría: respondido no es lo mismo que conforme.",
+    "Con la corrección hecha, cámbielo a «Cumple» y el aviso desaparece."
+   ],
+   "nota": "La marca «Listo para la auditoría» aparece cuando todas las obligaciones mayores cumplen y al menos el 95 % de las menores. Un formulario vacío nunca aparece como listo.",
+   "video": "https://vg-cert-videos.pages.dev/productor-avance.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-avance.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-avance-redes.mp4"
+  },
+  {
+   "id": "productor-sin-senal",
+   "actor": "productor",
+   "orden": 42,
+   "titulo": "Capturar sin señal y revisar Mi bóveda",
+   "resumen": "Todo se guarda primero en el dispositivo. Mi bóveda muestra qué falta subir al servidor.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 35,
+   "pasos": [
+    "Sin señal, el indicador de arriba dice «sin conexión».",
+    "Siga capturando con normalidad.",
+    "Al guardar, el registro queda pendiente: arriba suma «1 pend».",
+    "Toque «Mi bóveda» para ver qué está respaldado y qué no.",
+    "Lo pendiente no se pierde: se sube solo al volver la señal."
+   ],
+   "nota": "En la demostración nada se sube al servidor. Con una cuenta real, al volver la señal la app sube lo pendiente sola, y en Mi bóveda queda el botón «Sincronizar ahora».",
+   "video": "https://vg-cert-videos.pages.dev/productor-sin-senal.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-sin-senal.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-sin-senal-redes.mp4"
+  },
+  {
+   "id": "productor-sincronizar",
+   "actor": "productor",
+   "orden": 44,
+   "titulo": "Respaldar en el servidor con su cuenta",
+   "resumen": "Con una cuenta con acceso a la finca, lo capturado se sube al servidor junto con sus evidencias.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 0,
+   "pasos": [
+    "Entre con su cuenta de VG y elija su finca en «Contexto del levantamiento».",
+    "Al guardar con señal, la app sube la respuesta y sus archivos sola; no hace falta un botón.",
+    "El indicador de arriba cuenta lo pendiente (pend), lo que falló (fall) y lo subido (sync).",
+    "En «Mi bóveda», cada registro dice «respaldado», «en este dispositivo» o «error al subir».",
+    "Si algo quedó pendiente o con error, toque «Sincronizar ahora». Lo que falla no se borra: se vuelve a intentar."
+   ],
+   "nota": "Este flujo necesita una cuenta real con acceso a una finca: el video está en preparación.",
+   "video": null,
+   "portada": null
+  },
+  {
+   "id": "productor-mi-progreso",
+   "actor": "productor",
+   "orden": 50,
+   "titulo": "Ver Mi progreso en todas las normas",
+   "resumen": "Un tablero con el avance de cada norma y de cada formulario, sin necesidad de señal.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 28,
+   "pasos": [
+    "Arriba, toque «Mi progreso».",
+    "Ve cuántos formularios empezó y cuántos están listos para entregar.",
+    "Cada norma muestra su porcentaje. Tóquela para ver sus formularios.",
+    "Toque un formulario para abrirlo directamente."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-mi-progreso.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-mi-progreso.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-mi-progreso-redes.mp4"
+  },
+  {
+   "id": "productor-vista-previa",
+   "actor": "productor",
+   "orden": 60,
+   "titulo": "Vista previa del informe para el auditor",
+   "resumen": "Muestra cómo quedaría el informe de un formulario, como borrador con marca de agua.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 27,
+   "pasos": [
+    "Debajo del formulario, toque «Vista previa para el certificador».",
+    "Ve el informe con sus respuestas, tal como lo leería el auditor.",
+    "Es un borrador con marca de agua; el informe sin marca requiere un plan de pago.",
+    "Toque «Cerrar» para volver al formulario."
+   ],
+   "nota": "",
+   "video": "https://vg-cert-videos.pages.dev/productor-vista-previa.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-vista-previa.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-vista-previa-redes.mp4"
+  },
+  {
+   "id": "lector-solo-lectura",
+   "actor": "lector",
+   "orden": 70,
+   "titulo": "Revisar sin editar (rol de solo lectura)",
+   "resumen": "Con el rol «Solo lectura» se revisan los formularios y la vista previa, sin modificar nada.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 0,
+   "pasos": [
+    "Entre con la cuenta que le compartieron. Arriba aparece su rol: «Solo lectura».",
+    "Elija la finca, la norma y el formulario igual que los demás usuarios.",
+    "El formulario muestra «Modo solo lectura»: puede leer respuestas, texto oficial y qué revisa el auditor, pero no editar ni guardar.",
+    "Use «Vista previa para el certificador» para ver el informe del formulario.",
+    "Para cambiar algo, pídaselo al responsable de la finca: su rol no guarda capturas."
+   ],
+   "nota": "Este flujo necesita una cuenta real con rol de solo lectura: el video está en preparación.",
+   "video": null,
+   "portada": null
+  }
+ ]
+}
