@@ -1,0 +1,130 @@
+{
+ "id": "productor-llenar",
+ "orden": 30,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Llenar un formulario por secciones",
+ "resumen": "Cada tramo es un formulario dividido en secciones que se abren y se cierran.",
+ "gancho": "¿Cómo se llena un formulario?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "En la hoja de ruta, busque el tramo que va a llenar.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Cadena de suministro\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "13 min · 33 preguntas"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Tóquelo. Arriba ve el avance; cada sección cuenta sus respuestas.",
+   "corto": "Tóquelo: arriba, el avance; cada sección cuenta sus respuestas.",
+   "acciones": [
+    {
+     "clic_css": "button:has-text(\"Cadena de suministro\")"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"% completo\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "% completo"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Responda las preguntas de la sección abierta.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Commodity EUDR\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Commodity EUDR"
+    },
+    {
+     "elegir": [
+      "Commodity EUDR",
+      "Cacao"
+     ]
+    },
+    {
+     "llenar": [
+      "Código HS",
+      "1801"
+     ]
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Toque el título de otra sección para abrirla.",
+   "acciones": [
+    {
+     "clic": "1. Productor (origen)"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Al terminar, toque «Guardar (offline)». Se guarda aunque no haya señal.",
+   "corto": "Toque «Guardar (offline)»: se guarda aunque no haya señal.",
+   "acciones": [
+    {
+     "clic": "Guardar (offline)"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Para volver a la hoja de ruta, toque otra vez la norma.",
+   "acciones": [
+    {
+     "clic": "EU Deforestation Regulation"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Formulario guardado",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

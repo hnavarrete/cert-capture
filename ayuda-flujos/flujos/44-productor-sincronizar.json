@@ -1,0 +1,31 @@
+{
+ "id": "productor-sincronizar",
+ "orden": 44,
+ "solo_texto": true,
+ "actor": "productor",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/",
+ "titulo": "Respaldar en el servidor con su cuenta",
+ "resumen": "Con una cuenta con acceso a la finca, lo capturado se sube al servidor junto con sus evidencias.",
+ "pasos": [
+  {
+   "texto": "Entre con su cuenta de VG y elija su finca en «Contexto del levantamiento»."
+  },
+  {
+   "texto": "Al guardar con señal, la app sube la respuesta y sus archivos sola; no hace falta un botón."
+  },
+  {
+   "texto": "El indicador de arriba cuenta lo pendiente (pend), lo que falló (fall) y lo subido (sync)."
+  },
+  {
+   "texto": "En «Mi bóveda», cada registro dice «respaldado», «en este dispositivo» o «error al subir»."
+  },
+  {
+   "texto": "Si algo quedó pendiente o con error, toque «Sincronizar ahora». Lo que falla no se borra: se vuelve a intentar."
+  }
+ ],
+ "nota": "Este flujo necesita una cuenta real con acceso a una finca: el video está en preparación.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

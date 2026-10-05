@@ -1,0 +1,118 @@
+{
+ "id": "productor-punto-control",
+ "orden": 32,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Responder un punto de control",
+ "resumen": "Cada punto de control de la norma se responde Cumple, No cumple o No aplica.",
+ "gancho": "¿Qué le va a revisar el auditor?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  },
+  {
+   "clic": "GLOBAL G.A.P."
+  },
+  {
+   "pausa": 400
+  },
+  {
+   "clic_css": "button:has-text(\"GLOBAL G.A.P. - IFA Fruta y Verdura (edicion Smart)\")"
+  },
+  {
+   "pausa": 600
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Cada punto trae su código, su texto y su nivel: mayor o menor.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"FV-Smart 03.01\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "FV-Smart 03.01"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Toque «Ver texto oficial de la norma» para leer el requisito original.",
+   "corto": "«Ver texto oficial de la norma»: el requisito original.",
+   "acciones": [
+    {
+     "clic_texto": "Ver texto oficial de la norma"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "«Qué revisa el auditor» le dice qué se va a verificar.",
+   "acciones": [
+    {
+     "clic_texto": "Qué revisa el auditor"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Responda: Cumple, No cumple o No aplica.",
+   "acciones": [
+    {
+     "elegir": [
+      "Respuesta FV-Smart 03.01",
+      "Cumple"
+     ]
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "«No aplica» es para un punto fuera de su alcance; cuenta como conforme.",
+   "corto": "«No aplica»: punto fuera de su alcance; cuenta como conforme.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"FV-Smart 03.03\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "FV-Smart 03.03"
+    },
+    {
+     "elegir": [
+      "Respuesta FV-Smart 03.03",
+      "No aplica"
+     ]
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Punto de control respondido",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

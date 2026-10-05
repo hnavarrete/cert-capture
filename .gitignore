@@ -1,3 +1,5 @@
 node_modules/
 dist/
 .DS_Store
+ayuda-flujos/salida/
+ayuda-flujos/salida-redes/

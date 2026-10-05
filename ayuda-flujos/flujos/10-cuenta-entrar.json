@@ -1,0 +1,60 @@
+{
+ "id": "cuenta-entrar",
+ "actor": "cuenta",
+ "actor_txt": "Su cuenta",
+ "orden": 10,
+ "titulo": "Entrar a Certificaciones",
+ "resumen": "Con Google, con correo y contraseña, o con un enlace que llega al correo.",
+ "url": "http://localhost:4173/",
+ "probar": "https://cert.visiongeografica.com/",
+ "gancho": "¿Primera vez en Certificaciones?",
+ "preparar": [],
+ "pasos": [
+  {
+   "texto": "Abra cert.visiongeografica.com en el teléfono o en la computadora.",
+   "foco": "arriba",
+   "ms": 2800
+  },
+  {
+   "texto": "Entre con su cuenta de Google en un toque.",
+   "acciones": [
+    {
+     "ver": "Continuar con Google"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "O escriba su correo y contraseña y toque «Entrar».",
+   "acciones": [
+    {
+     "ver": "Correo electrónico"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Sin contraseña: pida un enlace de acceso y ábralo desde su correo.",
+   "acciones": [
+    {
+     "ver": "Enviar enlace de acceso al correo"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Abajo están el modo demostración y esta ayuda en video.",
+   "acciones": [
+    {
+     "ver": "Ayuda en video"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Bienvenido a VG Certificaciones",
+ "nota": "Si su cuenta tiene segundo factor, después de la contraseña se pide el código de 6 dígitos (vea «Entrar con segundo factor»).",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

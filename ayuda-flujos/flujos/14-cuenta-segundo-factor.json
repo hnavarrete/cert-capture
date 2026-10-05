@@ -1,0 +1,28 @@
+{
+ "id": "cuenta-segundo-factor",
+ "actor": "cuenta",
+ "orden": 14,
+ "solo_texto": true,
+ "titulo": "Entrar con segundo factor y avisos de contraseña",
+ "resumen": "Si su cuenta tiene verificación en dos pasos, se pide un código de 6 dígitos.",
+ "url": "http://localhost:4173/",
+ "probar": "https://cert.visiongeografica.com/",
+ "pasos": [
+  {
+   "texto": "Escriba su correo y contraseña y toque «Entrar»."
+  },
+  {
+   "texto": "Si su cuenta tiene segundo factor, la app pide el código de 6 dígitos de su aplicación de autenticación."
+  },
+  {
+   "texto": "Escriba el código antes de que cambie. Si sale «El código no es válido o ya caducó», espere el siguiente y vuelva a escribirlo."
+  },
+  {
+   "texto": "Si la app avisa «Conviene cambiar su contraseña», es porque esa contraseña apareció en filtraciones públicas: usted entra igual, pero conviene cambiarla."
+  }
+ ],
+ "nota": "Este flujo necesita una cuenta real con segundo factor: el video está en preparación.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

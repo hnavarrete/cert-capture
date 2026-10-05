@@ -1,0 +1,115 @@
+{
+ "id": "productor-sin-senal",
+ "orden": 42,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Capturar sin señal y revisar Mi bóveda",
+ "resumen": "Todo se guarda primero en el dispositivo. Mi bóveda muestra qué falta subir al servidor.",
+ "gancho": "¿Sin señal en la finca?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Sin señal, el indicador de arriba dice «sin conexión».",
+   "acciones": [
+    {
+     "js": "Object.defineProperty(Navigator.prototype,'onLine',{get:()=>false,configurable:true});window.dispatchEvent(new Event('offline'))"
+    },
+    {
+     "pausa": 300
+    }
+   ],
+   "foco": "arriba",
+   "ms": 2800
+  },
+  {
+   "texto": "Siga capturando con normalidad.",
+   "acciones": [
+    {
+     "clic_css": "button:has-text(\"Cadena de suministro\")"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Commodity EUDR\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Commodity EUDR"
+    },
+    {
+     "elegir": [
+      "Commodity EUDR",
+      "Café"
+     ]
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Al guardar, el registro queda pendiente: arriba suma «1 pend».",
+   "acciones": [
+    {
+     "clic": "Guardar (offline)"
+    },
+    {
+     "pausa": 600
+    },
+    {
+     "js": "window.scrollTo(0, 0)"
+    },
+    {
+     "pausa": 350
+    }
+   ],
+   "foco": "arriba",
+   "ms": 3000
+  },
+  {
+   "texto": "Toque «Mi bóveda» para ver qué está respaldado y qué no.",
+   "acciones": [
+    {
+     "clic": "Mi bóveda"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Lo pendiente no se pierde: se sube solo al volver la señal.",
+   "acciones": [
+    {
+     "ver": "aún en tu dispositivo"
+    }
+   ],
+   "ms": 3400
+  }
+ ],
+ "cierre": "Sin señal, sin perder nada",
+ "nota": "En la demostración nada se sube al servidor. Con una cuenta real, al volver la señal la app sube lo pendiente sola, y en Mi bóveda queda el botón «Sincronizar ahora».",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

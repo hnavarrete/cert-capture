@@ -1,0 +1,104 @@
+{
+ "id": "productor-poligono",
+ "orden": 38,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Conectar el polígono de la finca",
+ "resumen": "El polígono del predio se toma del visor: no hace falta volver a caminar el lindero.",
+ "gancho": "¿Ya tiene el polígono de su finca?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  },
+  {
+   "clic": "EU Deforestation Regulation"
+  },
+  {
+   "pausa": 400
+  },
+  {
+   "clic_css": "button:has-text(\"Polígono GPS del predio\")"
+  },
+  {
+   "pausa": 600
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Abra la sección «Geometría del predio».",
+   "acciones": [
+    {
+     "clic": "Geometría del predio"
+    }
+   ],
+   "ms": 2400
+  },
+  {
+   "texto": "Elija el tipo: polígono, obligatorio si el predio supera 4 ha.",
+   "acciones": [
+    {
+     "elegir": [
+      "Tipo de geometría",
+      "Polígono"
+     ]
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Toque «Conectar polígono del visor».",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Pol\\u00edgono del predio (caminar per\\u00edmetro)\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Polígono del predio (caminar perímetro)"
+    },
+    {
+     "clic": "Conectar polígono del visor"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "El polígono queda listo y no se vuelve a capturar.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Pol\\u00edgono dibujado en campo\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Polígono dibujado en campo"
+    }
+   ],
+   "ms": 3200
+  }
+ ],
+ "cierre": "Polígono conectado",
+ "nota": "En la demostración se usa un polígono de ejemplo. Dentro de VG Suite, el botón abre el mapa del visor con el polígono real de la finca.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

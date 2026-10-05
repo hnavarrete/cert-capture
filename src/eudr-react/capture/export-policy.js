@@ -129,6 +129,8 @@ export function watermarkConfig(ctx = {}) {
  * @param {object} ctx - { plan, productor_id, finca_id }
  * @returns {string} HTML autocontenido.
  */
+const ESTADO_CP = { cumple: 'Cumple', no_cumple: 'No cumple', na: 'No aplica' }
+
 export function buildCertReadyPreviewHtml(schema, respuesta, ctx = {}) {
   const wm = watermarkConfig(ctx)
   const data = (respuesta && respuesta.data) || {}
@@ -138,9 +140,17 @@ export function buildCertReadyPreviewHtml(schema, respuesta, ctx = {}) {
     let campos = ''
     for (const c of (sec.campos || [])) {
       const key = sec.key + '.' + c.key
-      const v = data[key]
-      if (v == null || v === '' || (Array.isArray(v) && !v.length)) continue
-      campos += `<tr><td class="k">${esc(c.label || c.key)}</td><td class="v">${esc(Array.isArray(v) ? v.join('; ') : v)}</td></tr>`
+      if (c.tipo === 'nota' || c.tipo === 'info') continue
+      /* 🔴 PUNTO DE CONTROL (5-oct-2026). Su respuesta vive en `<clave>.estado` y la evidencia en
+         `<clave>__evidencia`; leyendo solo `data[clave]` la vista previa decía «Sin datos capturados aún»
+         con todos los puntos respondidos, justo lo que el auditor viene a leer. Lo destapó la grabación
+         del video de ayuda. Y un booleano sin marcar NO es un «No» declarado: no se pinta («false» salía tal cual). */
+      let v = c.tipo === 'control_point' ? ESTADO_CP[data[key + '.estado']] || data[key + '.estado'] : data[key]
+      if (v === true) v = 'Sí'
+      if (v == null || v === '' || v === false || (Array.isArray(v) && !v.length)) continue
+      const evid = c.tipo === 'control_point' ? data[key + '__evidencia'] : null
+      const etiqueta = c.tipo === 'control_point' && c.code ? c.code + ' · ' + (c.label || '') : (c.label || c.key)
+      campos += `<tr><td class="k">${esc(etiqueta)}</td><td class="v">${esc(Array.isArray(v) ? v.join('; ') : v)}${evid ? `<div class="ev">Evidencia: ${esc(evid)}</div>` : ''}</td></tr>`
     }
     if (campos) filas += `<tr><td colspan="2" class="sec">${esc(sec.titulo || sec.key)}</td></tr>${campos}`
   }
@@ -150,7 +160,7 @@ export function buildCertReadyPreviewHtml(schema, respuesta, ctx = {}) {
 h1{color:#0c1220;font-size:20px;border-bottom:3px solid;border-image:linear-gradient(90deg,#1BABE1,#9FC834)1;padding-bottom:8px}
 .meta{color:#64748b;font-size:12px;margin:6px 0 14px}table{width:100%;border-collapse:collapse;font-size:13px}
 td{padding:7px 10px;border-bottom:1px solid #e6ebf2;vertical-align:top}.sec{background:#0c1220;color:#fff;font-weight:700}
-.k{color:#475569;width:46%}.v{font-weight:600}.foot{margin-top:18px;font-size:11px;color:#94a3b8}${wmCss}</style></head>
+.k{color:#475569;width:46%}.v{font-weight:600}.ev{font-weight:400;color:#64748b;font-size:12px;margin-top:3px}.foot{margin-top:18px;font-size:11px;color:#94a3b8}${wmCss}</style></head>
 <body><h1>${esc(schema.titulo || schema.certificacion)}</h1>
 <div class="meta">Certificación: ${esc(respuesta.certificacion || schema.certificacion)} · Productor: ${esc(ctx.productor_id || '—')} · Finca: ${esc(ctx.finca_id || '—')}</div>
 <table>${filas || '<tr><td>Sin datos capturados aún.</td></tr>'}</table>

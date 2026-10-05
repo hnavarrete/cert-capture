@@ -1,0 +1,28 @@
+{
+ "id": "cuenta-sin-acceso",
+ "actor": "cuenta",
+ "orden": 16,
+ "solo_texto": true,
+ "titulo": "Mi cuenta no tiene acceso a Certificaciones",
+ "resumen": "Qué hacer si la app dice que su cuenta todavía no tiene acceso, o que no pudo cargar sus permisos.",
+ "url": "http://localhost:4173/",
+ "probar": "https://cert.visiongeografica.com/",
+ "pasos": [
+  {
+   "texto": "Si ve «Su cuenta ya es parte del ecosistema VG, pero todavía no tiene acceso», toque «Solicitar acceso por WhatsApp»."
+  },
+  {
+   "texto": "El mensaje sale escrito con su correo: envíelo y el administrador activa el acceso."
+  },
+  {
+   "texto": "Si entró con otra cuenta por error, toque «Cambiar de cuenta»."
+  },
+  {
+   "texto": "Si ve «No pudimos cargar tus permisos», su sesión sí está activa: toque «Reintentar». Suele ser una falla pasajera de la conexión."
+  }
+ ],
+ "nota": "Este flujo solo aparece con una cuenta real sin acceso: el video está en preparación.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

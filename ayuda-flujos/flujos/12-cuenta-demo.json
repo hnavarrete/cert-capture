@@ -1,0 +1,60 @@
+{
+ "id": "cuenta-demo",
+ "actor": "cuenta",
+ "actor_txt": "Su cuenta",
+ "orden": 12,
+ "titulo": "Probar la app en modo demostración",
+ "resumen": "Explore todo sin cuenta: lo que capture se queda en su dispositivo y no se envía al servidor.",
+ "url": "http://localhost:4173/",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "gancho": "¿Quiere probar antes de empezar?",
+ "preparar": [],
+ "pasos": [
+  {
+   "texto": "En la pantalla de ingreso, debajo de «Entrar», está «Explorar en modo demo».",
+   "corto": "Debajo de «Entrar» está «Explorar en modo demo».",
+   "acciones": [
+    {
+     "ver": "Explorar en modo demo"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Tóquelo: el aviso amarillo confirma que está en modo demostración.",
+   "corto": "Tóquelo: el aviso amarillo confirma el modo demostración.",
+   "acciones": [
+    {
+     "clic": "Explorar en modo demo"
+    }
+   ],
+   "foco": "arriba",
+   "ms": 3200
+  },
+  {
+   "texto": "Lo que capture queda solo en este dispositivo: no se envía al servidor.",
+   "foco": "arriba",
+   "ms": 3200
+  },
+  {
+   "texto": "Elija una norma y recorra sus formularios sin miedo a equivocarse.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Rainforest Alliance 2020\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Rainforest Alliance 2020"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Pruébelo sin cuenta",
+ "nota": "Para guardar de verdad en el servidor hay que entrar con una cuenta de VG que tenga acceso a la finca.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

@@ -26,7 +26,7 @@ async function transport({ rows, photos }) {
   // sin sesión autenticada (p. ej. modo demo) no se intenta el RPC: el dato queda en IDB (no se
   // pierde, R2) y se sincroniza cuando el usuario inicie sesión con acceso a la finca.
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return { ok: false, reason: 'sin sesión' }
+  if (!session) return { ok: false, skip: true, reason: 'sin sesión' }   // skip: queda 'pending', no 'failed'
   const serverIds = {}
   for (const row of rows) {
     const clientSlug = row.client_slug || row.company_id || session.slug || null

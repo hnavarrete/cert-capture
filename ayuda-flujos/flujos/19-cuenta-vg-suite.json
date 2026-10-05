@@ -1,0 +1,25 @@
+{
+ "id": "cuenta-vg-suite",
+ "actor": "cuenta",
+ "orden": 19,
+ "solo_texto": true,
+ "titulo": "Abrir Certificaciones desde VG Suite",
+ "resumen": "Dentro de la app VG Suite, Certificaciones usa la misma sesión: no se vuelve a ingresar.",
+ "url": "http://localhost:4173/",
+ "probar": "https://cert.visiongeografica.com/",
+ "pasos": [
+  {
+   "texto": "En VG Suite, abra «Certificaciones» desde el menú."
+  },
+  {
+   "texto": "La sesión es la misma de VG Suite: no hace falta volver a entrar, y por eso no aparece el botón «Salir»."
+  },
+  {
+   "texto": "Si ve «Sesión no disponible», toque «Reintentar» o vuelva a abrir Certificaciones desde el menú de VG Suite."
+  }
+ ],
+ "nota": "Este flujo ocurre dentro de la app de teléfono VG Suite: el video está en preparación.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

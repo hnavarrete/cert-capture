@@ -1,0 +1,108 @@
+{
+ "id": "productor-nucleo",
+ "orden": 24,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Núcleo compartido: capturar una vez para varias normas",
+ "resumen": "Los tramos del núcleo se llenan una sola vez y cuentan para todas las normas que los usan.",
+ "gancho": "¿Llenar lo mismo para cada norma?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Los tramos marcados «núcleo» alimentan varias normas a la vez.",
+   "acciones": [
+    {
+     "ver": "Trabajadores y trabajo decente"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Ábralo y responda una vez.",
+   "acciones": [
+    {
+     "clic_css": "button:has-text(\"Trabajadores y trabajo decente\")"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Tipo de vinculaci\\u00f3n\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Tipo de vinculación"
+    },
+    {
+     "elegir": [
+      "Tipo de vinculación",
+      "Fijo"
+     ]
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Guárdelo: queda en el dispositivo aunque no haya señal.",
+   "acciones": [
+    {
+     "clic": "Guardar (offline)"
+    }
+   ],
+   "ms": 2400
+  },
+  {
+   "texto": "Ahora elija otra norma, por ejemplo Rainforest Alliance.",
+   "acciones": [
+    {
+     "clic": "Rainforest Alliance"
+    }
+   ],
+   "ms": 2200
+  },
+  {
+   "texto": "«Ventaja inicial»: lo que ya capturó del núcleo cuenta aquí sin volver a llenarlo.",
+   "corto": "«Ventaja inicial»: lo del núcleo cuenta aquí sin volver a llenarlo.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Ventaja inicial\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Ventaja inicial"
+    }
+   ],
+   "ms": 3600
+  }
+ ],
+ "cierre": "Capture una vez, úselo en varias normas",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

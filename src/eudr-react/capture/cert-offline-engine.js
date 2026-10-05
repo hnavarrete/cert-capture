@@ -186,6 +186,10 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
             await db.table(STORE).update(row._idb_id, { sync_status: 'synced', server_id: res.serverIds?.[row.local_id] || null, synced_at: Date.now() })
             for (const p of photos) await db.table(PHOTOS).update(p.photo_id, { sync_status: 'synced' })
             await db.table(QUEUE).where('local_id').equals(row.local_id).delete()
+          } else if (res && res.skip) {
+            // El transport NO lo intentó (p. ej., no hay sesión: modo demo o sesión vencida). No es un
+            // error de subida: sigue 'pending' («en este dispositivo») y se reintenta en el próximo flush.
+            // (cert-capture, 5-oct-2026: el modo demo marcaba cada guardado como «error al subir».)
           } else {
             await db.table(STORE).update(row._idb_id, { sync_status: 'failed' })
           }

@@ -1,0 +1,98 @@
+{
+ "id": "productor-hoja-ruta",
+ "orden": 22,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Elegir la norma y ver su hoja de ruta",
+ "resumen": "Cada norma trae su hoja de ruta: pilares, tramos, preguntas y tiempo estimado.",
+ "gancho": "¿Por dónde empezar la auditoría?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "En «Certificación», toque la norma que va a preparar.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"EU Deforestation Regulation\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "EU Deforestation Regulation"
+    },
+    {
+     "clic": "EU Deforestation Regulation"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "La hoja de ruta muestra los tramos, las preguntas y el tiempo estimado.",
+   "acciones": [
+    {
+     "ver": "Hoja de ruta"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Los tramos se agrupan en cuatro pilares: legal, ambiental, social y gestión.",
+   "acciones": [
+    {
+     "ver": "Social y laboral"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Cada tramo indica su tiempo y su estado: sin empezar, en progreso o listo.",
+   "acciones": [
+    {
+     "ver": "sin empezar"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Abajo, el tiempo estimado que falta para completar la norma.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Tiempo restante\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Tiempo restante"
+    }
+   ],
+   "ms": 3200
+  }
+ ],
+ "cierre": "Su hoja de ruta, a la vista",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

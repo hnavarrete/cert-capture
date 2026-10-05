@@ -1,0 +1,114 @@
+{
+ "id": "productor-adjuntar-documento",
+ "orden": 34,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Adjuntar un documento como evidencia",
+ "resumen": "Los puntos que piden evidencia aceptan PDF o imágenes, varios archivos por punto.",
+ "gancho": "¿Le piden evidencias?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  },
+  {
+   "clic": "GLOBAL G.A.P."
+  },
+  {
+   "pausa": 400
+  },
+  {
+   "clic_css": "button:has-text(\"GLOBAL G.A.P. - IFA Fruta y Verdura (edicion Smart)\")"
+  },
+  {
+   "pausa": 600
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Los puntos que piden evidencia traen el botón «Adjuntar documento o foto».",
+   "corto": "Los puntos con evidencia traen «Adjuntar documento o foto».",
+   "acciones": [
+    {
+     "elegir": [
+      "Respuesta FV-Smart 03.02",
+      "Cumple"
+     ]
+    },
+    {
+     "ver": "Adjuntar documento o foto"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Tóquelo y elija el archivo: PDF o imagen, hasta 15 MB.",
+   "acciones": [
+    {
+     "subir": [
+      ".vg-foto-box:has(input[data-field=\"sec_3.fv_smart_03_02__evidencia\"]) input[type=file]",
+      "muestras/procedimiento-capacitacion.pdf"
+     ]
+    },
+    {
+     "ver": "procedimiento-capacitacion.pdf"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "¿Viene en varias partes? Toque «Adjuntar otro archivo».",
+   "acciones": [
+    {
+     "subir": [
+      ".vg-foto-box:has(input[data-field=\"sec_3.fv_smart_03_02__evidencia\"]) input[type=file]",
+      "muestras/registro-capacitacion.pdf"
+     ]
+    },
+    {
+     "ver": "registro-capacitacion.pdf"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Si se equivocó, quítelo con la × antes de guardar.",
+   "acciones": [
+    {
+     "clic_aria": "Quitar registro-capacitacion.pdf"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Toque «Guardar (offline)»: la evidencia queda junto a su respuesta.",
+   "acciones": [
+    {
+     "clic": "Guardar (offline)"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Evidencia adjunta",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

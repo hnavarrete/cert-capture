@@ -1,0 +1,117 @@
+{
+ "id": "productor-mi-progreso",
+ "orden": 50,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Ver Mi progreso en todas las normas",
+ "resumen": "Un tablero con el avance de cada norma y de cada formulario, sin necesidad de señal.",
+ "gancho": "¿Cuánto le falta en cada norma?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  },
+  {
+   "clic_css": "button:has-text(\"Cadena de suministro\")"
+  },
+  {
+   "pausa": 400
+  },
+  {
+   "elegir": [
+    "Commodity EUDR",
+    "Cacao"
+   ]
+  },
+  {
+   "llenar": [
+    "Código HS",
+    "1801"
+   ]
+  },
+  {
+   "clic": "Guardar (offline)"
+  },
+  {
+   "pausa": 600
+  },
+  {
+   "clic": "EU Deforestation Regulation"
+  },
+  {
+   "js": "window.scrollTo(0,0)"
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Arriba, toque «Mi progreso».",
+   "acciones": [
+    {
+     "clic": "Mi progreso"
+    }
+   ],
+   "ms": 2400
+  },
+  {
+   "texto": "Ve cuántos formularios empezó y cuántos están listos para entregar.",
+   "corto": "Formularios empezados y listos para entregar.",
+   "acciones": [
+    {
+     "ver": "formularios iniciados"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Cada norma muestra su porcentaje. Tóquela para ver sus formularios.",
+   "acciones": [
+    {
+     "clic_css": ".tcert-head"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Toque un formulario para abrirlo directamente.",
+   "acciones": [
+    {
+     "clic_css": ".tform:has-text(\"Cadena de suministro\")"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"% completo\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "% completo"
+    }
+   ],
+   "ms": 3200
+  }
+ ],
+ "cierre": "Su avance, de un vistazo",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

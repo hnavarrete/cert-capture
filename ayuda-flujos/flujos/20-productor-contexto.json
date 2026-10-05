@@ -1,0 +1,64 @@
+{
+ "id": "productor-contexto",
+ "orden": 20,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Indicar la finca, el productor y el lote",
+ "resumen": "Antes de capturar, se indica de qué finca y de qué lote es la información.",
+ "gancho": "¿De qué finca es esta captura?",
+ "preparar": [],
+ "pasos": [
+  {
+   "texto": "En «Contexto del levantamiento», escriba la finca.",
+   "acciones": [
+    {
+     "llenar_ph": [
+      "ej. demo-cert",
+      "finca-demo"
+     ]
+    }
+   ],
+   "ms": 1800
+  },
+  {
+   "texto": "Escriba el código del productor.",
+   "acciones": [
+    {
+     "llenar_ph": [
+      "PRD-001",
+      "PRD-DEMO-01"
+     ]
+    }
+   ],
+   "ms": 1800
+  },
+  {
+   "texto": "Y el código de la finca o del lote.",
+   "acciones": [
+    {
+     "llenar_ph": [
+      "GY-001",
+      "LOTE-01"
+     ]
+    }
+   ],
+   "ms": 2200
+  },
+  {
+   "texto": "Todo lo que capture desde ahora queda asociado a ese contexto.",
+   "acciones": [
+    {
+     "ver": "El polígono se conecta"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Contexto listo",
+ "nota": "Con una cuenta real, la finca se elige de la lista «tus fincas»: son las mismas del visor y del ERP.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

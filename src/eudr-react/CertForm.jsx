@@ -253,7 +253,8 @@ function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon })
             ) : null}
           </details>
         ) : null}
-        <select data-field={`${dataField}.estado`} id={`${dataField}.estado`} defaultValue={(valor && valor.estado) || ''}>
+        <select data-field={`${dataField}.estado`} id={`${dataField}.estado`} defaultValue={(valor && valor.estado) || ''}
+          aria-label={'Respuesta ' + (campo.code || campo.key)}>
           <option value="">— sin responder —</option>
           <option value="cumple">Cumple</option>
           <option value="no_cumple">No cumple</option>
@@ -377,7 +378,11 @@ function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon })
  * Lee TODO el formulario desde el DOM (R2 offline-safe) en un objeto data plano por seccion.campo.
  * Maneja checkbox (boolean), multiselect (array de data-opt marcados) y el resto por value.
  */
-export function readFormFromContainer(containerEl) {
+export function readFormFromContainer(containerEl, { blur = true } = {}) {
+  /* 🔴 blur:false para el recálculo EN VIVO (5-oct-2026). El recálculo corre en cada tecla (onInput) y
+     el blur de abajo le quitaba el foco al campo que se estaba escribiendo: de «1801» quedaba «1» y en
+     el teléfono el teclado se cerraba tras cada letra. Lo destapó la grabación del video de ayuda.
+     El blur sigue al GUARDAR, que es donde importa el race del IME (R2). */
   const data = {}
   if (!containerEl) return data
   // multiselects
@@ -391,7 +396,7 @@ export function readFormFromContainer(containerEl) {
   containerEl.querySelectorAll('[data-field]:not([data-multiselect])').forEach(el => {
     const field = el.getAttribute('data-field')
     if (data[field] !== undefined) return
-    try { el.blur && el.blur() } catch {}
+    if (blur) { try { el.blur && el.blur() } catch {} }
     if (el.getAttribute('data-bool') === '1' || el.type === 'checkbox') data[field] = !!el.checked
     else data[field] = el.value != null ? el.value : (el.textContent || '')
   })
@@ -451,7 +456,7 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
   const recalc = useCallback(() => {
     if (!containerRef.current) return
     try {
-      const d = readFormFromContainer(containerRef.current)
+      const d = readFormFromContainer(containerRef.current, { blur: false })
       setProg(progresoDe(schema, d))
       setLiveData(prev => ({ ...prev, ...d }))
     } catch {}
@@ -495,10 +500,10 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
             {prog.major ? <span> · obligaciones mayores conformes {prog.majorPct}%</span> : null}
             {prog.noConformes ? <span className="vg-prog-nc"> · {prog.noConformes} en No cumple</span> : null}
             {prog.vendible
-              ? <span className="vg-prog-badge ok">✓ Listo para certificar</span>
+              ? <span className="vg-prog-badge ok">✓ Listo para la auditoría</span>
               : <span className="vg-prog-badge">
-                  {prog.noConformes ? 'Hay puntos en No cumple: resuélvelos antes de certificar'
-                    : 'Complétalo para certificar y poder compartir'}
+                  {prog.noConformes ? 'Hay puntos en No cumple: resuélvelos antes de la auditoría'
+                    : 'Complétalo para preparar la auditoría y poder compartir'}
                 </span>}
           </div>
         </div>

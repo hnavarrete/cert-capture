@@ -157,6 +157,8 @@ function Login({ onDemo, onAvisoC1 }) {
       <button type="button" className="link demo-link" style={{ marginTop: 12, display: 'block', width: '100%', textAlign: 'center' }} onClick={onDemo}>
         Explorar en modo demo (captura local, sin sincronizar) →
       </button>
+      {/* R-AYUDA: el centro de ayuda en video vive dentro del producto (/ayuda/) */}
+      <a className="ayuda-enlace" href="ayuda/">▶ Ayuda en video</a>
     </div>
   )
 }
@@ -338,7 +340,8 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
 
 export default function App() {
   const [user, setUser] = useState(null)
-  const [demo, setDemo] = useState(false)
+  // ?demo=1 entra directo al modo demostración (enlaces «Probarlo» del centro de ayuda). Captura local, sin sincronizar.
+  const [demo, setDemo] = useState(() => { try { return new URLSearchParams(window.location.search).has('demo') } catch { return false } })
   const [avisoC1, setAvisoC1] = useState(null)   // C1: contrasena en filtraciones. Avisa, no bloquea.
   const [ready, setReady] = useState(false)
   const { status, flush } = useCertCapture(engine)
@@ -461,7 +464,15 @@ export default function App() {
         if (!best[r.form_key] || sc > best[r.form_key].score) best[r.form_key] = { data: d, score: sc }
       }
       const map = {}
-      for (const s of (grouped[certSel] || [])) {
+      /* 🔴 Los tramos del NÚCLEO compartido (shared_*) son de la certificación COMPARTIDO, no de la norma
+         elegida: iterando solo grouped[certSel] nunca tenían estado, la hoja de ruta los mostraba «sin
+         empezar» aunque ya estuvieran capturados y la «Ventaja inicial» no aparecía nunca (lo destapó la
+         grabación del video de ayuda, 5-oct-2026). Se calcula el estado de TODOS los tramos de la ruta. */
+      const claves = new Set((grouped[certSel] || []).map(s => s.form_key))
+      for (const pil of (((bundle.rutas || {})[certSel] || {}).pilares || [])) for (const t of pil.tramos || []) claves.add(t.form_key)
+      for (const fk of claves) {
+        const s = SCHEMAS.find(x => x.form_key === fk)
+        if (!s) continue
         const p = progresoDe(s, best[s.form_key]?.data || {})
         map[s.form_key] = { pct: p.total ? Math.round(100 * p.hechas / p.total) : 0, vendible: !!p.vendible }
       }
@@ -527,6 +538,7 @@ export default function App() {
         <span className="spacer" />
         <button className="link" onClick={() => setTablero(true)}>📊 Mi progreso</button>
         <button className="link" onClick={() => setBoveda(true)}>🔒 Mi bóveda</button>
+        <a className="link" href="ayuda/">▶ Ayuda en video</a>
         <SyncBadge status={status} />
         {!EMBEBIDO ? (
           <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>

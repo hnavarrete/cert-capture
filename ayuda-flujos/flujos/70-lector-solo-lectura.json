@@ -1,0 +1,32 @@
+{
+ "id": "lector-solo-lectura",
+ "actor": "lector",
+ "actor_txt": "Solo lectura",
+ "orden": 70,
+ "solo_texto": true,
+ "titulo": "Revisar sin editar (rol de solo lectura)",
+ "resumen": "Con el rol «Solo lectura» se revisan los formularios y la vista previa, sin modificar nada.",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/",
+ "pasos": [
+  {
+   "texto": "Entre con la cuenta que le compartieron. Arriba aparece su rol: «Solo lectura»."
+  },
+  {
+   "texto": "Elija la finca, la norma y el formulario igual que los demás usuarios."
+  },
+  {
+   "texto": "El formulario muestra «Modo solo lectura»: puede leer respuestas, texto oficial y qué revisa el auditor, pero no editar ni guardar."
+  },
+  {
+   "texto": "Use «Vista previa para el certificador» para ver el informe del formulario."
+  },
+  {
+   "texto": "Para cambiar algo, pídaselo al responsable de la finca: su rol no guarda capturas."
+  }
+ ],
+ "nota": "Este flujo necesita una cuenta real con rol de solo lectura: el video está en preparación.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

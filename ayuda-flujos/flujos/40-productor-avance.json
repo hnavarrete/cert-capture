@@ -1,0 +1,116 @@
+{
+ "id": "productor-avance",
+ "orden": 40,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Ver el avance y cuándo está listo para la auditoría",
+ "resumen": "La barra de avance distingue lo respondido de lo conforme: un «No cumple» no cuenta como listo.",
+ "gancho": "¿Ya está listo para la auditoría?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  },
+  {
+   "clic": "GLOBAL G.A.P."
+  },
+  {
+   "pausa": 400
+  },
+  {
+   "clic_css": "button:has-text(\"GLOBAL G.A.P. - IFA Fruta y Verdura (edicion Smart)\")"
+  },
+  {
+   "pausa": 600
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Arriba del formulario ve el porcentaje completo y las preguntas respondidas.",
+   "corto": "Arriba: el porcentaje completo y las preguntas respondidas.",
+   "acciones": [
+    {
+     "ver": "% completo"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Al responder, el avance sube.",
+   "acciones": [
+    {
+     "elegir": [
+      "Respuesta FV-Smart 03.01",
+      "Cumple"
+     ]
+    },
+    {
+     "ver": "% completo"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Un «No cumple» en una obligación mayor aparece marcado.",
+   "acciones": [
+    {
+     "elegir": [
+      "Respuesta FV-Smart 03.02",
+      "No cumple"
+     ]
+    },
+    {
+     "ver": "en No cumple"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Hay que resolverlo antes de la auditoría: respondido no es lo mismo que conforme.",
+   "corto": "Resuélvalo antes de la auditoría: respondido no es conforme.",
+   "acciones": [
+    {
+     "ver": "resuélvelos antes de la auditoría"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Con la corrección hecha, cámbielo a «Cumple» y el aviso desaparece.",
+   "corto": "Corregido, cámbielo a «Cumple» y el aviso desaparece.",
+   "acciones": [
+    {
+     "elegir": [
+      "Respuesta FV-Smart 03.02",
+      "Cumple"
+     ]
+    },
+    {
+     "ver": "% completo"
+    }
+   ],
+   "ms": 3200
+  }
+ ],
+ "cierre": "Su avance, sin sorpresas",
+ "nota": "La marca «Listo para la auditoría» aparece cuando todas las obligaciones mayores cumplen y al menos el 95 % de las menores. Un formulario vacío nunca aparece como listo.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

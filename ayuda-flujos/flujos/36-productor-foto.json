@@ -1,0 +1,122 @@
+{
+ "id": "productor-foto",
+ "orden": 36,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Tomar o cargar una foto de evidencia",
+ "resumen": "Los campos de foto abren la cámara del teléfono, o dejan cargar una foto ya tomada.",
+ "gancho": "¿Una foto vale como evidencia?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  },
+  {
+   "clic": "Rainforest Alliance"
+  },
+  {
+   "pausa": 400
+  },
+  {
+   "clic_css": "button:has-text(\"Fertilidad y conservación del suelo\")"
+  },
+  {
+   "pausa": 600
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Abra la sección que pide la foto.",
+   "acciones": [
+    {
+     "clic": "Cobertura del suelo y uso de fertilizantes"
+    }
+   ],
+   "ms": 2400
+  },
+  {
+   "texto": "Toque «Tomar / cargar»: en el teléfono se abre la cámara.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Tomar / cargar: Foto de la cobertura\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Tomar / cargar: Foto de la cobertura"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "La foto aparece en miniatura junto a su nombre.",
+   "acciones": [
+    {
+     "subir": [
+      ".vg-foto-box:has(input[data-field=\"cobertura_fertilizacion.foto_cobertura\"]) input[type=file]",
+      "muestras/foto-cobertura-suelo.jpg"
+     ]
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"foto-cobertura-suelo.jpg\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "foto-cobertura-suelo.jpg"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Puede agregar otra foto, o quitar una con la ×.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Agregar otra foto\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Agregar otra foto"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Guarde: la foto queda en el dispositivo y se sube con su respuesta.",
+   "acciones": [
+    {
+     "clic": "Guardar (offline)"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Foto guardada como evidencia",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

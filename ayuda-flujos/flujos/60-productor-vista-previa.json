@@ -1,0 +1,95 @@
+{
+ "id": "productor-vista-previa",
+ "orden": 60,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Vista previa del informe para el auditor",
+ "resumen": "Muestra cómo quedaría el informe de un formulario, como borrador con marca de agua.",
+ "gancho": "¿Cómo lo verá el auditor?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  },
+  {
+   "clic": "GLOBAL G.A.P."
+  },
+  {
+   "pausa": 400
+  },
+  {
+   "clic_css": "button:has-text(\"GLOBAL G.A.P. - IFA Fruta y Verdura (edicion Smart)\")"
+  },
+  {
+   "pausa": 600
+  },
+  {
+   "elegir": [
+    "Respuesta FV-Smart 03.01",
+    "Cumple"
+   ]
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Debajo del formulario, toque «Vista previa para el certificador».",
+   "corto": "Toque «Vista previa para el certificador».",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Vista previa para el certificador\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Vista previa para el certificador"
+    },
+    {
+     "clic": "Vista previa para el certificador"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Ve el informe con sus respuestas, tal como lo leería el auditor.",
+   "foco": "centro",
+   "ms": 3400
+  },
+  {
+   "texto": "Es un borrador con marca de agua; el informe sin marca requiere un plan de pago.",
+   "corto": "Borrador con marca de agua; sin marca, con un plan de pago.",
+   "foco": "centro",
+   "ms": 3400
+  },
+  {
+   "texto": "Toque «Cerrar» para volver al formulario.",
+   "acciones": [
+    {
+     "clic": "Cerrar"
+    }
+   ],
+   "ms": 2400
+  }
+ ],
+ "cierre": "Revise antes de la auditoría",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda",
+ "nota": ""
+}

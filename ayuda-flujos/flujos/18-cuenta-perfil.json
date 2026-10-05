@@ -1,0 +1,31 @@
+{
+ "id": "cuenta-perfil",
+ "actor": "cuenta",
+ "orden": 18,
+ "solo_texto": true,
+ "titulo": "Completar su perfil de productor",
+ "resumen": "La primera vez se pide su identificación: evita duplicados y hace que sus registros sean suyos.",
+ "url": "http://localhost:4173/",
+ "probar": "https://cert.visiongeografica.com/",
+ "pasos": [
+  {
+   "texto": "Elija el tipo de identificación: cédula, RUC o pasaporte, y escriba el número."
+  },
+  {
+   "texto": "Escriba su nombre y apellido; el teléfono es opcional."
+  },
+  {
+   "texto": "Marque la autorización para guardar sus datos y toque «Guardar mi perfil»."
+  },
+  {
+   "texto": "Si no tiene señal, el perfil queda guardado en el dispositivo y se registra al volver la conexión."
+  },
+  {
+   "texto": "Si prefiere hacerlo después, toque «Completar luego»: la app no lo bloquea."
+  }
+ ],
+ "nota": "Esta pantalla aparece solo con una cuenta real que aún no tiene perfil: el video está en preparación.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}
