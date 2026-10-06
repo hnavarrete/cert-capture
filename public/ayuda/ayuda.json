@@ -1,6 +1,6 @@
 {
  "generado_por": "kit_video.py",
- "generado": "2026-10-06T00:12:50",
+ "generado": "2026-10-06T01:04:03",
  "flujos": [
   {
    "id": "cuenta-entrar",
@@ -120,7 +120,7 @@
    "titulo": "Indicar la finca, el productor y el lote",
    "resumen": "Antes de capturar, se indica de qué finca y de qué lote es la información.",
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 23,
+   "segundos": 22,
    "pasos": [
     "En «Contexto del levantamiento», escriba la finca.",
     "Escriba el código del productor.",
@@ -179,7 +179,7 @@
    "titulo": "Llenar un formulario por secciones",
    "resumen": "Cada tramo es un formulario dividido en secciones que se abren y se cierran.",
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 40,
+   "segundos": 39,
    "pasos": [
     "En la hoja de ruta, busque el tramo que va a llenar.",
     "Tóquelo. Arriba ve el avance; cada sección cuenta sus respuestas.",
@@ -249,7 +249,7 @@
     "Sus respuestas y sus evidencias siguen ahí, marcadas como guardadas.",
     "Siga donde quedó: cada guardado es una versión nueva y las anteriores no se tocan."
    ],
-   "nota": "Lo guardado se retoma en el mismo teléfono o computadora donde se cargó: vive en ese dispositivo. Conviene seguir siempre en el mismo.",
+   "nota": "En el mismo equipo se retoma siempre, aun sin señal. Con su cuenta y su finca elegida, también desde otro teléfono o computadora: al abrir el formulario, la app trae lo que ya está respaldado en el servidor, con sus evidencias. Lo que quedó solo en el otro equipo, sin respaldar, no se puede traer: revise antes la barra de respaldo.",
    "video": "https://vg-cert-videos.pages.dev/productor-retomar.mp4",
    "portada": "https://vg-cert-videos.pages.dev/productor-retomar.jpg",
    "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-retomar-redes.mp4"
@@ -328,25 +328,47 @@
     "Toque «Mi bóveda» para ver qué está respaldado y qué no.",
     "Lo pendiente no se pierde: se sube solo al volver la señal."
    ],
-   "nota": "En la demostración nada se sube al servidor. Con una cuenta real, al volver la señal la app sube lo pendiente sola, y en Mi bóveda queda el botón «Sincronizar ahora».",
+   "nota": "En la demostración nada se sube al servidor. Con una cuenta real, al volver la señal la app sube lo pendiente sola, y en la barra de respaldo y en Mi bóveda queda el botón «Respaldar ahora».",
    "video": "https://vg-cert-videos.pages.dev/productor-sin-senal.mp4",
    "portada": "https://vg-cert-videos.pages.dev/productor-sin-senal.jpg",
    "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-sin-senal-redes.mp4"
   },
   {
+   "id": "productor-respaldo",
+   "actor": "productor",
+   "orden": 43,
+   "titulo": "Ver si lo mío está respaldado",
+   "resumen": "La barra de respaldo, siempre a la vista, dice cuánto está en el servidor, cuánto solo en este equipo y qué hacer si algo falla.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 40,
+   "pasos": [
+    "Debajo del menú está la barra de respaldo: se ve siempre, sin abrir nada.",
+    "Guarde algo y mire la cuenta: «respaldadas» ya están en el servidor; «pendientes», solo en este equipo.",
+    "Si algo falta o falla, la barra dice la causa y qué hacer: iniciar sesión, elegir la finca, esperar la señal o avisar a Visión Geográfica.",
+    "Mi bóveda muestra cada versión: respaldada, en este dispositivo o con error.",
+    "Si queda algo pendiente, toque «Respaldar ahora»."
+   ],
+   "nota": "En la demostración nada se sube al servidor: la barra se queda en amarillo con «Modo demo». Con una cuenta con acceso a la finca, la barra se pone en verde («Todo respaldado en el servidor») cuando no queda nada pendiente, y en el formulario aparece «Registro encadenado: íntegro (N versiones)»: un registro encadenado propio, verificable contra sí mismo.",
+   "video": "https://vg-cert-videos.pages.dev/productor-respaldo.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-respaldo.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-respaldo-redes.mp4"
+  },
+  {
    "id": "productor-sincronizar",
    "actor": "productor",
    "orden": 44,
-   "titulo": "Respaldar en el servidor con su cuenta",
-   "resumen": "Con una cuenta con acceso a la finca, lo capturado se sube al servidor junto con sus evidencias.",
+   "titulo": "Respaldar en el servidor con su cuenta y retomar desde otro equipo",
+   "resumen": "Con una cuenta con acceso a la finca, lo capturado se sube al servidor con sus evidencias, y se retoma desde cualquier equipo.",
    "probar": "https://cert.visiongeografica.com/",
    "segundos": 0,
    "pasos": [
     "Entre con su cuenta de VG y elija su finca en «Contexto del levantamiento».",
     "Al guardar con señal, la app sube la respuesta y sus archivos sola; no hace falta un botón.",
-    "El indicador de arriba cuenta lo pendiente (pend), lo que falló (fall) y lo subido (sync).",
-    "En «Mi bóveda», cada registro dice «respaldado», «en este dispositivo» o «error al subir».",
-    "Si algo quedó pendiente o con error, toque «Sincronizar ahora». Lo que falla no se borra: se vuelve a intentar."
+    "La barra de respaldo, debajo del menú, cuenta las versiones respaldadas y las pendientes. En verde: «Todo respaldado en el servidor».",
+    "Si algo falla, la barra lo dice en lenguaje llano: «Elija su finca para respaldar», «Sin conexión: se respaldará al volver» o «Su cuenta no tiene permiso de escritura en esta finca: avise a Visión Geográfica».",
+    "Toque «Respaldar ahora» para intentarlo en el momento. Lo que falla no se borra: se vuelve a intentar sola.",
+    "En otro teléfono o computadora, entre con la misma cuenta, elija la misma finca y abra el formulario: aparece lo respaldado, con sus evidencias, y el aviso «traído del servidor».",
+    "Arriba del formulario, «Registro encadenado: íntegro (N versiones)» confirma que las versiones del servidor cuadran entre sí: es un registro encadenado propio, verificable contra sí mismo."
    ],
    "nota": "Este flujo necesita una cuenta real con acceso a una finca: el video está en preparación.",
    "video": null,
