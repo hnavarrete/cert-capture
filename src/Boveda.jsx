@@ -4,6 +4,7 @@
 // Campo" del visor. Offline-first: lee de IndexedDB, sirve sin señal.
 import React, { useEffect, useState } from 'react'
 import { db } from './engine.js'
+import { Icono } from './eudr-react/CertForm.jsx'
 
 const FECHA = ts => { try { return new Date(ts).toLocaleString('es', { dateStyle: 'short', timeStyle: 'short' }) } catch { return '' } }
 const esSync = s => s === 'synced' || s === 'ok' || s === 'sincronizado'
@@ -50,8 +51,8 @@ export default function Boveda({ slug, productor, finca, status, onFlush, onClos
     <div className="overlay" onClick={onClose}>
       <div className="sheet" onClick={e => e.stopPropagation()}>
         <div className="sheet-head">
-          <strong>🔒 Mi bóveda{slug ? ` · ${slug}` : ''}</strong>
-          <button className="link" onClick={onClose}>Cerrar ✕</button>
+          <strong><Icono n="lock" />Mi bóveda{slug ? ` · ${slug}` : ''}</strong>
+          <button className="link" onClick={onClose}>Cerrar <Icono n="close" /></button>
         </div>
 
         <div className="tablero">
@@ -60,7 +61,7 @@ export default function Boveda({ slug, productor, finca, status, onFlush, onClos
               <div style={{ padding: '12px 14px', borderRadius: 12, background: porSubir ? 'var(--warn-bg)' : 'var(--ok-bg)', marginBottom: 14 }}>
                 <p style={{ margin: 0, fontWeight: 700, color: porSubir ? 'var(--warn-ink)' : 'var(--ok-ink)' }}>
                   {total === 0 ? 'Tu bóveda está lista'
-                    : porSubir === 0 ? '✓ Todo tu trabajo está respaldado en el servidor'
+                    : porSubir === 0 ? 'Todo tu trabajo está respaldado en el servidor'
                       : `${porSubir} ${porSubir === 1 ? 'registro' : 'registros'} aún en tu dispositivo`}
                 </p>
                 <p className="muted" style={{ margin: '4px 0 0', color: porSubir ? 'var(--warn-ink)' : 'var(--ok-ink)' }}>

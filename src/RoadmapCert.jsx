@@ -7,9 +7,9 @@ import React from 'react'
 
 const COLOR_PILAR = {
   LEGAL_GOBERNANZA: '#1BABE1',
-  AMBIENTAL: '#15803d',
+  AMBIENTAL: '#16a34a',
   SOCIAL_LABORAL: '#7c3aed',
-  GESTION_MEJORA: '#f59e0b'
+  GESTION_MEJORA: '#d97706'
 }
 
 function fmtMin(m) { return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min` }
@@ -79,7 +79,7 @@ export default function RoadmapCert({ cert, ruta, forms, estadoPorForm, onPick }
             {p.tramos.map(t => {
               const s = estadoTramo(est[t.form_key])
               return (
-                <button key={t.form_key} onClick={() => onPick(t.form_key)} style={{ width: '100%', textAlign: 'left', background: '#fcfdfe', border: '1px solid var(--line)', borderRadius: 11, padding: '10px 12px', margin: '0 0 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button key={t.form_key} onClick={() => onPick(t.form_key)} style={{ width: '100%', textAlign: 'left', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 11, padding: '10px 12px', margin: '0 0 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}>{t.titulo}</div>
                     <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>

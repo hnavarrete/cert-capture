@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './eudr-react/index.js'
+import { Icono } from './eudr-react/CertForm.jsx'
+import { rehidratarVersiones, enContexto } from './eudr-react/capture/cert-offline-engine.js'
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
 import { engine, setCaptureSession, db } from './engine.js'
 import { supabase } from './supabase.js'
@@ -23,11 +25,34 @@ const CERT_LABEL = Object.assign(
   Object.fromEntries(CERTS.map(c => [c.key, c.titulo])),
   { FSC: 'FSC — Manejo forestal', PEFC: 'PEFC — Manejo forestal' }
 )
+// Íconos Material Symbols (línea visual VG: nunca emojis en cara pública)
 const CERT_ICON = {
-  GENERAL: '📋', EUDR: '🛡️', FSC: '🌲', FSC_FM: '🌲', FSC_CoC: '🔗', RFA: '🐸',
-  PEFC: '🌲', PEFC_FM: '🌲', PEFC_CoC: '🔗', RSPO: '🌴', ISCC: '🌴', CARBONO: '🌿',
-  USDA_ORGANIC: '🌱', GLOBAL_GAP: '✅', MARBETE_AGROCALIDAD: '🏷️', COMPARTIDO: '🔗'
+  GENERAL: 'assignment', EUDR: 'shield', FSC: 'forest', FSC_FM: 'forest', FSC_CoC: 'link', RFA: 'eco',
+  PEFC: 'park', PEFC_FM: 'park', PEFC_CoC: 'link', RSPO: 'nature', ISCC: 'nature', CARBONO: 'co2',
+  USDA_ORGANIC: 'compost', GLOBAL_GAP: 'verified', MARBETE_AGROCALIDAD: 'sell', COMPARTIDO: 'hub'
 }
+
+/* Estado VIGENTE de cada formulario en el contexto elegido: el mismo pliegue de versiones que usa el
+   formulario al retomarse (rehidratarVersiones). Antes el tablero y la hoja de ruta tomaban «el
+   borrador con más campos», que con guardados parciales podía no ser ninguno de los que se ven. */
+function vigentesPorForm(all, { slug, productor, finca }) {
+  const grupos = {}
+  for (const r of all) {
+    if (!enContexto(r, { company_id: slug || null, productor_id: productor || null, finca_id: finca || null })) continue
+    ;(grupos[r.form_key] = grupos[r.form_key] || []).push(r)
+  }
+  const m = {}
+  for (const [fk, rows] of Object.entries(grupos)) {
+    const v = rehidratarVersiones(rows)
+    const ult = rows.slice().sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0]
+    if (v) m[fk] = { data: v.data, sync: ult && ult.sync_status }
+  }
+  return m
+}
+
+// R-FECHA-VERSIÓN: versión y hora de la construcción (las fija vite.config.js al construir)
+const VG_VERSION = typeof __VG_VERSION__ !== 'undefined' ? __VG_VERSION__ : 'dev'
+const VG_BUILD = typeof __VG_BUILD__ !== 'undefined' ? __VG_BUILD__ : ''
 
 // Roles canónicos del ecosistema (fn_is_canonical_role) mapeados a nivel operativo del encuestador.
 // nivel: admin (god) · gestion · supervision · captura · lectura. De aquí salen las capacidades de la UI.
@@ -155,10 +180,10 @@ function Login({ onDemo, onAvisoC1 }) {
         }}
       />
       <button type="button" className="link demo-link" style={{ marginTop: 12, display: 'block', width: '100%', textAlign: 'center' }} onClick={onDemo}>
-        Explorar en modo demo (captura local, sin sincronizar) →
+        Explorar en modo demo (captura local, sin sincronizar) <Icono n="arrow_forward" />
       </button>
       {/* R-AYUDA: el centro de ayuda en video vive dentro del producto (/ayuda/) */}
-      <a className="ayuda-enlace" href="ayuda/">▶ Ayuda en video</a>
+      <a className="ayuda-enlace" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
     </div>
   )
 }
@@ -256,21 +281,7 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
     let on = true
     ;(async () => {
       const all = await db.cert_responses.toArray()
-      const ctx = all.filter(r => {
-        const rs = r.client_slug || r.company_id
-        if (slug && rs && rs !== slug) return false
-        if (productor && r.productor_id && r.productor_id !== productor) return false
-        if (finca && r.finca_id && r.finca_id !== finca) return false
-        return true
-      })
-      // por cada formulario, el borrador más avanzado (heurística: más campos respondidos)
-      const m = {}
-      for (const r of ctx) {
-        const d = r.data || {}
-        const score = Object.keys(d).length
-        if (!m[r.form_key] || score > m[r.form_key].score) m[r.form_key] = { data: d, score, sync: r.sync_status }
-      }
-      if (on) setBest(m)
+      if (on) setBest(vigentesPorForm(all, { slug, productor, finca }))
     })()
     return () => { on = false }
   }, [slug, productor, finca])
@@ -298,8 +309,8 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
     <div className="overlay" onClick={onClose}>
       <div className="sheet" onClick={e => e.stopPropagation()}>
         <div className="sheet-head">
-          <strong>📊 Mi progreso{slug ? ` · ${slug}` : ''}</strong>
-          <button className="link" onClick={onClose}>Cerrar ✕</button>
+          <strong><Icono n="bar_chart" />Mi progreso{slug ? ` · ${slug}` : ''}</strong>
+          <button className="link" onClick={onClose}>Cerrar <Icono n="close" /></button>
         </div>
         <div className="tablero">
           {best === null ? <p className="muted">Cargando tu avance…</p> : (
@@ -311,7 +322,7 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
               {filas.map(f => (
                 <div key={f.cert} className="tcert">
                   <button className="tcert-head" onClick={() => setAbierta(a => a === f.cert ? null : f.cert)}>
-                    <span className="ic">{CERT_ICON[f.cert] || '📄'}</span>
+                    <Icono n={CERT_ICON[f.cert] || 'description'} className="ic" />
                     <span className="tcert-name">{CERT_LABEL[f.cert] || f.cert}</span>
                     <span className="tcert-meta muted">{f.iniciados}/{f.nForms} form · {f.hechas}/{f.total} campos</span>
                     <span className="tcert-pct">{f.pct}%</span>
@@ -323,7 +334,7 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
                         <button key={fm.form_key} className="tform" onClick={() => onPick(f.cert, fm.form_key)}>
                           <span className="tform-name">{fm.titulo}</span>
                           <span className="tform-bar"><span className="pfill" style={{ width: fm.p.pct + '%' }} /></span>
-                          <span className="tform-pct muted">{fm.p.pct}%{fm.p.vendible ? ' ✓' : ''}</span>
+                          <span className="tform-pct muted">{fm.p.pct}%{fm.p.vendible ? <Icono n="check_circle" className="ok" /> : null}</span>
                         </button>
                       ))}
                     </div>
@@ -450,19 +461,7 @@ export default function App() {
   useEffect(() => {
     let on = true
     ;(async () => {
-      const all = await db.cert_responses.toArray()
-      const ctx = all.filter(r => {
-        const rs = r.client_slug || r.company_id
-        if (slug && rs && rs !== slug) return false
-        if (productor && r.productor_id && r.productor_id !== productor) return false
-        if (finca && r.finca_id && r.finca_id !== finca) return false
-        return true
-      })
-      const best = {}
-      for (const r of ctx) {
-        const d = r.data || {}; const sc = Object.keys(d).length
-        if (!best[r.form_key] || sc > best[r.form_key].score) best[r.form_key] = { data: d, score: sc }
-      }
+      const best = vigentesPorForm(await db.cert_responses.toArray(), { slug, productor, finca })
       const map = {}
       /* 🔴 Los tramos del NÚCLEO compartido (shared_*) son de la certificación COMPARTIDO, no de la norma
          elegida: iterando solo grouped[certSel] nunca tenían estado, la hoja de ruta los mostraba «sin
@@ -536,9 +535,9 @@ export default function App() {
         <span className="brand"><span className="dot" /> VG · Certificaciones</span>
         {rol && ROLES[rol] ? <span className={'rolbadge ' + caps.nivel}>{ROLES[rol].label}</span> : null}
         <span className="spacer" />
-        <button className="link" onClick={() => setTablero(true)}>📊 Mi progreso</button>
-        <button className="link" onClick={() => setBoveda(true)}>🔒 Mi bóveda</button>
-        <a className="link" href="ayuda/">▶ Ayuda en video</a>
+        <button className="link" onClick={() => setTablero(true)}><Icono n="bar_chart" />Mi progreso</button>
+        <button className="link" onClick={() => setBoveda(true)}><Icono n="lock" />Mi bóveda</button>
+        <a className="link" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
         <SyncBadge status={status} />
         {!EMBEBIDO ? (
           <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
@@ -576,7 +575,7 @@ export default function App() {
           {certKeys.map(c => (
             <button key={c} className={'chip ' + (certSel === c ? 'sel' : '')}
               onClick={() => { setCertSel(c); setFormKey('') }}>
-              <span className="ic">{CERT_ICON[c] || '📄'}</span>{CERT_LABEL[c] || c}
+              <Icono n={CERT_ICON[c] || 'description'} className="ic" />{CERT_LABEL[c] || c}
             </button>
           ))}
         </div>
@@ -589,9 +588,10 @@ export default function App() {
       {schema ? (
         <div className="card">
           {caps.esLector ? (
-            <div className="rol-aviso lectura">👁️ Modo solo lectura. Tu rol puede revisar y previsualizar, pero no editar ni guardar capturas.</div>
+            <div className="rol-aviso lectura"><Icono n="visibility" />Modo solo lectura. Tu rol puede revisar y previsualizar, pero no editar ni guardar capturas.</div>
           ) : null}
           <CertForm
+            key={[formKey, slug, productor, finca].join('|')}
             schema={schema}
             engine={engine}
             readonly={caps.esLector}
@@ -606,7 +606,7 @@ export default function App() {
             onSaved={(res) => { /* el badge refleja el estado; el sync es automático */ }}
           />
           <div className="export-bar">
-            <button type="button" className="primary" onClick={handlePreview}>📄 Vista previa para el certificador</button>
+            <button type="button" className="primary" onClick={handlePreview}><Icono n="description" />Vista previa para el certificador</button>
             <span className="muted">Borrador con marca de agua. El entregable válido para entregar requiere un plan de pago.</span>
           </div>
         </div>
@@ -621,7 +621,8 @@ export default function App() {
       )}
 
       <footer className="foot muted">
-        {SCHEMAS.length} formularios · {bundle.totales?.n_control_points || '—'} puntos de control · datos sellados con cadena de integridad. noindex.
+        {SCHEMAS.length} formularios · {bundle.totales?.n_control_points || '—'} puntos de control · datos sellados con cadena de integridad.
+        <div className="foot-vg">VG Certificaciones™ · Visión Geográfica™ · Versión {VG_VERSION}{VG_BUILD ? ' · ' + VG_BUILD : ''}</div>
       </footer>
 
       {tablero ? (
@@ -646,7 +647,7 @@ export default function App() {
           <div className="sheet" onClick={e => e.stopPropagation()}>
             <div className="sheet-head">
               <strong>Vista previa para el certificador</strong>
-              <button className="link" onClick={() => setPreview(null)}>Cerrar ✕</button>
+              <button className="link" onClick={() => setPreview(null)}>Cerrar <Icono n="close" /></button>
             </div>
             <iframe className="sheet-frame" srcDoc={preview} title="Vista previa cert-ready" />
           </div>

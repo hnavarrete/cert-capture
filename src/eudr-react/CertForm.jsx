@@ -8,20 +8,34 @@
 //  - R22: el campo gps_polygon ofrece CONECTAR el polígono del visor (no recapturar) vía onConnectPolygon.
 //  - Antifraude: si el engine devuelve flags/nivel, se muestran (la UI no miente sobre el estado del dato).
 
-import React, { useRef, useState, useCallback, useEffect } from 'react'
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 
 const TIPOS_TEXTO = new Set(['text', 'email', 'tel', 'number', 'decimal', 'date'])
 
 function fieldKey(seccionKey, campoKey) { return `${seccionKey}.${campoKey}` }
 
+// Ícono de la línea visual de VG (Material Symbols). Nunca emojis en cara pública (R28).
+export function Icono({ n, className = '' }) {
+  return <span className={'material-symbols-outlined vg-ic ' + className} aria-hidden="true">{n}</span>
+}
+
+/* 🔴 La respuesta de un punto de control vive en `<clave>.estado` (así la escribe readFormFromContainer),
+   no en `value[clave].estado`. Leyendo la forma equivocada, ni el contador de la sección ni el
+   formulario reabierto veían nada respondido (5-oct-2026). */
+function respuestaDe(value, sec, c) {
+  const k = fieldKey(sec.key, c.key)
+  if (c.tipo === 'control_point') return value[k + '.estado'] ?? (value[k] && value[k].estado)
+  return value[k]
+}
+const lleno = v => v !== undefined && v !== null && v !== '' && v !== false && !(Array.isArray(v) && v.length === 0)
+
 // Conteo respondidas/total por sección (badge del acordeón — gamificación seria)
 function contarSeccion(sec, value = {}) {
   let total = 0, hechas = 0
   for (const c of (sec.campos || [])) {
+    if (c.tipo === 'nota' || c.tipo === 'info') continue
     total++
-    const v = value[fieldKey(sec.key, c.key)]
-    const resp = (c.tipo === 'control_point') ? (v && v.estado) : v
-    if (resp !== undefined && resp !== null && resp !== '') hechas++
+    if (lleno(respuestaDe(value, sec, c))) hechas++
   }
   return { total, hechas }
 }
@@ -105,9 +119,9 @@ function visible(showIf, data) {
 // (MapView + editor de geometría, vía el bridge SSO de #07/#11) y devuelve el geoshape. El polígono se
 // REUSA del visor (no se recaptura, no hay otro mapa embebido ni cache de tiles propio). El host puede
 // devolver un GeoJSON/geoshape directo o { geoshape, origen }. Se guarda el geoshape + poligono_origen.
-function CampoPoligono({ campo, dataField, valor, onConnectPolygon }) {
+function CampoPoligono({ campo, dataField, valor, valorOrigen, onConnectPolygon }) {
   const [geo, setGeo] = useState(valor ? (typeof valor === 'string' ? valor : JSON.stringify(valor)) : '')
-  const [origen, setOrigen] = useState('')
+  const [origen, setOrigen] = useState(valorOrigen || '')
   const [busy, setBusy] = useState(false)
   async function conectar() {
     if (!onConnectPolygon) return
@@ -125,12 +139,12 @@ function CampoPoligono({ campo, dataField, valor, onConnectPolygon }) {
     <div className="vg-field vg-poly">
       <label>{campo.label}{campo.required ? ' *' : ''}</label>
       <button type="button" onClick={conectar} disabled={busy}>
-        {busy ? 'Abriendo el mapa…' : (geo ? '🗺️ Polígono listo · cambiar' : '🗺️ Conectar polígono del visor')}
+        <Icono n="map" />{busy ? 'Abriendo el mapa…' : (geo ? 'Polígono listo · cambiar' : 'Conectar polígono del visor')}
       </button>
       <input type="hidden" data-field={dataField} id={dataField} value={geo} readOnly />
       <input type="hidden" data-field={`${dataField}__origen`} value={origen} readOnly />
       {geo
-        ? <small className="vg-poly-ok">✓ Polígono {origen === 'capturado_aqui' ? 'dibujado en campo' : 'conectado del visor'}.</small>
+        ? <small className="vg-poly-ok"><Icono n="check_circle" /> Polígono {origen === 'capturado_aqui' ? 'dibujado en campo' : 'conectado del visor'}.</small>
         : <small>Si la finca ya está digitalizada en el visor, se reutiliza el polígono (no se recaptura).</small>}
     </div>
   )
@@ -157,18 +171,47 @@ function CampoPoligono({ campo, dataField, valor, onConnectPolygon }) {
 //    igual que antes para no cambiar el contrato ya existente; los siguientes llevan sufijo.
 const ACEPTA_DOCUMENTO = 'application/pdf,image/*'
 
-function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo = 'foto' }) {
+// Evidencia YA GUARDADA en una versión anterior (5-oct-2026). Se muestra al retomar el formulario y
+// pasa a la versión nueva como referencia. No lleva botón de quitar: retirar lo ya guardado es otra
+// cosa y lleva motivo (ver el plan, Fase 2).
+function PreviaItem({ f, getBlob }) {
+  const [url, setUrl] = useState(null)
+  useEffect(() => {
+    let on = true, u = null
+    if (getBlob && (f.mime || '').indexOf('image/') === 0) {
+      getBlob(f.photo_id).then(b => { if (on && b) { u = URL.createObjectURL(b); setUrl(u) } }).catch(() => {})
+    }
+    return () => { on = false; if (u) URL.revokeObjectURL(u) }
+  }, [f.photo_id, f.mime, getBlob])
+  return (
+    <div className="vg-foto-item guardado">
+      {url ? <img className="vg-foto-prev" src={url} alt="" /> : <Icono n={(f.mime || '').indexOf('pdf') >= 0 ? 'picture_as_pdf' : 'draft'} className="vg-foto-doc" />}
+      <span className="vg-foto-name">{f.name || 'archivo'}</span>
+      <span className="vg-foto-ok"><Icono n="cloud_done" />guardado</span>
+    </div>
+  )
+}
+
+// siguiente clave libre del campo: la 1.ª es la clave sola; las demás llevan #2, #3… (contrato existente)
+function claveLibre(fk, usadas) {
+  for (let n = 1; ; n++) { const c = n === 1 ? fk : fk + '#' + n; if (!usadas.has(c)) return c }
+}
+
+function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo = 'foto', previas = [], getBlob, guardadoN = 0 }) {
   const inputRef = useRef(null)
   const [archivos, setArchivos] = useState([])
   const esDoc = modo === 'documento'
+  // tras guardar, lo recién adjuntado ya es parte de `previas` (lo trae el formulario): se limpia aquí
+  useEffect(() => { if (guardadoN) setArchivos([]) }, [guardadoN])
 
   function onPick(e) {
     const elegidos = Array.from(e.target.files || [])
     e.target.value = ''            // permite volver a elegir el MISMO archivo si se quitó por error
     if (!elegidos.length) return
-    const agregados = elegidos.map((file, i) => {
-      const n = archivos.length + i
-      const clave = n === 0 ? fk : fk + '#' + (n + 1)
+    const usadas = new Set([...previas.map(p => p.field), ...archivos.map(a => a.clave)])
+    const agregados = elegidos.map((file) => {
+      const clave = claveLibre(fk, usadas)
+      usadas.add(clave)
       if (addFoto) addFoto(clave, file)
       if ((file.type || '').indexOf('image/') === 0) {
         try {
@@ -187,7 +230,8 @@ function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo =
     setArchivos(a => a.filter(x => x.clave !== clave))
   }
 
-  const etiqueta = archivos.length
+  const hay = archivos.length + previas.length
+  const etiqueta = hay
     ? (esDoc ? 'Adjuntar otro archivo' : 'Agregar otra foto')
     : esDoc
       ? (compacto ? 'Adjuntar documento o foto' : (label ? 'Adjuntar: ' + label : 'Adjuntar documento o foto'))
@@ -199,24 +243,25 @@ function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo =
         accept={esDoc ? ACEPTA_DOCUMENTO : 'image/*'}
         capture={esDoc ? undefined : 'environment'}
         style={{ display: 'none' }} onChange={onPick} />
-      <input type="hidden" data-field={fk} value={archivos.map(a => a.nombre).join(' · ')} readOnly />
+      <input type="hidden" data-field={fk} value={[...previas.map(p => p.name || 'archivo'), ...archivos.map(a => a.nombre)].join(' · ')} readOnly />
       <button type="button" className="vg-foto" onClick={() => inputRef.current && inputRef.current.click()}>
-        {esDoc ? '📎 ' : '📷 '}{etiqueta}
+        <Icono n={esDoc ? 'attach_file' : 'photo_camera'} />{etiqueta}
       </button>
-      {esDoc && !archivos.length ? <small className="vg-foto-ayuda">PDF o imagen, hasta 15 MB cada uno</small> : null}
+      {esDoc && !hay ? <small className="vg-foto-ayuda">PDF o imagen, hasta 15 MB cada uno</small> : null}
+      {previas.map(f => <PreviaItem key={f.photo_id} f={f} getBlob={getBlob} />)}
       {archivos.map(a => (
         <div key={a.clave} className="vg-foto-item">
           {a.preview ? <img className="vg-foto-prev" src={a.preview} alt="" /> : null}
           <span className="vg-foto-name">{a.nombre}</span>
           <button type="button" className="vg-foto-quitar" onClick={() => quitar(a.clave)}
-            title="Quitar este archivo" aria-label={'Quitar ' + a.nombre}>×</button>
+            title="Quitar este archivo" aria-label={'Quitar ' + a.nombre}><Icono n="close" /></button>
         </div>
       ))}
     </div>
   )
 }
 
-function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon }) {
+function Campo({ seccionKey, campo, valor, valores = {}, addFoto, delFoto, onConnectPolygon, ev = {} }) {
   const dataField = fieldKey(seccionKey, campo.key)
   const tipo = campo.tipo || 'text'
   const common = { 'data-field': dataField, id: dataField, defaultValue: valor ?? '' }
@@ -253,7 +298,8 @@ function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon })
             ) : null}
           </details>
         ) : null}
-        <select data-field={`${dataField}.estado`} id={`${dataField}.estado`} defaultValue={(valor && valor.estado) || ''}
+        <select data-field={`${dataField}.estado`} id={`${dataField}.estado`}
+          defaultValue={valores[dataField + '.estado'] || (valor && valor.estado) || ''}
           aria-label={'Respuesta ' + (campo.code || campo.key)}>
           <option value="">— sin responder —</option>
           <option value="cumple">Cumple</option>
@@ -263,14 +309,15 @@ function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon })
         {campo.requiere_evidencia ? (
           /* modo documento: lo que un punto de control pide casi siempre es un papel, no una foto */
           <FotoEvidencia fieldKey={`${dataField}__evidencia`} addFoto={addFoto} delFoto={delFoto}
-            compacto modo="documento" />
+            compacto modo="documento" previas={ev.previasDe ? ev.previasDe(`${dataField}__evidencia`) : []}
+            getBlob={ev.getBlob} guardadoN={ev.guardadoN} />
         ) : null}
       </div>
     )
   }
 
   if (tipo === 'gps_polygon') {
-    return <CampoPoligono campo={campo} dataField={dataField} valor={valor} onConnectPolygon={onConnectPolygon} />
+    return <CampoPoligono campo={campo} dataField={dataField} valor={valor} valorOrigen={valores[dataField + '__origen']} onConnectPolygon={onConnectPolygon} />
   }
 
   /* 🔴 DOCUMENT — 55 campos en 24 formularios (14-sep-2026). Sin esta rama caían al <input> de
@@ -283,7 +330,7 @@ function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon })
       <div className="vg-field">
         <label>{campo.label}{campo.required ? ' *' : ''}</label>
         <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} delFoto={delFoto}
-          modo="documento" />
+          modo="documento" previas={ev.previasDe ? ev.previasDe(dataField) : []} getBlob={ev.getBlob} guardadoN={ev.guardadoN} />
         {campo.help ? <small>{campo.help}</small> : null}
       </div>
     )
@@ -295,7 +342,8 @@ function Campo({ seccionKey, campo, valor, addFoto, delFoto, onConnectPolygon })
     return (
       <div className="vg-field">
         <label>{campo.label}{campo.required ? ' *' : ''}</label>
-        <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} delFoto={delFoto} />
+        <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} delFoto={delFoto}
+          previas={ev.previasDe ? ev.previasDe(dataField) : []} getBlob={ev.getBlob} guardadoN={ev.guardadoN} />
         {campo.help ? <small>{campo.help}</small> : null}
       </div>
     )
@@ -407,13 +455,56 @@ export function readFormFromContainer(containerEl, { blur = true } = {}) {
  * <CertForm schema engine value onSaved onConnectPolygon onPhoto readonly />
  * - schema: un form-schema de @vgsdk/cert-schemas.
  * - engine: instancia de createCertOfflineEngine (offline-first). Si falta, usa onSave(data).
+ * - value: valores iniciales. Si el engine sabe retomar (getLatestState), manda lo guardado.
  * - onSaved(result): callback tras guardar (result trae local_id, sync_status, antifraude...).
+ *
+ * 🔴 RETOMAR LO GUARDADO (5-oct-2026). Antes el formulario se abría SIEMPRE vacío y cada guardado
+ * nacía de cero: quien cargaba por partes durante días veía desaparecer lo del día anterior, aunque
+ * seguía en la bóveda del dispositivo. Ahora, al abrir, se arma el estado vigente con todas las
+ * versiones guardadas de ese formulario en ese contexto (engine.getLatestState) y se muestra, con sus
+ * evidencias. Guardar sigue creando una VERSIÓN NUEVA de la cadena de integridad (la anterior no se
+ * toca), pero ya completa y enlazada a la anterior (`version_de`).
  */
-export default function CertForm({ schema, engine, value = {}, onSave, onSaved, onConnectPolygon, onPhoto, productor_id, finca_id, readonly = false }) {
+export default function CertForm(props) {
+  const { schema, engine, value, productor_id, finca_id } = props
+  const puedeRetomar = !!(engine && typeof engine.getLatestState === 'function')
+  const [base, setBase] = useState(puedeRetomar ? undefined : null)   // undefined = cargando
+  useEffect(() => {
+    if (!puedeRetomar || !schema) return
+    let on = true
+    setBase(undefined)
+    engine.getLatestState(schema.form_key, { productor_id: productor_id || null, finca_id: finca_id || null })
+      .then(b => { if (on) setBase(b || null) })
+      .catch(() => { if (on) setBase(null) })   // si la bóveda no responde, se abre vacío (nunca bloquea)
+    return () => { on = false }
+  }, [puedeRetomar, engine, schema, productor_id, finca_id])
+
+  if (!schema) return null
+  if (base === undefined) return <div className="vg-certform vg-cargando"><Icono n="hourglass_top" /> Abriendo lo guardado…</div>
+  return <CertFormCuerpo key={schema.form_key + '|' + (base?.local_id || 'nuevo')} {...props}
+    value={base ? { ...(value || {}), ...base.data } : (value || {})} base={base} />
+}
+
+// igualdad «de lo que se ve»: vacío, null, false y [] cuentan igual
+const norma = v => (v === undefined || v === null || v === false ? '' : Array.isArray(v) ? v.join('|') : String(v))
+
+const FECHA_HORA = ts => { try { return new Date(ts).toLocaleString('es', { dateStyle: 'long', timeStyle: 'short' }) } catch { return '' } }
+
+function CertFormCuerpo({ schema, engine, value = {}, base = null, onSave, onSaved, onConnectPolygon, onPhoto, productor_id, finca_id, readonly = false }) {
   const containerRef = useRef(null)
   const fotosRef = useRef({})
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState(null)
+  // versión de la que parte el próximo guardado, y lo último que quedó guardado (para no duplicar)
+  const versionDeRef = useRef(base ? base.local_id : null)
+  const guardadoRef = useRef(base ? base.data : null)
+  const [previas, setPrevias] = useState(() => (base ? base.fotos : []))
+  const [guardadoN, setGuardadoN] = useState(0)
+  const getBlob = useMemo(() => (engine && engine.getPhotoBlob ? (id) => engine.getPhotoBlob(id) : null), [engine])
+  const ev = useMemo(() => ({
+    previasDe: (fk) => previas.filter(f => String(f.field || '').split('#')[0] === fk),
+    getBlob, guardadoN
+  }), [previas, getBlob, guardadoN])
 
   // registra el blob de una foto/evidencia por campo (offline-first; se persiste en IDB al guardar)
   const addFoto = useCallback((field, file) => {
@@ -433,12 +524,7 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
   const [montadas, setMontadas] = useState(() => {
     const s = new Set(primeraSec ? [primeraSec] : [])
     for (const sec of (schema?.secciones || [])) {
-      const conDato = (sec.campos || []).some(c => {
-        const v = value[fieldKey(sec.key, c.key)]
-        const r = c.tipo === 'control_point' ? (v && v.estado) : v
-        return r !== undefined && r !== null && r !== ''
-      })
-      if (conDato) s.add(sec.key)
+      if ((sec.campos || []).some(c => lleno(respuestaDe(value, sec, c)))) s.add(sec.key)
     }
     return s
   })
@@ -447,8 +533,9 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
     setMontadas(prev => prev.has(k) ? prev : new Set(prev).add(k))
   }, [])
 
-  // progreso de completitud en vivo (gamificación)
-  const [prog, setProg] = useState({ total: 0, hechas: 0, pct: 0, vendible: false, major: 0, majorPct: 100, minorPct: 100 })
+  // progreso de completitud en vivo (gamificación). Parte de lo guardado: las secciones sin montar
+  // no están en el DOM pero sus respuestas siguen contando.
+  const [prog, setProg] = useState(() => progresoDe(schema, value))
   // liveData = valores actuales (value inicial + lectura del DOM en cada cambio) para evaluar show_if
   // de forma reactiva sin controlar los inputs (mantiene la seguridad-IME). Merge para no perder
   // valores de secciones colapsadas/no-montadas (controlan condicionales cross-sección).
@@ -457,10 +544,10 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
     if (!containerRef.current) return
     try {
       const d = readFormFromContainer(containerRef.current, { blur: false })
-      setProg(progresoDe(schema, d))
       setLiveData(prev => ({ ...prev, ...d }))
     } catch {}
-  }, [schema])
+  }, [])
+  useEffect(() => { setProg(progresoDe(schema, liveData)) }, [schema, liveData])
   useEffect(() => { recalc() }, [recalc])
 
   const handleSave = useCallback(async () => {
@@ -468,22 +555,44 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
     setSaving(true)
     try {
       const data = readFormFromContainer(containerRef.current)
-      const fotos = Object.values(fotosRef.current).map(f => ({ field: f.field, blob: f.blob, mime: f.mime }))
+      const nuevas = Object.values(fotosRef.current)
+      /* 🔴 Guardar sin haber cambiado nada creaba otra versión idéntica en la bóveda (y otra fila sellada
+         en el servidor al sincronizar). Si lo que se ve es lo mismo que quedó guardado, no se escribe. */
+      const prev = guardadoRef.current
+      if (prev && versionDeRef.current && !nuevas.length && Object.keys(data).every(k => norma(data[k]) === norma(prev[k]))) {
+        setStatus({ sin_cambios: true })
+        return
+      }
+      const fotos = nuevas.map(f => ({ field: f.field, blob: f.blob, mime: f.mime, name: f.name }))
       let result
       if (engine && typeof engine.saveResponse === 'function') {
         result = await engine.saveResponse({
           form_key: schema.form_key, certificacion: schema.certificacion,
-          data, fotos, productor_id, finca_id
+          data, fotos, productor_id, finca_id,
+          version_de: versionDeRef.current || undefined,
+          fotos_previas: previas.map(f => ({ field: f.field, photo_id: f.photo_id }))
         })
       } else if (onSave) {
         result = await onSave(data, fotos)
+      }
+      if (result && result.local_id) {
+        // lo recién guardado pasa a ser «lo guardado»: la próxima versión parte de aquí
+        versionDeRef.current = result.local_id
+        guardadoRef.current = { ...(prev || {}), ...data }
+        const recien = (result.fotos || []).filter(f => !previas.some(p => p.photo_id === f.photo_id)).map(f => {
+          const n = fotosRef.current[f.field] || {}
+          return { field: f.field, photo_id: f.photo_id, name: n.name || null, mime: n.mime || null }
+        })
+        setPrevias(p => [...p, ...recien])
+        fotosRef.current = {}
+        setGuardadoN(n => n + 1)
       }
       setStatus(result || { ok: true })
       if (onSaved) onSaved(result, data)
     } catch (e) {
       setStatus({ error: e.message })
     } finally { setSaving(false) }
-  }, [engine, schema, onSave, onSaved, productor_id, finca_id])
+  }, [engine, schema, onSave, onSaved, productor_id, finca_id, previas])
 
   if (!schema) return null
 
@@ -493,6 +602,14 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
         <h2>{schema.titulo}</h2>
         {schema.descripcion ? <p>{schema.descripcion}</p> : null}
         <span className="vg-cert-tag">{schema.certificacion}</span>
+        {base ? (
+          <div className="vg-retomado" role="status">
+            <Icono n="history" />
+            <span>Retomando lo guardado el {FECHA_HORA(base.updated_at)}
+              {base.versiones > 1 ? ` (${base.versiones} guardados)` : ''}. Lo que agregue se guarda como una
+              versión nueva; las anteriores quedan intactas.</span>
+          </div>
+        ) : null}
         <div className="vg-progreso">
           <div className="vg-prog-bar"><span className={prog.vendible ? 'ok' : ''} style={{ width: prog.pct + '%' }} /></div>
           <div className="vg-prog-info">
@@ -500,7 +617,7 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
             {prog.major ? <span> · obligaciones mayores conformes {prog.majorPct}%</span> : null}
             {prog.noConformes ? <span className="vg-prog-nc"> · {prog.noConformes} en No cumple</span> : null}
             {prog.vendible
-              ? <span className="vg-prog-badge ok">✓ Listo para la auditoría</span>
+              ? <span className="vg-prog-badge ok"><Icono n="check_circle" />Listo para la auditoría</span>
               : <span className="vg-prog-badge">
                   {prog.noConformes ? 'Hay puntos en No cumple: resuélvelos antes de la auditoría'
                     : 'Complétalo para preparar la auditoría y poder compartir'}
@@ -512,14 +629,14 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
       {(schema.secciones || []).map(sec => {
         if (!visible(sec.show_if, liveData)) return null
         const abierta = abiertas.has(sec.key)
-        const cont = contarSeccion(sec, value)
+        const cont = contarSeccion(sec, liveData)
         const completa = cont.total > 0 && cont.hechas === cont.total
         return (
           <section key={sec.key} className={'vg-seccion' + (abierta ? ' abierta' : '')}>
             <h3 className="vg-seccion-head" role="button" tabIndex={0} aria-expanded={abierta}
               onClick={() => toggleSeccion(sec.key)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSeccion(sec.key) } }}>
-              <span className="vg-seccion-caret" aria-hidden="true">{abierta ? '▾' : '▸'}</span>
+              <Icono n={abierta ? 'expand_more' : 'chevron_right'} className="vg-seccion-caret" />
               <span className="vg-seccion-titulo">{sec.titulo}</span>
               <span className={'vg-seccion-cont' + (completa ? ' ok' : '')}>{cont.hechas}/{cont.total}</span>
             </h3>
@@ -530,8 +647,8 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
                   {(sec.campos || []).map(campo => (
                     visible(campo.show_if, liveData) ? (
                       <Campo key={campo.key} seccionKey={sec.key} campo={campo}
-                        valor={value[fieldKey(sec.key, campo.key)]}
-                        addFoto={addFoto} delFoto={delFoto} onConnectPolygon={onConnectPolygon} />
+                        valor={value[fieldKey(sec.key, campo.key)]} valores={value}
+                        addFoto={addFoto} delFoto={delFoto} onConnectPolygon={onConnectPolygon} ev={ev} />
                     ) : null
                   ))}
                 </>
@@ -544,9 +661,13 @@ export default function CertForm({ schema, engine, value = {}, onSave, onSaved, 
       {!readonly ? (
         <footer className="vg-certform-foot">
           <button type="submit" disabled={saving}>{saving ? 'Guardando…' : 'Guardar (offline)'}</button>
-          {status && status.sync_status ? <span className="vg-sync">estado: {status.sync_status}</span> : null}
+          {status && status.sin_cambios ? <span className="vg-sync">Sin cambios desde el último guardado.</span> : null}
+          {status && status.sync_status ? (
+            <span className="vg-sync"><Icono n="check_circle" className="ok" />Guardado en este dispositivo
+              {status.sync_status === 'synced' ? ' y respaldado' : '; se respalda al sincronizar'}.</span>
+          ) : null}
           {status && status.antifraude && status.antifraude.flags && status.antifraude.flags.length ? (
-            <span className="vg-flags">⚠ {status.antifraude.flags.length} alerta(s) · riesgo {status.antifraude.nivel_riesgo}</span>
+            <span className="vg-flags"><Icono n="warning" />{status.antifraude.flags.length} alerta(s) · riesgo {status.antifraude.nivel_riesgo}</span>
           ) : null}
           {status && status.error ? <span className="vg-error">Error: {status.error}</span> : null}
         </footer>

@@ -260,6 +260,38 @@ flujo(id='productor-adjuntar-documento', orden=34, **P,
       ],
       cierre='Evidencia adjunta')
 
+# 5-oct-2026: la grabación destapó que lo guardado NO se retomaba (el formulario se abría vacío). Arreglado en
+# CertForm + engine (getLatestState); este flujo muestra justamente eso: salir, volver y encontrar lo guardado.
+flujo(id='productor-retomar', orden=35, **P,
+      titulo='Salir y retomar donde quedó',
+      resumen='Lo guardado vuelve a aparecer al abrir el formulario, con sus evidencias. Puede cargar por partes, en varios días.',
+      gancho='¿Lo llena por partes?', preparar=contexto() + abrir_tramo('GLOBAL G.A.P.', FV_SMART),
+      pasos=[
+          {'texto': 'Responda lo que tenga a mano y adjunte su evidencia.',
+           'acciones': [{'elegir': ['Respuesta FV-Smart 03.02', 'Cumple']},
+                        {'subir': [caja_archivo('sec_3.fv_smart_03_02__evidencia'), 'muestras/procedimiento-capacitacion.pdf']},
+                        {'ver': 'procedimiento-capacitacion.pdf'}], 'ms': 3000},
+          {'texto': 'Toque «Guardar (offline)»: queda guardado en el dispositivo.',
+           'corto': 'Toque «Guardar (offline)»: queda en el dispositivo.',
+           'acciones': [{'clic': 'Guardar (offline)'}, {'ver': 'Guardado en este dispositivo'}], 'ms': 3000},
+          {'texto': 'Puede salir de la app. Otro día, vuelva a abrir el mismo formulario.',
+           'corto': 'Salga cuando quiera y vuelva a abrir el formulario.',
+           'acciones': [{'ir': DEMO}, {'pausa': 600}] + abrir_tramo('GLOBAL G.A.P.', FV_SMART) + ARRIBA,
+           'foco': 'arriba', 'ms': 3000},
+          {'texto': 'Arriba le avisa que está retomando lo guardado, con la fecha.',
+           'corto': 'Arriba le avisa que retoma lo guardado.',
+           'acciones': centrar('Retomando lo guardado'), 'ms': 3200},
+          {'texto': 'Sus respuestas y sus evidencias siguen ahí, marcadas como guardadas.',
+           'corto': 'Respuestas y evidencias siguen ahí, guardadas.',
+           'acciones': centrar('procedimiento-capacitacion.pdf'), 'ms': 3200},
+          {'texto': 'Siga donde quedó: cada guardado es una versión nueva y las anteriores no se tocan.',
+           'corto': 'Cada guardado es una versión nueva; las anteriores no se tocan.',
+           'acciones': [{'elegir': ['Respuesta FV-Smart 03.03', 'No aplica']}, {'clic': 'Guardar (offline)'}],
+           'ms': 3200},
+      ],
+      cierre='Retome donde quedó',
+      nota='Lo guardado se retoma en el mismo teléfono o computadora donde se cargó: vive en ese dispositivo. Conviene seguir siempre en el mismo.')
+
 flujo(id='productor-foto', orden=36, **P,
       titulo='Tomar o cargar una foto de evidencia',
       resumen='Los campos de foto abren la cámara del teléfono, o dejan cargar una foto ya tomada.',

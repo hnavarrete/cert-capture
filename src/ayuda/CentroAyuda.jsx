@@ -4,6 +4,10 @@
 // Los videos se sirven aparte (R-VIDEO, proyecto de Pages vg-cert-videos): el índice trae direcciones absolutas.
 // Enlace directo a un flujo: /ayuda/#<id>.
 import React, { useEffect, useMemo, useState } from 'react'
+import { Icono } from '../eudr-react/CertForm.jsx'
+
+const VG_VERSION = typeof __VG_VERSION__ !== 'undefined' ? __VG_VERSION__ : 'dev'
+const VG_BUILD = typeof __VG_BUILD__ !== 'undefined' ? __VG_BUILD__ : ''
 
 const url = a => a || undefined   // absolutas (vg-cert-videos.pages.dev) o relativas a /ayuda/
 
@@ -67,7 +71,7 @@ export default function CentroAyuda() {
       <header className="topbar">
         <span className="brand"><span className="dot" /> VG · Certificaciones</span>
         <span className="spacer" />
-        <a className="link" href="../">← Volver a la app</a>
+        <a className="link" href="../"><Icono n="arrow_back" />Volver a la app</a>
       </header>
 
       <div className="card ayuda-cabeza">
@@ -110,7 +114,7 @@ export default function CentroAyuda() {
                   <ol className="ayuda-pasos">{(f.pasos || []).map((p, i) => <li key={i}>{p}</li>)}</ol>
                   {f.nota ? <p className="muted ayuda-nota">{f.nota}</p> : null}
                   <p className="ayuda-acciones">
-                    {f.probar ? <a href={f.probar}>Probarlo →</a> : null}
+                    {f.probar ? <a href={f.probar}>Probarlo <Icono n="arrow_forward" /></a> : null}
                     <a href={'#' + f.id} onClick={e => { e.preventDefault(); abrir(f.id); try { navigator.clipboard.writeText(location.href.split('#')[0] + '#' + f.id) } catch {} }}>
                       Copiar enlace a este tema
                     </a>
@@ -125,6 +129,7 @@ export default function CentroAyuda() {
 
       <footer className="foot muted">
         Visión Geográfica · Certificaciones. La app ayuda a preparar la auditoría; la decisión de certificar es del organismo de certificación.
+        <div className="foot-vg">VG Certificaciones™ · Visión Geográfica™ · Versión {VG_VERSION}{VG_BUILD ? ' · ' + VG_BUILD : ''}</div>
       </footer>
     </div>
   )

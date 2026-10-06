@@ -3,8 +3,22 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// R-FECHA-VERSIÓN: el pie de la app lleva «Versión N · fecha y hora». N = despliegues hechos + 1 (cada
+// despliegue es un commit «deploy: …» en master), la hora es la del reloj de la máquina al construir.
+function versionApp() {
+  try {
+    const n = execFileSync('git', ['log', '--oneline', '--grep=^deploy', 'master'], { cwd: __dirname, encoding: 'utf8' })
+      .split('\n').filter(Boolean).length
+    return String(n + 1)
+  } catch { return 'local' }
+}
+const AHORA = new Intl.DateTimeFormat('es-EC', {
+  timeZone: 'America/Guayaquil', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+}).format(new Date())
 
 // La página de ayuda NO registra el service worker ni enlaza el manifest: vite-plugin-pwa los inyecta con rutas
 // relativas (./registerSW.js, ./manifest.webmanifest) que desde /ayuda/ apuntarían a archivos inexistentes.
@@ -59,6 +73,10 @@ export default defineConfig({
     })
   ],
   base: './',
+  define: {
+    __VG_VERSION__: JSON.stringify(versionApp()),
+    __VG_BUILD__: JSON.stringify(AHORA)
+  },
   build: {
     outDir: 'dist', chunkSizeWarningLimit: 2000,
     // dos páginas: la app (/) y el centro de ayuda en video (/ayuda/), que GitHub Pages sirve como archivo real

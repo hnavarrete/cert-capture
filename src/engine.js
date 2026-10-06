@@ -34,7 +34,12 @@ async function transport({ rows, photos }) {
     //    Path: <client_slug>/<local_id>/<field>.<ext> -> la RLS valida acceso a la finca con el path.
     //    Aseguradas en el servidor + respaldadas; la referencia (path) va en cert_responses.fotos.
     const fotoRefs = []
-    for (const p of (photos || []).filter(x => x.local_id === row.local_id)) {
+    /* 🔴 Una versión nueva hereda evidencias de la anterior (5-oct-2026): el motor las pasa junto con las
+       propias. Antes se filtraba por local_id === row.local_id y la versión subía SIN las heredadas.
+       La ruta usa el local_id de la versión donde se guardó la evidencia: es la misma en todas las
+       versiones, así que una evidencia ya subida no se vuelve a subir (y con upsert sería idempotente). */
+    const ids = new Set((row.fotos || []).map(f => f.photo_id))
+    for (const p of (photos || []).filter(x => x.local_id === row.local_id || ids.has(x.photo_id))) {
       const mime = p.mime || 'image/jpeg'
       const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('pdf') ? 'pdf' : 'jpg'
       /* 🔴 La ruta llevaba solo el nombre del campo y el upload va con upsert:true, así que dos
@@ -43,10 +48,12 @@ async function transport({ rows, photos }) {
          el formato sin migrar nada porque cert_responses está en cero. */
       const safe = String(p.field || 'evidencia').replace(/[^\w.-]/g, '_')
       const sufijo = String(p.photo_id || '').replace(/[^\w]/g, '').slice(0, 8)
-      const path = `${clientSlug || 'sin-slug'}/${row.local_id}/${safe}${sufijo ? '_' + sufijo : ''}.${ext}`
-      const { error: upErr } = await supabase.storage.from('cert-evidencias')
-        .upload(path, p.blob, { upsert: true, contentType: mime })
-      if (upErr) { console.warn('[sync] foto a Storage:', upErr.message); return { ok: false } }
+      const path = `${clientSlug || 'sin-slug'}/${p.local_id || row.local_id}/${safe}${sufijo ? '_' + sufijo : ''}.${ext}`
+      if (p.sync_status !== 'synced') {
+        const { error: upErr } = await supabase.storage.from('cert-evidencias')
+          .upload(path, p.blob, { upsert: true, contentType: mime })
+        if (upErr) { console.warn('[sync] foto a Storage:', upErr.message); return { ok: false } }
+      }
       fotoRefs.push({ field: p.field, path, photo_id: p.photo_id, bucket: 'cert-evidencias' })
     }
     // 2) Subir la respuesta (con las referencias de las fotos ya en Storage).

@@ -87,16 +87,27 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
     const user = getUser() || {}
 
     // 1) Persistir las fotos como BLOB en IDB ANTES de cualquier upload (R2 #3).
+    //    Primero van las heredadas de la versión anterior (ver abajo), en su orden; después las nuevas.
     const fotoRefs = []
+    for (const f of (args.fotos_previas || [])) {
+      if (!f || !f.photo_id || fotoRefs.some(x => x.photo_id === f.photo_id)) continue
+      fotoRefs.push({ field: f.field, photo_id: f.photo_id })
+    }
     for (const f of (args.fotos || [])) {
       if (!f || !f.blob) continue
       const photo_id = uuid()
       await db.table(PHOTOS).put({
         photo_id, local_id, field: f.field, blob: f.blob, mime: f.mime || 'image/jpeg',
-        sync_status: 'pending', created_at: now
+        name: f.name || null, sync_status: 'pending', created_at: now
       })
       fotoRefs.push({ field: f.field, photo_id })
     }
+    /* 🔴 VERSIONES, NO SOBRESCRITURA (5-oct-2026). Cada guardado es un registro NUEVO de la cadena de
+       integridad: la versión anterior queda intacta y sellada, como exige una auditoría. Para que la
+       versión nueva sea COMPLETA (y no solo lo que se tocó en esta sesión), lleva las evidencias que ya
+       estaban guardadas como REFERENCIA a su blob —sin volver a copiarlo— y el local_id de la versión
+       de la que parte (`version_de`). Antes no había ni lo uno ni lo otro: el formulario se abría vacío
+       y cada guardado empezaba de cero. */
 
     // 2) Persistir la respuesta en IDB (R2 #1) — esto es el "guardado" real.
     const record = {
@@ -108,6 +119,7 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
       finca_id: args.finca_id || null,
       data: args.data || {},
       fotos: fotoRefs,
+      version_de: args.version_de || null,
       geom: args.geom || null,
       Email_Usuario: user.email || null,
       Timestamp_Creacion: new Date(now).toISOString(),
@@ -163,7 +175,7 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
     // 4) Intentar flush en background SI hay red. Si falla, queda en queue (no se pierde).
     if (navigatorOnline()) { flush().catch(() => {}) }
 
-    return { local_id, sync_status: 'pending' }
+    return { local_id, sync_status: 'pending', fotos: fotoRefs, version_de: record.version_de }
   }
 
   /**
@@ -180,6 +192,9 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
       for (const row of pendientes) {
         // adjuntar blobs de fotos pendientes de este registro
         const photos = await db.table(PHOTOS).where('local_id').equals(row.local_id).toArray()
+        // + las evidencias que esta versión hereda de una anterior (referencia, el blob vive una sola vez)
+        const heredadas = (row.fotos || []).map(f => f.photo_id).filter(id => id && !photos.some(p => p.photo_id === id))
+        if (heredadas.length) for (const p of await db.table(PHOTOS).bulkGet(heredadas)) if (p) photos.push(p)
         try {
           const res = await transport({ rows: [row], photos })
           if (res && res.ok) {
@@ -216,6 +231,28 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
     return db.table(STORE).where('local_id').equals(local_id).first()
   }
 
+  /**
+   * RETOMAR: estado vigente de un formulario en un contexto (finca/productor/lote), armado con TODAS
+   * sus versiones guardadas en el dispositivo (ver rehidratarVersiones). Es lo que el formulario
+   * muestra al abrirse: sin esto, cada vez se abría vacío y «Puedes salir y retomar» no era verdad.
+   * No escribe nada: solo lee la bóveda local.
+   * @param {string} form_key
+   * @param {object} [ctx] - { company_id, productor_id, finca_id }: el mismo filtro del tablero.
+   * @returns {Promise<null | { data, fotos:[{field,photo_id,name,mime}], local_id, versiones, updated_at }>}
+   */
+  async function getLatestState(form_key, ctx = {}) {
+    if (!form_key) return null
+    // sin company_id explícito, el de la sesión actual (la finca elegida), como al guardar
+    const c = { ...ctx, company_id: ctx.company_id !== undefined ? ctx.company_id : getCompanyId() }
+    const rows = (await db.table(STORE).where('form_key').equals(form_key).toArray())
+      .filter(r => enContexto(r, c))
+    if (!rows.length) return null
+    const ids = [...new Set(rows.flatMap(r => (r.fotos || []).map(f => f.photo_id)).filter(Boolean))]
+    const fotosPorId = {}
+    if (ids.length) for (const p of await db.table(PHOTOS).bulkGet(ids)) if (p) fotosPorId[p.photo_id] = p
+    return rehidratarVersiones(rows, fotosPorId)
+  }
+
   /** Blob de una foto offline (para mostrar sin red). */
   async function getPhotoBlob(photo_id) {
     const p = await db.table(PHOTOS).get(photo_id)
@@ -243,7 +280,78 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
 
   refreshCounts()
 
-  return { saveResponse, flush, listResponses, getResponse, getPhotoBlob, verifyResponseChain, onStatus, refreshCounts, statusSnapshot }
+  return { saveResponse, flush, listResponses, getResponse, getLatestState, getPhotoBlob, verifyResponseChain, onStatus, refreshCounts, statusSnapshot }
+}
+
+/**
+ * ¿El registro pertenece al contexto elegido? Mismo criterio laxo del tablero de progreso: un dato
+ * que el registro no trae (sin finca, sin productor) no lo excluye.
+ */
+export function enContexto(r, { company_id, productor_id, finca_id } = {}) {
+  const rs = r.client_slug || r.company_id
+  if (company_id && rs && rs !== company_id) return false
+  if (productor_id && r.productor_id && r.productor_id !== productor_id) return false
+  if (finca_id && r.finca_id && r.finca_id !== finca_id) return false
+  return true
+}
+
+const vacio = v => v === undefined || v === null || v === '' || v === false || (Array.isArray(v) && v.length === 0)
+
+/**
+ * Pliega las versiones guardadas de UN formulario en su estado vigente (función pura, sin IDB).
+ *
+ * 🔴 Dos clases de versión, y por qué se tratan distinto (5-oct-2026):
+ *  - Versión que CONTINÚA otra (`version_de`): se guardó con el formulario mostrando lo anterior, así
+ *    que lo que trae es el estado completo de lo que se vio. Un campo vacío ahí es un vaciado
+ *    deliberado y SÍ borra el valor previo. Sus evidencias son la lista completa.
+ *  - Versión SIN `version_de` (todas las anteriores a este arreglo): se guardó desde un formulario que
+ *    se abría VACÍO. Sus campos vacíos no son decisiones, son el formulario en blanco: no pisan nada.
+ *    Solo aporta lo que sí trae, y sus evidencias se SUMAN (cada sesión subía las suyas). Así lo que la
+ *    persona cargó por partes durante días vuelve a aparecer junto, sin perder ninguna parte.
+ *
+ * @param {Array} rows - registros de cert_responses del mismo form_key (cualquier orden).
+ * @param {object} [fotosPorId] - photo_id → registro de cert_photos (para nombre y tipo).
+ */
+export function rehidratarVersiones(rows, fotosPorId = {}) {
+  const orden = (rows || []).slice().sort((a, b) => (a.created_at || a.updated_at || 0) - (b.created_at || b.updated_at || 0))
+  if (!orden.length) return null
+  let data = {}
+  let fotos = []
+  const nombres = {}   // photo_id → nombre, tomado de la versión donde la evidencia se guardó por primera vez
+  for (const r of orden) {
+    const d = r.data || {}
+    const refs = (r.fotos || []).filter(f => f && f.photo_id).map(f => {
+      const p = fotosPorId[f.photo_id] || {}
+      if (!(f.photo_id in nombres)) nombres[f.photo_id] = p.name || nombreHeredado(d, f.field)
+      return { field: f.field, photo_id: f.photo_id, mime: p.mime || null, name: nombres[f.photo_id], size: p.blob?.size ?? null }
+    })
+    if (r.version_de) {
+      data = { ...data, ...d }
+      fotos = refs
+    } else {
+      for (const [k, v] of Object.entries(d)) if (!vacio(v)) data[k] = v
+      for (const f of refs) {
+        // la misma evidencia guardada dos veces en una sesión (mismo campo, nombre y tamaño) no se duplica
+        const dup = fotos.some(x => x.photo_id === f.photo_id ||
+          (base(x.field) === base(f.field) && x.name && x.name === f.name && x.size != null && x.size === f.size))
+        if (!dup) fotos.push(f)
+      }
+    }
+  }
+  // el campo de evidencia guarda los nombres de TODOS sus archivos vigentes (lo lee la vista previa)
+  const porCampo = {}
+  for (const f of fotos) (porCampo[base(f.field)] = porCampo[base(f.field)] || []).push(f.name || 'archivo')
+  for (const [k, nombres] of Object.entries(porCampo)) data[k] = nombres.join(' · ')
+  const ult = orden[orden.length - 1]
+  return { data, fotos, local_id: ult.local_id, versiones: orden.length, updated_at: ult.updated_at || ult.created_at || null }
+}
+
+function base(field) { return String(field || '').split('#')[0] }
+// versiones viejas: el blob no guardaba su nombre, pero el campo sí (nombres unidos con « · », en orden)
+function nombreHeredado(data, field) {
+  const [b, n] = String(field || '').split('#')
+  const nombres = String(data[b] || '').split(' · ').filter(Boolean)
+  return nombres[n ? parseInt(n, 10) - 1 : 0] || null
 }
 
 /**
