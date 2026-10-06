@@ -1,6 +1,6 @@
 {
  "generado_por": "kit_video.py",
- "generado": "2026-10-05T18:38:33",
+ "generado": "2026-10-06T00:12:50",
  "flujos": [
   {
    "id": "cuenta-entrar",
@@ -159,7 +159,7 @@
    "titulo": "Núcleo compartido: capturar una vez para varias normas",
    "resumen": "Los tramos del núcleo se llenan una sola vez y cuentan para todas las normas que los usan.",
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 34,
+   "segundos": 33,
    "pasos": [
     "Los tramos marcados «núcleo» alimentan varias normas a la vez.",
     "Ábralo y responda una vez.",
@@ -232,6 +232,27 @@
    "video": "https://vg-cert-videos.pages.dev/productor-adjuntar-documento.mp4",
    "portada": "https://vg-cert-videos.pages.dev/productor-adjuntar-documento.jpg",
    "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-adjuntar-documento-redes.mp4"
+  },
+  {
+   "id": "productor-retomar",
+   "actor": "productor",
+   "orden": 35,
+   "titulo": "Salir y retomar donde quedó",
+   "resumen": "Lo guardado vuelve a aparecer al abrir el formulario, con sus evidencias. Puede cargar por partes, en varios días.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 45,
+   "pasos": [
+    "Responda lo que tenga a mano y adjunte su evidencia.",
+    "Toque «Guardar (offline)»: queda guardado en el dispositivo.",
+    "Puede salir de la app. Otro día, vuelva a abrir el mismo formulario.",
+    "Arriba le avisa que está retomando lo guardado, con la fecha.",
+    "Sus respuestas y sus evidencias siguen ahí, marcadas como guardadas.",
+    "Siga donde quedó: cada guardado es una versión nueva y las anteriores no se tocan."
+   ],
+   "nota": "Lo guardado se retoma en el mismo teléfono o computadora donde se cargó: vive en ese dispositivo. Conviene seguir siempre en el mismo.",
+   "video": "https://vg-cert-videos.pages.dev/productor-retomar.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/productor-retomar.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/productor-retomar-redes.mp4"
   },
   {
    "id": "productor-foto",
