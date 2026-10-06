@@ -1,0 +1,129 @@
+{
+ "id": "productor-respaldo",
+ "orden": 43,
+ "actor": "productor",
+ "actor_txt": "Productor · finca",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "titulo": "Ver si lo mío está respaldado",
+ "resumen": "La barra de respaldo, siempre a la vista, dice cuánto está en el servidor, cuánto solo en este equipo y qué hacer si algo falla.",
+ "gancho": "¿Lo suyo está a salvo?",
+ "preparar": [
+  {
+   "llenar_ph": [
+    "ej. demo-cert",
+    "finca-demo"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "PRD-001",
+    "PRD-DEMO-01"
+   ]
+  },
+  {
+   "llenar_ph": [
+    "GY-001",
+    "LOTE-01"
+   ]
+  }
+ ],
+ "pasos": [
+  {
+   "texto": "Debajo del menú está la barra de respaldo: se ve siempre, sin abrir nada.",
+   "corto": "Debajo del menú, la barra de respaldo: siempre a la vista.",
+   "acciones": [
+    {
+     "ver": "lo que guarde queda solo en este equipo"
+    }
+   ],
+   "foco": "arriba",
+   "ms": 3200
+  },
+  {
+   "texto": "Guarde algo y mire la cuenta: «respaldadas» ya están en el servidor; «pendientes», solo en este equipo.",
+   "corto": "«Respaldadas»: en el servidor. «Pendientes»: solo en este equipo.",
+   "acciones": [
+    {
+     "clic_css": "button:has-text(\"Cadena de suministro\")"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Commodity EUDR\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Commodity EUDR"
+    },
+    {
+     "elegir": [
+      "Commodity EUDR",
+      "Café"
+     ]
+    },
+    {
+     "clic": "Guardar (offline)"
+    },
+    {
+     "pausa": 600
+    },
+    {
+     "js": "window.scrollTo(0, 0)"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "1 pendiente"
+    }
+   ],
+   "foco": "arriba",
+   "ms": 3600
+  },
+  {
+   "texto": "Si algo falta o falla, la barra dice la causa y qué hacer: iniciar sesión, elegir la finca, esperar la señal o avisar a Visión Geográfica.",
+   "corto": "Si algo falta o falla, dice la causa y qué hacer.",
+   "acciones": [
+    {
+     "ver": "Inicie sesión para respaldar"
+    }
+   ],
+   "foco": "arriba",
+   "ms": 3600
+  },
+  {
+   "texto": "Mi bóveda muestra cada versión: respaldada, en este dispositivo o con error.",
+   "corto": "Mi bóveda: cada versión, respaldada o no.",
+   "acciones": [
+    {
+     "clic": "Mi bóveda"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "ver": "aún en tu dispositivo"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Si queda algo pendiente, toque «Respaldar ahora».",
+   "acciones": [
+    {
+     "ver": "Respaldar ahora"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "cierre": "Sepa siempre qué está a salvo",
+ "nota": "En la demostración nada se sube al servidor: la barra se queda en amarillo con «Modo demo». Con una cuenta con acceso a la finca, la barra se pone en verde («Todo respaldado en el servidor») cuando no queda nada pendiente, y en el formulario aparece «Registro encadenado: íntegro (N versiones)»: un registro encadenado propio, verificable contra sí mismo.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

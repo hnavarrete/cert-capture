@@ -174,20 +174,32 @@ const ACEPTA_DOCUMENTO = 'application/pdf,image/*'
 // Evidencia YA GUARDADA en una versión anterior (5-oct-2026). Se muestra al retomar el formulario y
 // pasa a la versión nueva como referencia. No lleva botón de quitar: retirar lo ya guardado es otra
 // cosa y lleva motivo (ver el plan, Fase 2).
-function PreviaItem({ f, getBlob }) {
+/* 🔴 Evidencia guardada en OTRO equipo (6-oct-2026): su archivo no está aquí, está en el servidor. No se
+   descarga ni se copia: se pide una URL firmada (getUrl) para verla. */
+function PreviaItem({ f, getBlob, getUrl }) {
   const [url, setUrl] = useState(null)
+  const [remota, setRemota] = useState(null)
+  const esImagen = (f.mime || '').indexOf('image/') === 0
   useEffect(() => {
     let on = true, u = null
-    if (getBlob && (f.mime || '').indexOf('image/') === 0) {
-      getBlob(f.photo_id).then(b => { if (on && b) { u = URL.createObjectURL(b); setUrl(u) } }).catch(() => {})
-    }
+    ;(async () => {
+      const b = getBlob ? await getBlob(f.photo_id).catch(() => null) : null
+      if (!on) return
+      if (b) { if (esImagen) { u = URL.createObjectURL(b); setUrl(u) } return }
+      if (getUrl) {
+        const r = await getUrl(f.photo_id).catch(() => null)
+        if (on && r && r.url) { if (r.local) u = r.url; setRemota(r.url) }
+      }
+    })()
     return () => { on = false; if (u) URL.revokeObjectURL(u) }
-  }, [f.photo_id, f.mime, getBlob])
+  }, [f.photo_id, esImagen, getBlob, getUrl])
+  const vista = url || (remota && esImagen ? remota : null)
   return (
     <div className="vg-foto-item guardado">
-      {url ? <img className="vg-foto-prev" src={url} alt="" /> : <Icono n={(f.mime || '').indexOf('pdf') >= 0 ? 'picture_as_pdf' : 'draft'} className="vg-foto-doc" />}
+      {vista ? <img className="vg-foto-prev" src={vista} alt="" /> : <Icono n={(f.mime || '').indexOf('pdf') >= 0 ? 'picture_as_pdf' : 'draft'} className="vg-foto-doc" />}
       <span className="vg-foto-name">{f.name || 'archivo'}</span>
-      <span className="vg-foto-ok"><Icono n="cloud_done" />guardado</span>
+      {remota ? <a className="vg-foto-ver" href={remota} target="_blank" rel="noopener noreferrer">Ver</a> : null}
+      <span className="vg-foto-ok"><Icono n="cloud_done" />{remota ? 'en el servidor' : 'guardado'}</span>
     </div>
   )
 }
@@ -197,7 +209,7 @@ function claveLibre(fk, usadas) {
   for (let n = 1; ; n++) { const c = n === 1 ? fk : fk + '#' + n; if (!usadas.has(c)) return c }
 }
 
-function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo = 'foto', previas = [], getBlob, guardadoN = 0 }) {
+function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo = 'foto', previas = [], getBlob, getUrl, guardadoN = 0 }) {
   const inputRef = useRef(null)
   const [archivos, setArchivos] = useState([])
   const esDoc = modo === 'documento'
@@ -248,7 +260,7 @@ function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo =
         <Icono n={esDoc ? 'attach_file' : 'photo_camera'} />{etiqueta}
       </button>
       {esDoc && !hay ? <small className="vg-foto-ayuda">PDF o imagen, hasta 15 MB cada uno</small> : null}
-      {previas.map(f => <PreviaItem key={f.photo_id} f={f} getBlob={getBlob} />)}
+      {previas.map(f => <PreviaItem key={f.photo_id} f={f} getBlob={getBlob} getUrl={getUrl} />)}
       {archivos.map(a => (
         <div key={a.clave} className="vg-foto-item">
           {a.preview ? <img className="vg-foto-prev" src={a.preview} alt="" /> : null}
@@ -310,7 +322,7 @@ function Campo({ seccionKey, campo, valor, valores = {}, addFoto, delFoto, onCon
           /* modo documento: lo que un punto de control pide casi siempre es un papel, no una foto */
           <FotoEvidencia fieldKey={`${dataField}__evidencia`} addFoto={addFoto} delFoto={delFoto}
             compacto modo="documento" previas={ev.previasDe ? ev.previasDe(`${dataField}__evidencia`) : []}
-            getBlob={ev.getBlob} guardadoN={ev.guardadoN} />
+            getBlob={ev.getBlob} getUrl={ev.getUrl} guardadoN={ev.guardadoN} />
         ) : null}
       </div>
     )
@@ -330,7 +342,7 @@ function Campo({ seccionKey, campo, valor, valores = {}, addFoto, delFoto, onCon
       <div className="vg-field">
         <label>{campo.label}{campo.required ? ' *' : ''}</label>
         <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} delFoto={delFoto}
-          modo="documento" previas={ev.previasDe ? ev.previasDe(dataField) : []} getBlob={ev.getBlob} guardadoN={ev.guardadoN} />
+          modo="documento" previas={ev.previasDe ? ev.previasDe(dataField) : []} getBlob={ev.getBlob} getUrl={ev.getUrl} guardadoN={ev.guardadoN} />
         {campo.help ? <small>{campo.help}</small> : null}
       </div>
     )
@@ -343,7 +355,7 @@ function Campo({ seccionKey, campo, valor, valores = {}, addFoto, delFoto, onCon
       <div className="vg-field">
         <label>{campo.label}{campo.required ? ' *' : ''}</label>
         <FotoEvidencia fieldKey={dataField} label={campo.label} addFoto={addFoto} delFoto={delFoto}
-          previas={ev.previasDe ? ev.previasDe(dataField) : []} getBlob={ev.getBlob} guardadoN={ev.guardadoN} />
+          previas={ev.previasDe ? ev.previasDe(dataField) : []} getBlob={ev.getBlob} getUrl={ev.getUrl} guardadoN={ev.guardadoN} />
         {campo.help ? <small>{campo.help}</small> : null}
       </div>
     )
@@ -501,10 +513,11 @@ function CertFormCuerpo({ schema, engine, value = {}, base = null, onSave, onSav
   const [previas, setPrevias] = useState(() => (base ? base.fotos : []))
   const [guardadoN, setGuardadoN] = useState(0)
   const getBlob = useMemo(() => (engine && engine.getPhotoBlob ? (id) => engine.getPhotoBlob(id) : null), [engine])
+  const getUrl = useMemo(() => (engine && engine.getPhotoUrl ? (id) => engine.getPhotoUrl(id) : null), [engine])
   const ev = useMemo(() => ({
     previasDe: (fk) => previas.filter(f => String(f.field || '').split('#')[0] === fk),
-    getBlob, guardadoN
-  }), [previas, getBlob, guardadoN])
+    getBlob, getUrl, guardadoN
+  }), [previas, getBlob, getUrl, guardadoN])
 
   // registra el blob de una foto/evidencia por campo (offline-first; se persiste en IDB al guardar)
   const addFoto = useCallback((field, file) => {
@@ -606,8 +619,9 @@ function CertFormCuerpo({ schema, engine, value = {}, base = null, onSave, onSav
           <div className="vg-retomado" role="status">
             <Icono n="history" />
             <span>Retomando lo guardado el {FECHA_HORA(base.updated_at)}
-              {base.versiones > 1 ? ` (${base.versiones} guardados)` : ''}. Lo que agregue se guarda como una
-              versión nueva; las anteriores quedan intactas.</span>
+              {base.versiones > 1 ? ` (${base.versiones} guardados)` : ''}
+              {base.remotas ? `, ${base.remotas === base.versiones ? 'traído' : 'con ' + base.remotas + ' traído' + (base.remotas > 1 ? 's' : '')} del servidor` : ''}.
+              Lo que agregue se guarda como una versión nueva; las anteriores quedan intactas.</span>
           </div>
         ) : null}
         <div className="vg-progreso">

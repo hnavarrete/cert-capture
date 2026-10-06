@@ -157,7 +157,7 @@
   }
  ],
  "cierre": "Retome donde quedó",
- "nota": "Lo guardado se retoma en el mismo teléfono o computadora donde se cargó: vive en ese dispositivo. Conviene seguir siempre en el mismo.",
+ "nota": "En el mismo equipo se retoma siempre, aun sin señal. Con su cuenta y su finca elegida, también desde otro teléfono o computadora: al abrir el formulario, la app trae lo que ya está respaldado en el servidor, con sus evidencias. Lo que quedó solo en el otro equipo, sin respaldar, no se puede traer: revise antes la barra de respaldo.",
  "musica_estilo": "eudr",
  "limpiar": true,
  "cierre_sub": "cert.visiongeografica.com/ayuda"

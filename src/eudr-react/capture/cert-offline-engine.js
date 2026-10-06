@@ -50,7 +50,13 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
   const listeners = new Set()
   function emit() { const s = statusSnapshot(); listeners.forEach(fn => { try { fn(s) } catch {} }) }
   let _counts = { pending: 0, failed: 0, synced: 0, total: 0 }
-  function statusSnapshot() { return { ..._counts, offline: !navigatorOnline() } }
+  /* 🔴 EL MOTIVO DEL ÚLTIMO INTENTO, A LA VISTA (6-oct-2026). Antes un respaldo fallido solo dejaba un
+     console.warn: una clienta cargó semanas, nada llegó al servidor y nadie se enteró. Ahora el transporte
+     devuelve { error: { tipo, mensaje } } (o { skip, reason }) y el estado lo expone para que la app lo
+     diga en lenguaje llano. Se limpia cuando un respaldo completo sale bien. */
+  let _lastError = null
+  let _lastFlushAt = null
+  function statusSnapshot() { return { ..._counts, offline: !navigatorOnline(), lastError: _lastError, lastFlushAt: _lastFlushAt } }
   function navigatorOnline() { return typeof navigator === 'undefined' ? true : navigator.onLine }
 
   async function refreshCounts() {
@@ -186,38 +192,69 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
   async function flush() {
     if (_flushing || !navigatorOnline()) return statusSnapshot()
     _flushing = true
+    let problema = null
     try {
-      const pendientes = await db.table(STORE)
+      let pendientes = await db.table(STORE)
         .where('sync_status').anyOf('pending', 'failed').toArray()
-      for (const row of pendientes) {
-        // adjuntar blobs de fotos pendientes de este registro
-        const photos = await db.table(PHOTOS).where('local_id').equals(row.local_id).toArray()
-        // + las evidencias que esta versión hereda de una anterior (referencia, el blob vive una sola vez)
-        const heredadas = (row.fotos || []).map(f => f.photo_id).filter(id => id && !photos.some(p => p.photo_id === id))
-        if (heredadas.length) for (const p of await db.table(PHOTOS).bulkGet(heredadas)) if (p) photos.push(p)
-        try {
-          const res = await transport({ rows: [row], photos })
-          if (res && res.ok) {
-            await db.table(STORE).update(row._idb_id, { sync_status: 'synced', server_id: res.serverIds?.[row.local_id] || null, synced_at: Date.now() })
-            for (const p of photos) await db.table(PHOTOS).update(p.photo_id, { sync_status: 'synced' })
-            await db.table(QUEUE).where('local_id').equals(row.local_id).delete()
-          } else if (res && res.skip) {
-            // El transport NO lo intentó (p. ej., no hay sesión: modo demo o sesión vencida). No es un
-            // error de subida: sigue 'pending' («en este dispositivo») y se reintenta en el próximo flush.
-            // (cert-capture, 5-oct-2026: el modo demo marcaba cada guardado como «error al subir».)
-          } else {
-            await db.table(STORE).update(row._idb_id, { sync_status: 'failed' })
-          }
-        } catch (e) {
-          // R2 #2: NO se descarta. Queda 'failed' en queue para el próximo flush.
-          await db.table(STORE).update(row._idb_id, { sync_status: 'failed' })
+      // dos vueltas como máximo: la segunda solo para las versiones que se renombraron (ver «sellada» abajo)
+      for (let vuelta = 0; vuelta < 2 && pendientes.length; vuelta++) {
+        const renombradas = []
+        for (const row of pendientes) {
+          const r = await subirUna(row)
+          if (r.renombrada) renombradas.push(r.renombrada)
+          else if (r.problema && !problema) problema = r.problema
         }
+        pendientes = renombradas
       }
     } finally {
       _flushing = false
+      _lastFlushAt = Date.now()
+      _lastError = problema
       await refreshCounts()
     }
     return statusSnapshot()
+  }
+
+  // Sube UNA versión. Devuelve { ok } | { problema } | { renombrada: fila } (la segunda vuelta la reintenta).
+  async function subirUna(row) {
+    // adjuntar blobs de fotos pendientes de este registro
+    const photos = await db.table(PHOTOS).where('local_id').equals(row.local_id).toArray()
+    // + las evidencias que esta versión hereda de una anterior (referencia, el blob vive una sola vez)
+    const heredadas = (row.fotos || []).map(f => f.photo_id).filter(id => id && !photos.some(p => p.photo_id === id))
+    if (heredadas.length) for (const p of await db.table(PHOTOS).bulkGet(heredadas)) if (p) photos.push(p)
+    try {
+      const res = await transport({ rows: [row], photos })
+      if (res && res.ok) {
+        await db.table(STORE).update(row._idb_id, { sync_status: 'synced', server_id: res.serverIds?.[row.local_id] || null, synced_at: Date.now(), sync_error: null })
+        for (const p of photos) if (p.sync_status !== 'synced') await db.table(PHOTOS).update(p.photo_id, { sync_status: 'synced' })
+        await db.table(QUEUE).where('local_id').equals(row.local_id).delete()
+        return { ok: true }
+      }
+      if (res && res.skip) {
+        // El transport NO lo intentó (p. ej., no hay sesión: modo demo o sesión vencida). No es un
+        // error de subida: sigue 'pending' («en este dispositivo») y se reintenta en el próximo flush.
+        // (cert-capture, 5-oct-2026: el modo demo marcaba cada guardado como «error al subir».)
+        return { problema: res.error || { tipo: 'sin_sesion', mensaje: res.reason || '' } }
+      }
+      const error = (res && res.error) || { tipo: 'otro', mensaje: 'el servidor no confirmó el respaldo' }
+      /* 🔴 SELLADA (6-oct-2026). El servidor ya tiene ese local_id sellado con OTRO contenido y no lo reescribe.
+         Reintentar el mismo local_id fallaría para siempre. Lo que el usuario guardó se respalda como una
+         VERSIÓN NUEVA: mismo contenido, local_id nuevo y su hash recalculado. Lo sellado no se toca. */
+      if (error.tipo === 'sellada' && !row.reemplaza_local_id) {
+        const nuevo = { ...row, local_id: uuid(), reemplaza_local_id: row.local_id, sync_status: 'pending', sync_error: null }
+        try { nuevo.audit_hash = await computeAuditHash(nuevo, row.prev_hash || '') } catch { nuevo.audit_hash = null }
+        await db.table(STORE).put(nuevo)
+        await db.table(QUEUE).where('local_id').equals(row.local_id).modify({ local_id: nuevo.local_id })
+        return { renombrada: nuevo }
+      }
+      await db.table(STORE).update(row._idb_id, { sync_status: 'failed', sync_error: error })
+      return { problema: error }
+    } catch (e) {
+      // R2 #2: NO se descarta. Queda 'failed' en queue para el próximo flush.
+      const error = { tipo: 'otro', mensaje: (e && e.message) || String(e) }
+      await db.table(STORE).update(row._idb_id, { sync_status: 'failed', sync_error: error })
+      return { problema: error }
+    }
   }
 
   /** Respuestas guardadas localmente (para listar/editar offline). */
@@ -250,7 +287,10 @@ export function createCertOfflineEngine({ db, transport, getCompanyId = () => nu
     const ids = [...new Set(rows.flatMap(r => (r.fotos || []).map(f => f.photo_id)).filter(Boolean))]
     const fotosPorId = {}
     if (ids.length) for (const p of await db.table(PHOTOS).bulkGet(ids)) if (p) fotosPorId[p.photo_id] = p
-    return rehidratarVersiones(rows, fotosPorId)
+    const estado = rehidratarVersiones(rows, fotosPorId)
+    // cuántas de esas versiones llegaron del servidor (guardadas en otro equipo): lo dice el aviso de retomar
+    if (estado) estado.remotas = rows.filter(r => r.desde_servidor).length
+    return estado
   }
 
   /** Blob de una foto offline (para mostrar sin red). */

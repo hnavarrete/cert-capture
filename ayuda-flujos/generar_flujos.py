@@ -290,7 +290,9 @@ flujo(id='productor-retomar', orden=35, **P,
            'ms': 3200},
       ],
       cierre='Retome donde quedó',
-      nota='Lo guardado se retoma en el mismo teléfono o computadora donde se cargó: vive en ese dispositivo. Conviene seguir siempre en el mismo.')
+      nota='En el mismo equipo se retoma siempre, aun sin señal. Con su cuenta y su finca elegida, también desde otro '
+           'teléfono o computadora: al abrir el formulario, la app trae lo que ya está respaldado en el servidor, con sus '
+           'evidencias. Lo que quedó solo en el otro equipo, sin respaldar, no se puede traer: revise antes la barra de respaldo.')
 
 flujo(id='productor-foto', orden=36, **P,
       titulo='Tomar o cargar una foto de evidencia',
@@ -368,17 +370,50 @@ flujo(id='productor-sin-senal', orden=42, **P,
            'acciones': [{'ver': 'aún en tu dispositivo'}], 'ms': 3400},
       ],
       cierre='Sin señal, sin perder nada',
-      nota='En la demostración nada se sube al servidor. Con una cuenta real, al volver la señal la app sube lo pendiente sola, y en Mi bóveda queda el botón «Sincronizar ahora».')
+      nota='En la demostración nada se sube al servidor. Con una cuenta real, al volver la señal la app sube lo pendiente sola, y en la barra de respaldo y en Mi bóveda queda el botón «Respaldar ahora».')
+
+# 6-oct-2026: el respaldo, a la vista. Una clienta cargó semanas y nada llegó al servidor sin que nadie lo notara.
+# Se graba sobre la demostración: la barra queda en amarillo («Modo demo»), que es justo el caso de la clienta.
+flujo(id='productor-respaldo', orden=43, **P,
+      titulo='Ver si lo mío está respaldado',
+      resumen='La barra de respaldo, siempre a la vista, dice cuánto está en el servidor, cuánto solo en este equipo y qué hacer si algo falla.',
+      gancho='¿Lo suyo está a salvo?', preparar=contexto(),
+      pasos=[
+          {'texto': 'Debajo del menú está la barra de respaldo: se ve siempre, sin abrir nada.',
+           'corto': 'Debajo del menú, la barra de respaldo: siempre a la vista.',
+           'acciones': [{'ver': 'lo que guarde queda solo en este equipo'}], 'foco': 'arriba', 'ms': 3200},
+          {'texto': 'Guarde algo y mire la cuenta: «respaldadas» ya están en el servidor; «pendientes», solo en este equipo.',
+           'corto': '«Respaldadas»: en el servidor. «Pendientes»: solo en este equipo.',
+           'acciones': [tramo_btn('Cadena de suministro'), {'pausa': 500}] + centrar('Commodity EUDR')
+                       + [{'elegir': ['Commodity EUDR', 'Café']}, {'clic': 'Guardar (offline)'}, {'pausa': 600}] + ARRIBA
+                       + [{'ver': '1 pendiente'}],
+           'foco': 'arriba', 'ms': 3600},
+          {'texto': 'Si algo falta o falla, la barra dice la causa y qué hacer: iniciar sesión, elegir la finca, esperar la señal o avisar a Visión Geográfica.',
+           'corto': 'Si algo falta o falla, dice la causa y qué hacer.',
+           'acciones': [{'ver': 'Inicie sesión para respaldar'}], 'foco': 'arriba', 'ms': 3600},
+          {'texto': 'Mi bóveda muestra cada versión: respaldada, en este dispositivo o con error.',
+           'corto': 'Mi bóveda: cada versión, respaldada o no.',
+           'acciones': [{'clic': 'Mi bóveda'}, {'pausa': 500}, {'ver': 'aún en tu dispositivo'}], 'ms': 3200},
+          {'texto': 'Si queda algo pendiente, toque «Respaldar ahora».',
+           'acciones': [{'ver': 'Respaldar ahora'}], 'ms': 3000},
+      ],
+      cierre='Sepa siempre qué está a salvo',
+      nota='En la demostración nada se sube al servidor: la barra se queda en amarillo con «Modo demo». Con una cuenta con '
+           'acceso a la finca, la barra se pone en verde («Todo respaldado en el servidor») cuando no queda nada pendiente, y '
+           'en el formulario aparece «Registro encadenado: íntegro (N versiones)»: un registro encadenado propio, '
+           'verificable contra sí mismo.')
 
 flujo(id='productor-sincronizar', orden=44, solo_texto=True, actor='productor', url=DEMO, probar=PUBLICA + '/',
-      titulo='Respaldar en el servidor con su cuenta',
-      resumen='Con una cuenta con acceso a la finca, lo capturado se sube al servidor junto con sus evidencias.',
+      titulo='Respaldar en el servidor con su cuenta y retomar desde otro equipo',
+      resumen='Con una cuenta con acceso a la finca, lo capturado se sube al servidor con sus evidencias, y se retoma desde cualquier equipo.',
       pasos=[
           {'texto': 'Entre con su cuenta de VG y elija su finca en «Contexto del levantamiento».'},
           {'texto': 'Al guardar con señal, la app sube la respuesta y sus archivos sola; no hace falta un botón.'},
-          {'texto': 'El indicador de arriba cuenta lo pendiente (pend), lo que falló (fall) y lo subido (sync).'},
-          {'texto': 'En «Mi bóveda», cada registro dice «respaldado», «en este dispositivo» o «error al subir».'},
-          {'texto': 'Si algo quedó pendiente o con error, toque «Sincronizar ahora». Lo que falla no se borra: se vuelve a intentar.'},
+          {'texto': 'La barra de respaldo, debajo del menú, cuenta las versiones respaldadas y las pendientes. En verde: «Todo respaldado en el servidor».'},
+          {'texto': 'Si algo falla, la barra lo dice en lenguaje llano: «Elija su finca para respaldar», «Sin conexión: se respaldará al volver» o «Su cuenta no tiene permiso de escritura en esta finca: avise a Visión Geográfica».'},
+          {'texto': 'Toque «Respaldar ahora» para intentarlo en el momento. Lo que falla no se borra: se vuelve a intentar sola.'},
+          {'texto': 'En otro teléfono o computadora, entre con la misma cuenta, elija la misma finca y abra el formulario: aparece lo respaldado, con sus evidencias, y el aviso «traído del servidor».'},
+          {'texto': 'Arriba del formulario, «Registro encadenado: íntegro (N versiones)» confirma que las versiones del servidor cuadran entre sí: es un registro encadenado propio, verificable contra sí mismo.'},
       ],
       nota='Este flujo necesita una cuenta real con acceso a una finca: el video está en preparación.')
 

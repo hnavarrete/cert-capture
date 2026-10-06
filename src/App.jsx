@@ -3,7 +3,8 @@ import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './e
 import { Icono } from './eudr-react/CertForm.jsx'
 import { rehidratarVersiones, enContexto } from './eudr-react/capture/cert-offline-engine.js'
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
-import { engine, setCaptureSession, db } from './engine.js'
+import { engine, setCaptureSession, db, traerDelServidor } from './engine.js'
+import { RespaldoAviso, IntegridadCadena } from './Respaldo.jsx'
 import { supabase } from './supabase.js'
 import { adoptShellSessionIfEmbedded, estamosEmbebidos, consumeHandoffIfPresent } from './shell-bridge.js'
 
@@ -274,12 +275,15 @@ function MiPerfilGate({ email, onListo, onOmitir }) {
 // Lee los borradores guardados en IndexedDB del contexto actual (finca/productor) y, por cada
 // certificación, hace el rollup de avance con el MISMO progresoDe del formulario (una sola fuente de
 // verdad del cálculo). Offline-first: no consulta al servidor, sirve sin señal.
-function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, onClose }) {
+function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, onClose, conSesion = false }) {
   const [best, setBest] = useState(null)
   const [abierta, setAbierta] = useState(null)
   useEffect(() => {
     let on = true
     ;(async () => {
+      // con sesión y finca, primero lo que esté en el servidor y falte en este equipo (retomar desde otro equipo);
+      // con tope de 6 s: sin señal, el tablero se arma con lo del equipo
+      try { await Promise.race([traerDelServidor(null), new Promise(r => setTimeout(r, 6000))]) } catch {}
       const all = await db.cert_responses.toArray()
       if (on) setBest(vigentesPorForm(all, { slug, productor, finca }))
     })()
@@ -317,7 +321,7 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
             <>
               <p className="muted tablero-resumen">
                 {iniciadosTot}/{totalForms} formularios iniciados · {vendiblesTot} listos para entregar ·
-                avance guardado sin conexión.
+                avance guardado sin conexión{conSesion && slug ? ', y lo respaldado en el servidor desde cualquier equipo' : ''}.
               </p>
               {filas.map(f => (
                 <div key={f.cert} className="tcert">
@@ -391,6 +395,16 @@ export default function App() {
   }, [])
 
   useEffect(() => { setCaptureSession({ slug, email: effEmail }); localStorage.setItem('vg_slug', slug) }, [slug, effEmail])
+
+  // 🔴 Respaldo (6-oct-2026): al entrar con sesión o al elegir la finca se intenta respaldar lo pendiente (antes
+  // solo al guardar o al volver la señal), y mientras quede algo pendiente se reintenta cada 90 s.
+  const pendientes = (status.pending || 0) + (status.failed || 0)
+  useEffect(() => { if (user && slug) flush() }, [user, slug, flush])
+  useEffect(() => {
+    if (!user || !slug || !pendientes) return
+    const t = setInterval(() => { flush() }, 90000)
+    return () => clearInterval(t)
+  }, [user, slug, pendientes, flush])
 
   // Carga el producto EUDR del usuario vía la RPC canónica public.my_products() (#03): misma fuente que
   // /api/identity/me, respeta expiración y es RLS-safe (no expone otros usuarios). De ahí salen sus fincas
@@ -543,11 +557,15 @@ export default function App() {
           <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
         ) : null}
       </header>
-      {demo && !user ? (
-        <div className="card" style={{ background: '#fdf3e3', borderColor: '#f0d9a8' }}>
-          <strong>Modo demo.</strong> <span className="muted">Captura local real (offline-first + antifraude +
-          nivel de verificación) sin sincronizar al servidor. Para sincronizar de verdad, ingresa con una cuenta VG con acceso a la finca.</span>
-        </div>
+      {/* El respaldo, a la vista y sin abrir nada (6-oct-2026). En modo demo es el aviso amarillo de siempre, con
+          la cuenta de lo que queda solo en este equipo. */}
+      {!caps.esLector ? (
+        <RespaldoAviso
+          status={status} conSesion={!!user} demo={demo && !user} slug={slug} email={user?.email}
+          onFlush={flush}
+          onLogin={() => { setDemo(false); if (user) supabase.auth.signOut() }}
+          onElegirFinca={() => { const el = document.getElementById('campo-finca'); if (el) { el.scrollIntoView({ block: 'center' }); el.focus() } }}
+        />
       ) : null}
 
       <div className="card ctx">
@@ -555,12 +573,12 @@ export default function App() {
         <div className="grid3">
           <label>Finca {misFincas.length ? `(tus ${misFincas.length} fincas)` : ''}
             {misFincas.length ? (
-              <select value={slug} onChange={e => setSlug(e.target.value)}>
+              <select id="campo-finca" value={slug} onChange={e => setSlug(e.target.value)}>
                 <option value="">— elige tu finca —</option>
                 {misFincas.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             ) : (
-              <input value={slug} onChange={e => setSlug(e.target.value)} placeholder="ej. demo-cert" />
+              <input id="campo-finca" value={slug} onChange={e => setSlug(e.target.value)} placeholder="ej. demo-cert" />
             )}
           </label>
           <label>Productor (producer_id)<input value={productor} onChange={e => setProductor(e.target.value)} placeholder="PRD-001" /></label>
@@ -590,6 +608,7 @@ export default function App() {
           {caps.esLector ? (
             <div className="rol-aviso lectura"><Icono n="visibility" />Modo solo lectura. Tu rol puede revisar y previsualizar, pero no editar ni guardar capturas.</div>
           ) : null}
+          {user && slug ? <IntegridadCadena formKey={formKey} refrescar={status.synced} /> : null}
           <CertForm
             key={[formKey, slug, productor, finca].join('|')}
             schema={schema}
@@ -628,7 +647,7 @@ export default function App() {
       {tablero ? (
         <TableroProgreso
           grouped={grouped} certKeys={certKeys}
-          slug={slug} productor={productor} finca={finca}
+          slug={slug} productor={productor} finca={finca} conSesion={!!user}
           onPick={(cert, fk) => { setCertSel(cert); setFormKey(fk); setTablero(false); window.scrollTo(0, 0) }}
           onClose={() => setTablero(false)}
         />
@@ -638,6 +657,7 @@ export default function App() {
         <Boveda
           slug={slug} productor={productor} finca={finca}
           status={status} onFlush={flush}
+          conSesion={!!user} demo={demo && !user} email={user?.email}
           onClose={() => setBoveda(false)}
         />
       ) : null}

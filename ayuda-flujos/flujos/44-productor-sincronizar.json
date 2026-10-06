@@ -5,8 +5,8 @@
  "actor": "productor",
  "url": "http://localhost:4173/?demo=1",
  "probar": "https://cert.visiongeografica.com/",
- "titulo": "Respaldar en el servidor con su cuenta",
- "resumen": "Con una cuenta con acceso a la finca, lo capturado se sube al servidor junto con sus evidencias.",
+ "titulo": "Respaldar en el servidor con su cuenta y retomar desde otro equipo",
+ "resumen": "Con una cuenta con acceso a la finca, lo capturado se sube al servidor con sus evidencias, y se retoma desde cualquier equipo.",
  "pasos": [
   {
    "texto": "Entre con su cuenta de VG y elija su finca en «Contexto del levantamiento»."
@@ -15,13 +15,19 @@
    "texto": "Al guardar con señal, la app sube la respuesta y sus archivos sola; no hace falta un botón."
   },
   {
-   "texto": "El indicador de arriba cuenta lo pendiente (pend), lo que falló (fall) y lo subido (sync)."
+   "texto": "La barra de respaldo, debajo del menú, cuenta las versiones respaldadas y las pendientes. En verde: «Todo respaldado en el servidor»."
   },
   {
-   "texto": "En «Mi bóveda», cada registro dice «respaldado», «en este dispositivo» o «error al subir»."
+   "texto": "Si algo falla, la barra lo dice en lenguaje llano: «Elija su finca para respaldar», «Sin conexión: se respaldará al volver» o «Su cuenta no tiene permiso de escritura en esta finca: avise a Visión Geográfica»."
   },
   {
-   "texto": "Si algo quedó pendiente o con error, toque «Sincronizar ahora». Lo que falla no se borra: se vuelve a intentar."
+   "texto": "Toque «Respaldar ahora» para intentarlo en el momento. Lo que falla no se borra: se vuelve a intentar sola."
+  },
+  {
+   "texto": "En otro teléfono o computadora, entre con la misma cuenta, elija la misma finca y abra el formulario: aparece lo respaldado, con sus evidencias, y el aviso «traído del servidor»."
+  },
+  {
+   "texto": "Arriba del formulario, «Registro encadenado: íntegro (N versiones)» confirma que las versiones del servidor cuadran entre sí: es un registro encadenado propio, verificable contra sí mismo."
   }
  ],
  "nota": "Este flujo necesita una cuenta real con acceso a una finca: el video está en preparación.",

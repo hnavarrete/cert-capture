@@ -103,7 +103,8 @@ export default function RoadmapCert({ cert, ruta, forms, estadoPorForm, onPick }
       </div>
 
       <div className="muted" style={{ padding: '0 18px 16px', margin: 0 }}>
-        Se guarda solo. Puedes salir y retomar donde quedaste, sin conexión.
+        Se guarda solo. Puedes salir y retomar donde quedaste, sin conexión; con tu cuenta y tu finca elegida, también
+        desde otro equipo, porque lo respaldado en el servidor se trae al abrir.
       </div>
     </div>
   )

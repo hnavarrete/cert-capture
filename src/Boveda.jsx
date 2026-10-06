@@ -5,12 +5,13 @@
 import React, { useEffect, useState } from 'react'
 import { db } from './engine.js'
 import { Icono } from './eudr-react/CertForm.jsx'
+import { estadoRespaldo, IntegridadCadena } from './Respaldo.jsx'
 
 const FECHA = ts => { try { return new Date(ts).toLocaleString('es', { dateStyle: 'short', timeStyle: 'short' }) } catch { return '' } }
 const esSync = s => s === 'synced' || s === 'ok' || s === 'sincronizado'
 const esFail = s => s === 'failed' || s === 'error'
 
-export default function Boveda({ slug, productor, finca, status, onFlush, onClose }) {
+export default function Boveda({ slug, productor, finca, status, onFlush, onClose, conSesion = false, demo = false, email = null }) {
   const [rows, setRows] = useState(null)
   const [sincronizando, setSincronizando] = useState(false)
   const offline = status?.offline
@@ -23,11 +24,12 @@ export default function Boveda({ slug, productor, finca, status, onFlush, onClos
       if (productor && r.productor_id && r.productor_id !== productor) return false
       if (finca && r.finca_id && r.finca_id !== finca) return false
       return true
-    }).map(r => ({ form_key: r.form_key, estado: r.sync_status || 'pending', ts: r.created_at, id: r.local_id || r._idb_id }))
+    }).map(r => ({ form_key: r.form_key, estado: r.sync_status || 'pending', ts: r.created_at, id: r.local_id || r._idb_id, remota: !!r.desde_servidor, error: r.sync_error || null }))
     ctx.sort((a, b) => (b.ts || 0) - (a.ts || 0))
     setRows(ctx)
   }
-  useEffect(() => { cargar() }, [slug, productor, finca])
+  // se recarga cuando cambia el estado del motor (un respaldo terminó, llegó algo del servidor)
+  useEffect(() => { cargar() }, [slug, productor, finca, status?.synced, status?.pending, status?.failed])
 
   const respaldados = (rows || []).filter(r => esSync(r.estado))
   const conError = (rows || []).filter(r => esFail(r.estado))
@@ -42,8 +44,13 @@ export default function Boveda({ slug, productor, finca, status, onFlush, onClos
     setTimeout(() => { cargar(); setSincronizando(false) }, 1200)
   }
 
-  const Badge = ({ estado }) => esSync(estado)
-    ? <span className="bov-badge ok">respaldado</span>
+  // causa del último intento, en lenguaje llano (la misma frase que la barra de respaldo)
+  const causa = estadoRespaldo({ status: status || {}, conSesion, demo, slug, email })
+  // formularios con versiones respaldadas: su registro encadenado se verifica en el servidor
+  const formsRespaldados = [...new Set(respaldados.map(r => r.form_key))].slice(0, 12)
+
+  const Badge = ({ estado, remota }) => esSync(estado)
+    ? <span className="bov-badge ok">{remota ? 'respaldado · otro equipo' : 'respaldado'}</span>
     : esFail(estado) ? <span className="bov-badge err">error al subir</span>
       : <span className="bov-badge pend">en este dispositivo</span>
 
@@ -71,6 +78,9 @@ export default function Boveda({ slug, productor, finca, status, onFlush, onClos
                       ? 'Hiciste tu parte: todo lo capturado está a salvo en el servidor.'
                       : 'Tu trabajo NO se pierde: está guardado en este dispositivo y se subirá solo al volver la señal.'}
                 </p>
+                {porSubir > 0 && causa.nivel !== 'ok' && causa.nivel !== 'info' ? (
+                  <p className="bov-causa" data-causa={causa.nivel}><Icono n={causa.icono} /><span><strong>{causa.titulo}.</strong> {causa.detalle}</span></p>
+                ) : null}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
@@ -81,7 +91,7 @@ export default function Boveda({ slug, productor, finca, status, onFlush, onClos
 
               {porSubir > 0 ? (
                 <button type="button" className="primary" style={{ width: '100%', marginBottom: 14 }} onClick={sincronizar} disabled={offline || sincronizando}>
-                  {offline ? 'Sin conexión — se subirá al volver la señal' : sincronizando ? 'Sincronizando…' : `Sincronizar ahora (${porSubir})`}
+                  {offline ? 'Sin conexión: se respaldará al volver' : sincronizando ? 'Respaldando…' : `Respaldar ahora (${porSubir})`}
                 </button>
               ) : null}
 
@@ -93,11 +103,23 @@ export default function Boveda({ slug, productor, finca, status, onFlush, onClos
                         <div className="bov-form">{r.form_key}</div>
                         <div className="muted" style={{ fontSize: 12 }}>{FECHA(r.ts)}</div>
                       </div>
-                      <Badge estado={r.estado} />
+                      <Badge estado={r.estado} remota={r.remota} />
                     </div>
                   ))}
                 </div>
               )}
+
+              {conSesion && slug && formsRespaldados.length ? (
+                <div className="bov-cadena">
+                  <h4><Icono n="link" />Registro encadenado en el servidor</h4>
+                  {formsRespaldados.map(fk => (
+                    <div key={fk} className="bov-cadena-fila">
+                      <div className="bov-form">{fk}</div>
+                      <IntegridadCadena formKey={fk} refrescar={status?.synced} />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </>
           )}
         </div>
