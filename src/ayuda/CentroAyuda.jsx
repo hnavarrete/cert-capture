@@ -39,6 +39,38 @@ export default function CentroAyuda() {
     if (el) setTimeout(() => el.scrollIntoView({ block: 'start' }), 50)
   }, [datos])
 
+  // Que ningún video deje la página sin desplazamiento (Henrry, 6-oct-2026: «se congela el desplazamiento cuando abro
+  // un video… debo actualizar»). Medido: si la salida de la pantalla completa deja un overflow:hidden, la página queda
+  // inmóvil hasta recargar; y con el foco en un video, las flechas no movían la página. Por eso: al salir de la pantalla
+  // completa (estándar, webkit y el «webkitendfullscreen» del video en iPhone, que no burbujea: se escucha en captura)
+  // se quita cualquier bloqueo; al reproducir un video se pausan los demás; y con el foco en el video, flecha
+  // arriba/abajo desplazan la página (espacio y los lados siguen siendo del video).
+  useEffect(() => {
+    const liberar = () => { document.documentElement.style.overflow = ''; document.body.style.overflow = '' }
+    const fs = () => { if (!document.fullscreenElement) liberar() }
+    const wfs = () => { if (!document.webkitFullscreenElement) liberar() }
+    const play = e => {
+      if (e.target?.tagName !== 'VIDEO') return
+      document.querySelectorAll('video').forEach(o => { if (o !== e.target && !o.paused) o.pause() })
+    }
+    const tecla = e => {
+      if (e.target?.tagName !== 'VIDEO' || e.altKey || e.ctrlKey || e.metaKey) return
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); window.scrollBy(0, e.key === 'ArrowDown' ? 60 : -60) }
+    }
+    document.addEventListener('fullscreenchange', fs)
+    document.addEventListener('webkitfullscreenchange', wfs)
+    document.addEventListener('webkitendfullscreen', liberar, true)
+    document.addEventListener('play', play, true)
+    document.addEventListener('keydown', tecla, true)
+    return () => {
+      document.removeEventListener('fullscreenchange', fs)
+      document.removeEventListener('webkitfullscreenchange', wfs)
+      document.removeEventListener('webkitendfullscreen', liberar, true)
+      document.removeEventListener('play', play, true)
+      document.removeEventListener('keydown', tecla, true)
+    }
+  }, [])
+
   useEffect(() => {
     const h = () => setAbierto(decodeURIComponent((window.location.hash || '').slice(1)))
     window.addEventListener('hashchange', h)
