@@ -5,6 +5,7 @@ import { createCertOfflineEngine } from './eudr-react/capture/cert-offline-engin
 import { evaluateRules } from './eudr-react/capture/fraud-rules-engine.js'
 import { buildAntifraudeCtxEUDR } from './eudr-react/useCertCapture.js'
 import { supabase } from './supabase.js'
+import { tipoReal, TIPOS_ADMITIDOS } from './eudr-react/capture/archivo-evidencia.js'
 
 // sesión mutable (client_slug + email) que el App fija tras login + selección de tenant.
 const session = { slug: null, email: null }
@@ -45,7 +46,7 @@ export function clasificarError(err) {
 }
 
 function extDe(mime) {
-  return mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('pdf') ? 'pdf' : 'jpg'
+  return mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('pdf') ? 'pdf' : mime.includes('heic') ? 'heic' : 'jpg'
 }
 
 // transport: sube cada fila a la RPC public.cert_upsert_response (upsert por local_id + sellado server-side).
@@ -72,6 +73,16 @@ async function transport({ rows, photos }) {
        versiones, así que una evidencia ya subida no se vuelve a subir (y con upsert sería idempotente). */
     const ids = new Set((row.fotos || []).map(f => f.photo_id))
     for (const p of (photos || []).filter(x => x.local_id === row.local_id || ids.has(x.photo_id))) {
+      const porSubir = p.sync_status !== 'synced' && !!p.blob
+      /* 🔴 13-oct-2026 (ASVS L1): antes de subir se comprueba el tipo REAL por los primeros bytes (el formulario ya
+         lo hace al adjuntar; esto cubre lo capturado antes del arreglo). Lo que no es de los tipos admitidos no se
+         sube: la versión queda en el equipo con el motivo a la vista, sin perder nada (R1). El tipo detectado se
+         guarda en el equipo para que la ruta y el tipo sean los mismos en las versiones que hereden la evidencia. */
+      if (porSubir) {
+        const t = await tipoReal(p.blob)
+        if (!t) return { ok: false, error: { tipo: 'otro', mensaje: `la evidencia «${p.name || p.field || 'archivo'}» no es ${TIPOS_ADMITIDOS}` } }
+        if (t.mime !== p.mime) { p.mime = t.mime; await db.cert_photos.update(p.photo_id, { mime: t.mime }) }
+      }
       const mime = p.mime || 'image/jpeg'
       /* 🔴 La ruta llevaba solo el nombre del campo y el upload va con upsert:true, así que dos
          evidencias del MISMO campo se pisaban en el bucket: subía la segunda y la primera
@@ -81,7 +92,7 @@ async function transport({ rows, photos }) {
       const sufijo = String(p.photo_id || '').replace(/[^\w]/g, '').slice(0, 8)
       // una evidencia traída del servidor (otro equipo) ya tiene su ruta: se reusa, no se vuelve a subir
       const path = p.path || `${clientSlug}/${p.local_id || row.local_id}/${safe}${sufijo ? '_' + sufijo : ''}.${extDe(mime)}`
-      if (p.sync_status !== 'synced' && p.blob) {
+      if (porSubir) {
         const { error: upErr } = await supabase.storage.from(BUCKET)
           .upload(path, p.blob, { upsert: true, contentType: mime })
         if (upErr) return { ok: false, error: clasificarError(upErr) }

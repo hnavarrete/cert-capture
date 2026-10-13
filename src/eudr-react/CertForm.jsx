@@ -9,6 +9,7 @@
 //  - Antifraude: si el engine devuelve flags/nivel, se muestran (la UI no miente sobre el estado del dato).
 
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import { tipoReal, TIPOS_ADMITIDOS } from './capture/archivo-evidencia.js'
 
 const TIPOS_TEXTO = new Set(['text', 'email', 'tel', 'number', 'decimal', 'date'])
 
@@ -212,29 +213,40 @@ function claveLibre(fk, usadas) {
 function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo = 'foto', previas = [], getBlob, getUrl, guardadoN = 0 }) {
   const inputRef = useRef(null)
   const [archivos, setArchivos] = useState([])
+  const [revisando, setRevisando] = useState(false)
+  const [rechazados, setRechazados] = useState([])
   const esDoc = modo === 'documento'
   // tras guardar, lo recién adjuntado ya es parte de `previas` (lo trae el formulario): se limpia aquí
   useEffect(() => { if (guardadoN) setArchivos([]) }, [guardadoN])
 
-  function onPick(e) {
+  /* 🔴 13-oct-2026 (ASVS L1): el tipo se comprueba por los primeros bytes del archivo, no por `file.type` (que
+     sale de la extensión del nombre). Lo que no es PDF, JPEG, PNG, WEBP ni HEIC no se adjunta y se dice por qué.
+     Mientras se revisa, el botón queda desactivado: así dos elecciones seguidas no se pisan las claves. */
+  async function onPick(e) {
     const elegidos = Array.from(e.target.files || [])
     e.target.value = ''            // permite volver a elegir el MISMO archivo si se quitó por error
     if (!elegidos.length) return
+    setRevisando(true)
+    const tipos = await Promise.all(elegidos.map(f => tipoReal(f)))
+    setRevisando(false)
+    setRechazados(elegidos.filter((_, i) => !tipos[i]).map(f => f.name || 'archivo'))
     const usadas = new Set([...previas.map(p => p.field), ...archivos.map(a => a.clave)])
-    const agregados = elegidos.map((file) => {
+    const agregados = elegidos.flatMap((file, i) => {
+      const t = tipos[i]
+      if (!t) return []
       const clave = claveLibre(fk, usadas)
       usadas.add(clave)
-      if (addFoto) addFoto(clave, file)
-      if ((file.type || '').indexOf('image/') === 0) {
+      if (addFoto) addFoto(clave, file, t.mime)
+      if (t.mime.indexOf('image/') === 0) {
         try {
           const r = new FileReader()
           r.onload = () => setArchivos(a => a.map(x => (x.clave === clave ? { ...x, preview: r.result } : x)))
           r.readAsDataURL(file)
         } catch {}
       }
-      return { clave, nombre: file.name, mime: file.type || '', preview: null }
+      return [{ clave, nombre: file.name, mime: t.mime, preview: null }]
     })
-    setArchivos(archivos.concat(agregados))
+    if (agregados.length) setArchivos(archivos.concat(agregados))
   }
 
   function quitar(clave) {
@@ -256,10 +268,16 @@ function FotoEvidencia({ fieldKey: fk, label, addFoto, delFoto, compacto, modo =
         capture={esDoc ? undefined : 'environment'}
         style={{ display: 'none' }} onChange={onPick} />
       <input type="hidden" data-field={fk} value={[...previas.map(p => p.name || 'archivo'), ...archivos.map(a => a.nombre)].join(' · ')} readOnly />
-      <button type="button" className="vg-foto" onClick={() => inputRef.current && inputRef.current.click()}>
-        <Icono n={esDoc ? 'attach_file' : 'photo_camera'} />{etiqueta}
+      <button type="button" className="vg-foto" disabled={revisando} onClick={() => inputRef.current && inputRef.current.click()}>
+        <Icono n={esDoc ? 'attach_file' : 'photo_camera'} />{revisando ? 'Revisando el archivo…' : etiqueta}
       </button>
       {esDoc && !hay ? <small className="vg-foto-ayuda">PDF o imagen, hasta 15 MB cada uno</small> : null}
+      {rechazados.length ? (
+        <div className="vg-error" role="alert">
+          {rechazados.length === 1 ? `«${rechazados[0]}» no se adjuntó` : `${rechazados.length} archivos no se adjuntaron (${rechazados.join(', ')})`}:
+          {' '}solo se aceptan {TIPOS_ADMITIDOS}. Se revisa el contenido del archivo, no solo su nombre.
+        </div>
+      ) : null}
       {previas.map(f => <PreviaItem key={f.photo_id} f={f} getBlob={getBlob} getUrl={getUrl} />)}
       {archivos.map(a => (
         <div key={a.clave} className="vg-foto-item">
@@ -520,8 +538,9 @@ function CertFormCuerpo({ schema, engine, value = {}, base = null, onSave, onSav
   }), [previas, getBlob, getUrl, guardadoN])
 
   // registra el blob de una foto/evidencia por campo (offline-first; se persiste en IDB al guardar)
-  const addFoto = useCallback((field, file) => {
-    fotosRef.current[field] = { field, blob: file, mime: file.type || 'application/octet-stream', name: file.name }
+  // `mime` es el tipo REAL detectado por los primeros bytes (13-oct-2026); file.type solo como respaldo
+  const addFoto = useCallback((field, file, mime) => {
+    fotosRef.current[field] = { field, blob: file, mime: mime || file.type || 'application/octet-stream', name: file.name }
   }, [])
   // quitar una evidencia adjuntada por error, ANTES de guardar. No borra nada del servidor: retirar
   // lo ya guardado es otra cosa y lleva motivo (ver el plan, Fase 2).
