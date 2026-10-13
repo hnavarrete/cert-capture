@@ -3,7 +3,7 @@ import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './e
 import { Icono } from './eudr-react/CertForm.jsx'
 import { rehidratarVersiones, enContexto } from './eudr-react/capture/cert-offline-engine.js'
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
-import { engine, setCaptureSession, db, traerDelServidor, limpiarRespaldadoDelEquipo } from './engine.js'
+import { engine, setCaptureSession, db, traerDelServidor, limpiarRespaldadoDelEquipo, clasificarError } from './engine.js'
 import { RespaldoAviso, IntegridadCadena } from './Respaldo.jsx'
 import { supabase } from './supabase.js'
 import { adoptShellSessionIfEmbedded, estamosEmbebidos, consumeHandoffIfPresent } from './shell-bridge.js'
@@ -198,43 +198,79 @@ function SinAcceso({ email, onSalir }) {
   )
 }
 
+const CLAVE_PERFIL_PENDIENTE = 'vg_perfil_pendiente'
+const leerPerfilPendiente = () => { try { return JSON.parse(localStorage.getItem(CLAVE_PERFIL_PENDIENTE) || 'null') } catch { return null } }
+const borrarPerfilPendiente = () => { try { localStorage.removeItem(CLAVE_PERFIL_PENDIENTE) } catch {} }
+
+function mensajePerfil(codigo) {
+  const c = String(codigo || '')
+  if (/campos_obligatorios/.test(c)) return 'Faltan datos obligatorios: identificación, nombre, apellido y cargo.'
+  if (/duplicate|unique|23505|ya (existe|est[aá] registrad)/i.test(c))
+    return 'Ese número de identificación ya está registrado en otra cuenta. Escriba a Visión Geográfica para revisarlo.'
+  return 'No se pudo guardar el perfil (' + (c || 'sin detalle') + ').'
+}
+
+/**
+ * Registra el perfil en el servidor con el contrato CANÓNICO de identidad (bus B2, dueño #03), en el orden que
+ * indicó #03: ensure_producer_self (crea/enlaza el producer por el email del JWT + consent base) →
+ * upsert_my_profile (identidad real con la cédula). R23: no se reimplementa; es el mismo «Mi perfil» del visor/ERP.
+ *
+ * 🔴 13-oct-2026 (auditoría ASVS L1): se llamaba a upsert_my_profile con 5 argumentos. La versión de 7 —la que
+ * PostgREST elige con esos nombres— exige p_cargo y, si falta, CONTESTA {ok:false, error:'campos_obligatorios'}
+ * sin error ni excepción. Solo se miraba `error`: el perfil se daba por guardado y no se guardaba nunca. Tampoco
+ * se miraba el resultado de ensure_producer_self. Ahora se miran los dos, y se manda p_cargo.
+ * @returns {Promise<{ ok: true } | { red: true } | { error: string }>} red = sin señal (se guarda en el equipo)
+ */
+async function registrarPerfil(d) {
+  const fallo = (err) => (clasificarError(err).tipo === 'sin_red' ? { red: true } : { error: mensajePerfil(err && (err.message || err.code)) })
+  try {
+    const r1 = await supabase.rpc('ensure_producer_self', { p_display_name: (d.nombre + ' ' + d.apellido).trim(), p_tenant_slug_origin: 'eudr' })
+    if (r1.error) return fallo(r1.error)
+    if (r1.data && r1.data.ok === false) return { error: mensajePerfil(r1.data.error) }
+    const r2 = await supabase.rpc('upsert_my_profile', {
+      p_nombre: d.nombre, p_apellido: d.apellido, p_cargo: d.cargo,
+      p_tipo_documento: d.tipo, p_numero_documento: d.ident,
+      p_telefono: d.telefono || null
+    })
+    if (r2.error) return fallo(r2.error)
+    if (r2.data && r2.data.ok === false) return { error: mensajePerfil(r2.data.error) }
+    return { ok: true }
+  } catch (e) { return fallo(e) }
+}
+
 // Gate "Mi perfil" — identidad Capa 0 del productor (onboarding F1). La identificación (cédula/RUC/
 // pasaporte) es el ancla única anti-duplicados que hace las certificaciones tuyas y auditables.
-// R1-safe: "Completar luego" nunca bloquea. R2: si no hay señal o la RPC aún no existe, guarda local y avanza.
-function MiPerfilGate({ email, onListo, onOmitir }) {
-  const [tipo, setTipo] = useState('cedula')
-  const [ident, setIdent] = useState('')
-  const [nombre, setNombre] = useState('')
-  const [apellido, setApellido] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [consent, setConsent] = useState(false)
+// R1-safe: "Completar luego" nunca bloquea. R2: SOLO sin señal se guarda en el equipo y se avanza; se registra
+// la próxima vez que la app abra con señal. Si el servidor RECHAZA el perfil, se dice y no se da por guardado.
+function MiPerfilGate({ email, onListo, onOmitir, inicial = null, avisoInicial = null }) {
+  const [tipo, setTipo] = useState(inicial?.tipo || 'cedula')
+  const [ident, setIdent] = useState(inicial?.ident || '')
+  const [nombre, setNombre] = useState(inicial?.nombre || '')
+  const [apellido, setApellido] = useState(inicial?.apellido || '')
+  const [cargo, setCargo] = useState(inicial?.cargo || '')
+  const [telefono, setTelefono] = useState(inicial?.telefono || '')
+  const [consent, setConsent] = useState(!!inicial?.consent)
   const [busy, setBusy] = useState(false)
-  const [msg, setMsg] = useState(null)
+  const [msg, setMsg] = useState(avisoInicial)
   const LABELS = { cedula: 'Cédula', ruc: 'RUC', pasaporte: 'Pasaporte' }
 
   async function guardar(e) {
     e.preventDefault()
-    if (!ident.trim() || !nombre.trim() || !apellido.trim()) { setMsg('Completa tu identificación, nombre y apellido.'); return }
+    if (!ident.trim() || !nombre.trim() || !apellido.trim() || !cargo.trim()) { setMsg('Completa tu identificación, nombre, apellido y cargo.'); return }
     if (!consent) { setMsg('Necesitamos tu autorización para guardar tus datos.'); return }
     setBusy(true); setMsg(null)
-    try {
-      // Contrato CANÓNICO de identidad (bus B2, dueño #03). Orden indicado por #03: ensure_producer_self
-      // (crea/enlaza el producer por email del JWT + consent base) → upsert_my_profile (identidad real con cédula).
-      // R23: no reimplementar identidad; la misma "Mi perfil" del visor/ERP, una sola fuente.
-      await supabase.rpc('ensure_producer_self', { p_display_name: (nombre + ' ' + apellido).trim(), p_tenant_slug_origin: 'eudr' })
-      const { error } = await supabase.rpc('upsert_my_profile', {
-        p_nombre: nombre.trim(), p_apellido: apellido.trim(),
-        p_tipo_documento: tipo, p_numero_documento: ident.trim(),
-        p_telefono: telefono.trim() || null
-      })
-      if (error) throw error
-      onListo(true)
-    } catch (err) {
-      // offline: guardamos en el dispositivo y dejamos avanzar (R1: no bloquear). Se sincroniza al volver la señal.
-      localStorage.setItem('vg_perfil_pendiente', JSON.stringify({ tipo, ident: ident.trim(), nombre: nombre.trim(), apellido: apellido.trim(), telefono: telefono.trim(), consent }))
-      setMsg('Guardamos tu perfil en este dispositivo; se registrará al volver la señal.')
-      setTimeout(() => onListo(true), 1200)
-    } finally { setBusy(false) }
+    const d = { tipo, ident: ident.trim(), nombre: nombre.trim(), apellido: apellido.trim(), cargo: cargo.trim(), telefono: telefono.trim(), consent }
+    const r = await registrarPerfil(d)
+    setBusy(false)
+    if (r.ok) { borrarPerfilPendiente(); onListo(true); return }
+    if (r.red) {
+      // sin señal: se guarda en el dispositivo y se deja avanzar (R1: no bloquear). Se registra al volver la señal.
+      try { localStorage.setItem(CLAVE_PERFIL_PENDIENTE, JSON.stringify(d)) } catch {}
+      setMsg('Sin señal: guardamos tu perfil en este dispositivo; se registrará la próxima vez que abras la app con señal.')
+      setTimeout(() => onListo(true), 1600)
+      return
+    }
+    setMsg(r.error)   // el servidor lo rechazó: se dice y NO se da por guardado
   }
 
   return (
@@ -253,6 +289,11 @@ function MiPerfilGate({ email, onListo, onOmitir }) {
         <label>{LABELS[tipo]}<input value={ident} onChange={e => setIdent(e.target.value)} placeholder="Número de identificación" required /></label>
         <label>Nombre<input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tus nombres" required /></label>
         <label>Apellido<input value={apellido} onChange={e => setApellido(e.target.value)} placeholder="Tus apellidos" required /></label>
+        <label>Cargo<input value={cargo} onChange={e => setCargo(e.target.value)} list="cargos-perfil" placeholder="ej. Productor, técnico de campo" required /></label>
+        <datalist id="cargos-perfil">
+          <option value="Productor" /><option value="Técnico de campo" /><option value="Gerente de finca" />
+          <option value="Responsable de certificaciones" /><option value="Supervisor" />
+        </datalist>
         <label>Teléfono (opcional)<input value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="+593…" /></label>
         <label className="check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
           <span>Autorizo a VG a guardar mis datos para gestionar mis certificaciones. Mis datos son míos; yo decido con quién los comparto.</span></label>
@@ -501,14 +542,26 @@ export default function App() {
 
   // ¿el productor ya tiene su perfil Capa 0? (onboarding F1). Si la RPC get_my_profile aún no existe
   // (la construye #03) o no hay señal, NO bloqueamos: el gate queda dormido hasta que el backend exista.
+  // 13-oct-2026: un perfil guardado sin señal por fin se registra aquí (antes se prometía «se registrará al volver
+  // la señal» y nada lo leía). Si el servidor lo rechaza, el formulario vuelve con el motivo y lo ya escrito.
+  const [perfilInicial, setPerfilInicial] = useState(null) // { datos, aviso } para precargar el formulario
   useEffect(() => {
     if (!user) { setPerfil('checking'); return }
     let on = true
-    supabase.rpc('get_my_profile').then(({ data, error }) => {
+    supabase.rpc('get_my_profile').then(async ({ data, error }) => {
       if (!on) return
       if (error) { setPerfil('ok'); return } // RPC no disponible todavía → dormido, no molesta en producción
       const p = Array.isArray(data) ? data[0] : data
-      setPerfil(p && (p.has_profile || p.profile_completo) ? 'ok' : 'necesita') // contrato canónico get_my_profile (B2)
+      const tiene = !!(p && (p.has_profile || p.profile_completo)) // contrato canónico get_my_profile (B2)
+      const pend = leerPerfilPendiente()
+      if (tiene) { if (pend) borrarPerfilPendiente(); setPerfil('ok'); return }
+      if (!pend) { setPerfil('necesita'); return }
+      const r = await registrarPerfil(pend)
+      if (!on) return
+      if (r.ok) { borrarPerfilPendiente(); setPerfil('ok'); return }
+      if (r.red) { setPerfil('ok'); return }   // sigue sin señal: se reintenta la próxima vez
+      setPerfilInicial({ datos: pend, aviso: r.error })
+      setPerfil('necesita')
     }).catch(() => { if (on) setPerfil('ok') })
     return () => { on = false }
   }, [user])
@@ -619,7 +672,8 @@ export default function App() {
   // En embebido, "cambiar de cuenta" NO cierra la sesión (es compartida con el shell); recarga el módulo.
   if (user && accesoEudr === false) return <>{hojaSalida}<SinAcceso email={user.email} onSalir={() => EMBEBIDO ? window.location.reload() : salir()} /></>
   if (user && accesoEudr && perfil === 'necesita')
-    return <MiPerfilGate email={user.email} onListo={() => setPerfil('ok')} onOmitir={() => setPerfil('omitido')} />
+    return <MiPerfilGate email={user.email} inicial={perfilInicial?.datos} avisoInicial={perfilInicial?.aviso}
+      onListo={() => setPerfil('ok')} onOmitir={() => setPerfil('omitido')} />
 
   return (
     <div className="wrap">
