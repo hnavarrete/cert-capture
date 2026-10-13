@@ -19,6 +19,7 @@ import { VGLogin } from '@vgsdk/auth-ui'
    principal (index.ts:83), asi que NO hace falta subruta ni subir de version de auth-ui: el
    componente pone la caja y el producto trae el motor (inversion de control). Ver CABLEAR-C1.md. */
 import { contrasenaFiltrada, mensajeSiFiltrada } from '@vgsdk/auth'
+import { DesafioSegundoFactor, faltaSegundoFactor, verificarCodigoTotp } from './SegundoFactor.jsx'
 
 const SCHEMAS = (bundle.schemas || []).filter(s => !s.legacy)
 const CERTS = bundle.certificaciones || []
@@ -131,7 +132,12 @@ function Login({ onDemo, onAvisoC1 }) {
          * Cómo se sabe que falta: Supabase compara el nivel de garantía ACTUAL con el SIGUIENTE.
          * Si difieren (`aal1` vs `aal2`), la cuenta tiene un factor inscrito y todavía no se
          * verificó en esta sesión. Quien no tenga MFA da los dos iguales y este camino ni se toca:
-         * por eso las cuentas de siempre entran igual que ayer. */
+         * por eso las cuentas de siempre entran igual que ayer.
+         *
+         * 🔴 13-oct-2026 (ASVS L1): este paso por sí solo NO protegía. La sesión aal1 llega a la app por
+         * onAuthStateChange en cuanto signInWithPassword responde, y la app la aceptaba sin mirar el nivel.
+         * Ahora quien manda es la compuerta de App (faltaSegundoFactor → DesafioSegundoFactor), que corre en
+         * TODA sesión: contraseña, Google, enlace por correo y sesión guardada al recargar. */
         onPassword={async (email, password) => {
           /* 🔴 C1 AVISA, NO BLOQUEA — y me aparto a proposito del recorte de #11, que hace
            * `if (aviso) throw`. La razon esta medida en el propio motor, no es corazonada:
@@ -157,21 +163,8 @@ function Login({ onDemo, onAvisoC1 }) {
           const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
           if (aal && aal.nextLevel && aal.currentLevel !== aal.nextLevel) return 'mfa'
         }}
-        onTotp={async (codigo) => {
-          /* Se toma el factor TOTP ya verificado de la cuenta. Si hubiera varios, el primero
-             verificado es el que el usuario tiene en su aplicación. */
-          const { data: factores, error: eF } = await supabase.auth.mfa.listFactors()
-          if (eF) throw new Error(eF.message)
-          const factor = (factores?.totp || [])[0]
-          if (!factor) throw new Error('Esta cuenta no tiene configurado un segundo factor.')
-          const { data: reto, error: eR } = await supabase.auth.mfa.challenge({ factorId: factor.id })
-          if (eR) throw new Error(eR.message)
-          const { error: eV } = await supabase.auth.mfa.verify({
-            factorId: factor.id, challengeId: reto.id, code: codigo
-          })
-          /* Aquí sí se lanza, y es correcto: un código equivocado SÍ es un fallo. */
-          if (eV) throw new Error('El código no es válido o ya caducó.')
-        }}
+        /* La misma verificación que el desafío de la compuerta (SegundoFactor.jsx): lanza si el código falla. */
+        onTotp={verificarCodigoTotp}
         onMagicLink={async (email) => {
           const { error } = await supabase.auth.signInWithOtp({
             email,
@@ -354,7 +347,12 @@ function TableroProgreso({ grouped, certKeys, slug, productor, finca, onPick, on
 }
 
 export default function App() {
-  const [user, setUser] = useState(null)
+  /* 🔴 Segundo factor (13-oct-2026). `sesionUser` es el usuario de la sesión, tenga el nivel que tenga; `user`
+     —el que usa TODA la app: permisos, perfil, respaldo— solo existe cuando la sesión ya cumplió el segundo
+     factor (o la cuenta no lo tiene). Así ninguna llamada con sesión sale mientras falte el código. */
+  const [sesionUser, setSesionUser] = useState(null)
+  const [aal, setAal] = useState('ok') // ok · falta (la cuenta tiene factor verificado y la sesión es aal1)
+  const user = aal === 'ok' ? sesionUser : null
   // ?demo=1 entra directo al modo demostración (enlaces «Probarlo» del centro de ayuda). Captura local, sin sincronizar.
   const [demo, setDemo] = useState(() => { try { return new URLSearchParams(window.location.search).has('demo') } catch { return false } })
   const [avisoC1, setAvisoC1] = useState(null)   // C1: contrasena en filtraciones. Avisa, no bloquea.
@@ -380,6 +378,17 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true
+    /* El nivel se calcula ANTES de entregar el usuario: si se fijara primero, la app alcanzaría a pintarse con
+       la sesión aal1. Cada cambio lleva su turno y solo el último se aplica. No se pasa por «Cargando…» en cada
+       renovación del token: eso desmontaría el formulario y perdería lo escrito sin guardar. */
+    let turno = 0
+    async function aplicarSesion(session) {
+      const mio = ++turno
+      const falta = await faltaSegundoFactor(session).catch(() => !!session)
+      if (!mounted || mio !== turno) return
+      setSesionUser(session?.user || null)
+      setAal(falta ? 'falta' : 'ok')
+    }
     ;(async () => {
       // Handoff SSO "Abrir aparte": si el APK abrió cert standalone con ?vg_handoff=<code>, canjea el
       // code por sesión ANTES de leerla → no re-login. Si no hay code o falla, es no-op (login normal).
@@ -388,11 +397,23 @@ export default function App() {
       // Fuera del iframe es no-op → la app standalone sigue igual (login Google normal).
       try { await adoptShellSessionIfEmbedded() } catch { /* nunca bloquea */ }
       const { data } = await supabase.auth.getSession()
-      if (mounted) { setUser(data.session?.user || null); setReady(true) }
+      await aplicarSesion(data.session)
+      if (mounted) setReady(true)
     })()
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user || null))
+    /* Se difiere con setTimeout: en versiones anteriores de supabase-js, llamar a sus métodos DENTRO de este aviso
+       podía trabarse (el aviso corría con el candado de la sesión tomado). La 2.108 instalada dice que ya es seguro;
+       diferirlo no cuesta nada y protege si el paquete cambia de versión. */
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { setTimeout(() => { aplicarSesion(s) }, 0) })
     return () => { mounted = false; sub.subscription.unsubscribe() }
   }, [])
+
+  // tras verificar el código, se vuelve a mirar el nivel con la sesión nueva (aal2)
+  async function revisarNivel() {
+    const { data } = await supabase.auth.getSession()
+    const falta = await faltaSegundoFactor(data.session).catch(() => !!data.session)
+    setSesionUser(data.session?.user || null)
+    setAal(falta ? 'falta' : 'ok')
+  }
 
   useEffect(() => { setCaptureSession({ slug, email: effEmail }); localStorage.setItem('vg_slug', slug) }, [slug, effEmail])
 
@@ -510,6 +531,12 @@ export default function App() {
   }
 
   if (!ready) return <div className="wrap"><div className="card">Cargando…</div></div>
+  // Sesión abierta sin el segundo factor: ni la app ni ninguna llamada con sesión hasta verificar el código.
+  // Embebido, «Usar otra cuenta» no cierra la sesión (es la del shell): recarga el módulo, igual que SinAcceso.
+  if (sesionUser && aal === 'falta') return (
+    <DesafioSegundoFactor email={sesionUser.email} onVerificado={revisarNivel}
+      onOtraCuenta={() => EMBEBIDO ? window.location.reload() : supabase.auth.signOut()} />
+  )
   // Embebido en el shell SIN sesión adoptada: NO mostramos el login Google (el OAuth de Google no corre
   // dentro de un iframe). El shell es dueño de la sesión → ofrecemos reintentar/reabrir el módulo.
   if (EMBEBIDO && !user) return (
