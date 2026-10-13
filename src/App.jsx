@@ -626,7 +626,7 @@ export default function App() {
           />
           <div className="export-bar">
             <button type="button" className="primary" onClick={handlePreview}><Icono n="description" />Vista previa para el certificador</button>
-            <span className="muted">Borrador con marca de agua. El entregable válido para entregar requiere un plan de pago.</span>
+            <span className="muted">Borrador con marca de agua. El entregable válido para el certificador es una función premium.</span>
           </div>
         </div>
       ) : (

@@ -30,7 +30,7 @@ export function exportPolicy(kind, ctx = {}) {
     return {
       allowed: ok, tier: 'pago', requiresPlan: !ok,
       reason: ok ? 'Servicio de exportación al formato del certificador.'
-        : 'El entregable en el formato exacto del certificador requiere un plan de pago.'
+        : 'El entregable en el formato exacto del certificador es una función premium.'
     }
   }
   if (kind === EXPORT_KIND.COMPARTIR) {
@@ -39,7 +39,7 @@ export function exportPolicy(kind, ctx = {}) {
     return {
       allowed: plOk && coOk, tier: 'pago', requiresPlan: !plOk, requiresConsent: !coOk,
       reason: (plOk && coOk) ? 'Compartir con consentimiento del productor.'
-        : 'Compartir requiere plan de pago y consentimiento explícito del productor.'
+        : 'Compartir es una función premium y requiere el consentimiento explícito del productor.'
     }
   }
   return { allowed: false, reason: 'Tipo de exportación desconocido.' }
@@ -116,7 +116,7 @@ export function watermarkConfig(ctx = {}) {
   return {
     aplica: !pagado,
     texto: pagado ? null : 'VISTA PREVIA · VG · NO VÁLIDO PARA ENTREGA',
-    nota: pagado ? null : 'Borrador. El entregable válido para el certificador requiere un plan de pago.'
+    nota: pagado ? null : 'Borrador. El entregable válido para el certificador es una función premium.'
   }
 }
 
