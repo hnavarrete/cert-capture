@@ -780,7 +780,7 @@ export default function App() {
 
       <footer className="foot muted">
         {SCHEMAS.length} formularios · {bundle.totales?.n_control_points || '—'} puntos de control · datos sellados con cadena de integridad.
-        <div className="foot-vg">VG Certificaciones™ · Visión Geográfica™ · Versión {VG_VERSION}{VG_BUILD ? ' · ' + VG_BUILD : ''}</div>
+        <div className="foot-vg">VG Certificaciones™ · Visión Geográfica™ · Versión {VG_VERSION}{VG_BUILD ? ' · ' + VG_BUILD : ''} · <a href="https://www.visiongeografica.com/privacidad/" target="_blank" rel="noopener">Política de privacidad</a></div>
       </footer>
 
       {tablero ? (
