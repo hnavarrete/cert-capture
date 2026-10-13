@@ -5,7 +5,7 @@ import { createCertOfflineEngine } from './eudr-react/capture/cert-offline-engin
 import { evaluateRules } from './eudr-react/capture/fraud-rules-engine.js'
 import { buildAntifraudeCtxEUDR } from './eudr-react/useCertCapture.js'
 import { supabase } from './supabase.js'
-import { tipoReal, TIPOS_ADMITIDOS } from './eudr-react/capture/archivo-evidencia.js'
+import { tipoReal, TIPOS_ADMITIDOS, huellaSha256 } from './eudr-react/capture/archivo-evidencia.js'
 
 // sesión mutable (client_slug + email) que el App fija tras login + selección de tenant.
 const session = { slug: null, email: null }
@@ -45,6 +45,13 @@ export function clasificarError(err) {
   return t('otro')
 }
 
+/* «Ya existe» al subir sin reemplazo. Supabase Storage lo dice con 409, «The resource already exists» o
+   «Duplicate» según la versión; se aceptan las tres formas. */
+function yaExiste(err) {
+  const t = [err && err.message, err && err.error, err && err.statusCode, err && err.status].filter(Boolean).join(' ')
+  return /already exists|duplicate|\b409\b/i.test(t)
+}
+
 function extDe(mime) {
   return mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('pdf') ? 'pdf' : mime.includes('heic') ? 'heic' : 'jpg'
 }
@@ -70,7 +77,7 @@ async function transport({ rows, photos }) {
     /* 🔴 Una versión nueva hereda evidencias de la anterior (5-oct-2026): el motor las pasa junto con las
        propias. Antes se filtraba por local_id === row.local_id y la versión subía SIN las heredadas.
        La ruta usa el local_id de la versión donde se guardó la evidencia: es la misma en todas las
-       versiones, así que una evidencia ya subida no se vuelve a subir (y con upsert sería idempotente). */
+       versiones, así que una evidencia ya subida no se vuelve a subir (y si se reintenta, «ya existe» cuenta como subida). */
     const ids = new Set((row.fotos || []).map(f => f.photo_id))
     for (const p of (photos || []).filter(x => x.local_id === row.local_id || ids.has(x.photo_id))) {
       const porSubir = p.sync_status !== 'synced' && !!p.blob
@@ -83,8 +90,18 @@ async function transport({ rows, photos }) {
         if (!t) return { ok: false, error: { tipo: 'otro', mensaje: `la evidencia «${p.name || p.field || 'archivo'}» no es ${TIPOS_ADMITIDOS}` } }
         if (t.mime !== p.mime) { p.mime = t.mime; await db.cert_photos.update(p.photo_id, { mime: t.mime }) }
       }
+      /* 🔴 HUELLA (13-oct-2026). El sello del servidor cubre la RUTA de la evidencia, no su contenido. La sha256 del
+         archivo, calculada en el equipo ANTES de subirlo, viaja en la referencia (fotos[].sha256) y queda sellada
+         con la respuesta: si alguien sustituye el archivo en el depósito, la huella ya no coincide. Se guarda en el
+         equipo para que las versiones que heredan la evidencia lleven la MISMA huella (el servidor compara `fotos`
+         al reconocer un reenvío idéntico). Una evidencia traída de otro equipo trae la suya. */
+      let sha256 = p.sha256 || null
+      if (!sha256 && p.blob) {
+        sha256 = await huellaSha256(p.blob)
+        if (sha256) { p.sha256 = sha256; await db.cert_photos.update(p.photo_id, { sha256 }) }
+      }
       const mime = p.mime || 'image/jpeg'
-      /* 🔴 La ruta llevaba solo el nombre del campo y el upload va con upsert:true, así que dos
+      /* 🔴 La ruta llevaba solo el nombre del campo y el upload iba con upsert:true, así que dos
          evidencias del MISMO campo se pisaban en el bucket: subía la segunda y la primera
          desaparecía sin aviso. Se le agrega el identificador de la evidencia. Se puede cambiar
          el formato sin migrar nada porque cert_responses está en cero. */
@@ -92,12 +109,16 @@ async function transport({ rows, photos }) {
       const sufijo = String(p.photo_id || '').replace(/[^\w]/g, '').slice(0, 8)
       // una evidencia traída del servidor (otro equipo) ya tiene su ruta: se reusa, no se vuelve a subir
       const path = p.path || `${clientSlug}/${p.local_id || row.local_id}/${safe}${sufijo ? '_' + sufijo : ''}.${extDe(mime)}`
+      /* 🔴 SIN REEMPLAZO (13-oct-2026, ASVS L1). Con upsert:true, cualquiera con acceso a la finca podía sustituir
+         una evidencia ya sellada subiendo otro archivo a la misma ruta. Ahora upsert:false, y «ya existe» cuenta como
+         subida: la ruta lleva el identificador de la evidencia, así que si existe es porque un intento anterior de
+         este mismo respaldo llegó (y se cortó antes de la respuesta). La huella permite comprobar que es el mismo. */
       if (porSubir) {
         const { error: upErr } = await supabase.storage.from(BUCKET)
-          .upload(path, p.blob, { upsert: true, contentType: mime })
-        if (upErr) return { ok: false, error: clasificarError(upErr) }
+          .upload(path, p.blob, { upsert: false, contentType: mime })
+        if (upErr && !yaExiste(upErr)) return { ok: false, error: clasificarError(upErr) }
       }
-      fotoRefs.push({ field: p.field, path, photo_id: p.photo_id, bucket: BUCKET, name: p.name || null, mime })
+      fotoRefs.push({ field: p.field, path, photo_id: p.photo_id, bucket: BUCKET, name: p.name || null, mime, sha256 })
     }
     // 2) Subir la respuesta (con las referencias de las fotos ya en Storage).
     const data = { ...(row.data || {}) }
@@ -178,7 +199,8 @@ export async function traerDelServidor(form_key = null) {
       if (!(await db.cert_photos.get(f.photo_id))) {
         await db.cert_photos.put({
           photo_id: f.photo_id, local_id: r.local_id, field: f.field, blob: null, mime: f.mime || null,
-          name: f.name || null, path: f.path || null, bucket: f.bucket || BUCKET, sync_status: 'synced', remota: true
+          name: f.name || null, path: f.path || null, bucket: f.bucket || BUCKET, sha256: f.sha256 || null,
+          sync_status: 'synced', remota: true
         })
       }
     }
