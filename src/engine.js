@@ -216,6 +216,41 @@ export async function urlEvidencia(photo_id) {
   return { url: data.signedUrl, local: false }
 }
 
+/**
+ * AL SALIR (13-oct-2026, auditoría ASVS L1). «Salir» solo cerraba la sesión: todo lo capturado —respuestas y
+ * evidencias— quedaba en el teléfono, a la vista de quien lo usara después. Esto borra de ESTE EQUIPO lo que ya
+ * está respaldado en el servidor; al volver a entrar se trae de nuevo (traerDelServidor), con su cadena y sus
+ * versiones, y las evidencias se ven por URL firmada.
+ *
+ * 🔴 Lo que NO está respaldado no se toca (R1: el dato del campo es sagrado), y tampoco las evidencias que una
+ * versión pendiente hereda de una ya respaldada: sin su archivo, esa versión subiría sin la evidencia.
+ * @returns {Promise<{ borradas: number, evidencias: number, quedan: number }>}
+ */
+export async function limpiarRespaldadoDelEquipo() {
+  const r = await db.transaction('rw', db.cert_responses, db.cert_photos, db.cert_sync_queue, async () => {
+    const todas = await db.cert_responses.toArray()
+    const quedan = todas.filter(x => x.sync_status !== 'synced')
+    const borrar = todas.filter(x => x.sync_status === 'synced')
+    const vivas = new Set(quedan.map(x => x.local_id))
+    const usadas = new Set(quedan.flatMap(x => (x.fotos || []).map(f => f.photo_id)).filter(Boolean))
+    await db.cert_responses.bulkDelete(borrar.map(x => x._idb_id))
+    const fotos = (await db.cert_photos.toArray())
+      .filter(p => !vivas.has(p.local_id) && !usadas.has(p.photo_id)).map(p => p.photo_id)
+    await db.cert_photos.bulkDelete(fotos)
+    const cola = (await db.cert_sync_queue.toArray()).filter(q => !vivas.has(q.local_id)).map(q => q.queue_id)
+    await db.cert_sync_queue.bulkDelete(cola)
+    return { borradas: borrar.length, evidencias: fotos.length, quedan: quedan.length }
+  })
+  await base.refreshCounts()
+  return r
+}
+
+/* PENDIENTE (13-oct-2026): separar la base local por cuenta (`vg-cert-capture-<user.id>`). No se hizo aquí porque
+   el motor y la base se crean una sola vez al cargar el módulo (y la app, el tablero y la bóveda importan `db`
+   directo): habría que recrearlos al cambiar de cuenta y migrar lo pendiente de la base común sin perder nada.
+   Mientras tanto, lo pendiente que quede al salir lo puede ver (y respaldar, si tiene acceso a esa finca) la
+   próxima cuenta que entre en este equipo; por eso «Salir» avisa antes. */
+
 /* El motor que usa la app. Al abrir un formulario (getLatestState), antes de leer el equipo trae del servidor lo
    que falte, con un tope de 6 s: sin señal o con el servidor lento, se abre con lo que hay en el equipo. */
 export const engine = {

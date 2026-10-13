@@ -3,7 +3,7 @@ import { CertForm, useCertCapture, readFormFromContainer, progresoDe } from './e
 import { Icono } from './eudr-react/CertForm.jsx'
 import { rehidratarVersiones, enContexto } from './eudr-react/capture/cert-offline-engine.js'
 import { buildCertReadyPreviewHtml } from './eudr-react/capture/export-policy.js'
-import { engine, setCaptureSession, db, traerDelServidor } from './engine.js'
+import { engine, setCaptureSession, db, traerDelServidor, limpiarRespaldadoDelEquipo } from './engine.js'
 import { RespaldoAviso, IntegridadCadena } from './Respaldo.jsx'
 import { supabase } from './supabase.js'
 import { adoptShellSessionIfEmbedded, estamosEmbebidos, consumeHandoffIfPresent } from './shell-bridge.js'
@@ -375,6 +375,7 @@ export default function App() {
   const [tablero, setTablero] = useState(false)
   const [boveda, setBoveda] = useState(false)
   const [estadoPorForm, setEstadoPorForm] = useState({}) // progreso por formulario del cert actual (hoja de ruta)
+  const [salida, setSalida] = useState(null) // null · { pendientes } (pide confirmar) · 'saliendo'
 
   useEffect(() => {
     let mounted = true
@@ -415,7 +416,9 @@ export default function App() {
     setAal(falta ? 'falta' : 'ok')
   }
 
-  useEffect(() => { setCaptureSession({ slug, email: effEmail }); localStorage.setItem('vg_slug', slug) }, [slug, effEmail])
+  // vacío = se quita la clave (no se deja una clave vacía: al salir se borran todas las vg_*)
+  const guardarLocal = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k) } catch {} }
+  useEffect(() => { setCaptureSession({ slug, email: effEmail }); guardarLocal('vg_slug', slug) }, [slug, effEmail])
 
   // 🔴 Respaldo (6-oct-2026): al entrar con sesión o al elegir la finca se intenta respaldar lo pendiente (antes
   // solo al guardar o al volver la señal), y mientras quede algo pendiente se reintenta cada 90 s.
@@ -459,8 +462,41 @@ export default function App() {
     })().catch(() => { if (!cancelado) { setAccesoEudr('error'); setMisFincas([]); setModuleFlags([]); setRol(null) } })
     return () => { cancelado = true }
   }, [user])
-  useEffect(() => { localStorage.setItem('vg_prod', productor) }, [productor])
-  useEffect(() => { localStorage.setItem('vg_finca', finca) }, [finca])
+  useEffect(() => { guardarLocal('vg_prod', productor) }, [productor])
+  useEffect(() => { guardarLocal('vg_finca', finca) }, [finca])
+
+  /* 🔴 SALIR (13-oct-2026, auditoría ASVS L1). Antes solo cerraba la sesión y dejaba en el teléfono la finca, el
+     productor, el perfil pendiente (con la cédula) y todo lo capturado. Ahora: se intenta respaldar lo pendiente
+     (8 s como tope); si aun así queda algo sin respaldar, se avisa y se pide confirmar; al salir se borran las
+     claves vg_* y lo ya respaldado de la base local (limpiarRespaldadoDelEquipo). Lo pendiente no se borra (R1).
+     En modo demo «Salir» sigue siendo solo dejar la demo: sus capturas esperan a que alguien inicie sesión. */
+  async function salir(confirmado = false) {
+    if (!user) { setDemo(false); return }
+    if (!confirmado) {
+      setSalida('saliendo')
+      try { await Promise.race([flush(), new Promise(r => setTimeout(r, 8000))]) } catch {}
+      const n = await db.cert_responses.where('sync_status').anyOf('pending', 'failed').count().catch(() => 0)
+      if (n) { setSalida({ pendientes: n }); return }
+    }
+    setSalida('saliendo')
+    try { await limpiarRespaldadoDelEquipo() } catch { /* no impide salir */ }
+    try {
+      for (const k of Object.keys(localStorage)) if (k.startsWith('vg_')) localStorage.removeItem(k)
+    } catch {}
+    setSlug(''); setProductor(''); setFinca(''); setFormKey('')
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      /* Sin señal, supabase-js no puede avisar al servidor y DEJA la sesión puesta (devuelve el error sin borrarla).
+         Se quita del equipo a mano y se recarga: en este teléfono ya no queda sesión. */
+      try {
+        localStorage.removeItem(supabase.auth.storageKey)
+        localStorage.removeItem(supabase.auth.storageKey + '-code-verifier')
+      } catch {}
+      window.location.reload()
+      return
+    }
+    setSalida(null); setDemo(false)
+  }
 
 
   // ¿el productor ya tiene su perfil Capa 0? (onboarding F1). Si la RPC get_my_profile aún no existe
@@ -530,6 +566,28 @@ export default function App() {
     setPreview(html)
   }
 
+  // Confirmación de «Salir» con versiones sin respaldar. Va en la vista principal y en la de «sin acceso».
+  const hojaSalida = salida && salida.pendientes ? (
+    <div className="overlay" onClick={() => setSalida(null)}>
+      <div className="sheet" onClick={e => e.stopPropagation()} role="alertdialog" aria-labelledby="salida-titulo">
+        <div className="sheet-head">
+          <strong id="salida-titulo"><Icono n="warning" />Quedan {salida.pendientes} {salida.pendientes === 1 ? 'versión' : 'versiones'} sin respaldar</strong>
+        </div>
+        <div className="tablero">
+          <p>Están guardadas solo en este equipo y todavía no llegaron al servidor.</p>
+          <p className="muted">Si sale ahora, no se borran: se quedan en este teléfono hasta que se respalden, y
+            quien use el equipo después podría verlas. Lo que ya está respaldado, la finca elegida y el perfil
+            pendiente sí se borran de este equipo.</p>
+          <div className="export-bar">
+            <button type="button" className="primary" onClick={() => { setSalida(null); flush() }}>
+              <Icono n="cloud_upload" />Quedarme y respaldar</button>
+            <button type="button" className="link" onClick={() => salir(true)}>Salir de todas formas</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null
+
   if (!ready) return <div className="wrap"><div className="card">Cargando…</div></div>
   // Sesión abierta sin el segundo factor: ni la app ni ninguna llamada con sesión hasta verificar el código.
   // Embebido, «Usar otra cuenta» no cierra la sesión (es la del shell): recarga el módulo, igual que SinAcceso.
@@ -559,7 +617,7 @@ export default function App() {
     </div></div>
   )
   // En embebido, "cambiar de cuenta" NO cierra la sesión (es compartida con el shell); recarga el módulo.
-  if (user && accesoEudr === false) return <SinAcceso email={user.email} onSalir={() => EMBEBIDO ? window.location.reload() : supabase.auth.signOut()} />
+  if (user && accesoEudr === false) return <>{hojaSalida}<SinAcceso email={user.email} onSalir={() => EMBEBIDO ? window.location.reload() : salir()} /></>
   if (user && accesoEudr && perfil === 'necesita')
     return <MiPerfilGate email={user.email} onListo={() => setPerfil('ok')} onOmitir={() => setPerfil('omitido')} />
 
@@ -581,7 +639,7 @@ export default function App() {
         <a className="link" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
         <SyncBadge status={status} />
         {!EMBEBIDO ? (
-          <button className="link" onClick={() => { if (user) supabase.auth.signOut(); setDemo(false) }}>Salir</button>
+          <button className="link" disabled={salida === 'saliendo'} onClick={() => salir()}>{salida === 'saliendo' ? 'Saliendo…' : 'Salir'}</button>
         ) : null}
       </header>
       {/* El respaldo, a la vista y sin abrir nada (6-oct-2026). En modo demo es el aviso amarillo de siempre, con
@@ -688,6 +746,8 @@ export default function App() {
           onClose={() => setBoveda(false)}
         />
       ) : null}
+
+      {hojaSalida}
 
       {preview ? (
         <div className="overlay" onClick={() => setPreview(null)}>
