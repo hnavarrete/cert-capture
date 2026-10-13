@@ -27,11 +27,22 @@ const PHOTOS = 'cert_photos'        // blobs de fotos offline-first
 const QUEUE = 'cert_sync_queue'     // cola de sync (push diferido)
 
 // uuid v4 sin dependencias (idempotencia del registro)
+/* 🔴 13-oct-2026 (auditoría ASVS L1): salía de Math.random, que no es aleatorio criptográfico: los local_id y los
+   photo_id —que forman la ruta de cada evidencia en el depósito— se podían predecir. Ahora crypto.randomUUID; si el
+   navegador no lo tiene (fuera de https o WebView viejo), crypto.getRandomValues; Math.random queda solo como
+   último recurso para no impedir guardar (R1). */
 function uuid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = (Math.random() * 16) | 0
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
-  })
+  const c = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
+  if (c && typeof c.randomUUID === 'function') {
+    try { return c.randomUUID() } catch { /* fuera de contexto seguro: sigue abajo */ }
+  }
+  const b = new Uint8Array(16)
+  if (c && typeof c.getRandomValues === 'function') c.getRandomValues(b)
+  else for (let i = 0; i < 16; i++) b[i] = (Math.random() * 256) | 0
+  b[6] = (b[6] & 0x0f) | 0x40   // versión 4
+  b[8] = (b[8] & 0x3f) | 0x80   // variante RFC 4122
+  const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
 }
 
 /**
