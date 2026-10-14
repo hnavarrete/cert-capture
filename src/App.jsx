@@ -107,7 +107,7 @@ function SyncBadge({ status }) {
 }
 
 // Login único del ecosistema VG: componente compartido <VGLogin> (@vgsdk/auth-ui).
-// Mismas vías + look que visor/erp/campo (Google + correo/contraseña + magic-link),
+// Mismas vías que todo el ecosistema (Google, Microsoft de trabajo y código al correo, más contraseña),
 // branding por tenant, marca VG siempre. cert SOLO inyecta sus handlers Supabase
 // (desacoplado). El modo demo se conserva debajo (gancho de exploración sin sesión).
 function Login({ onDemo, onAvisoC1 }) {
@@ -119,6 +119,16 @@ function Login({ onDemo, onAvisoC1 }) {
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: { redirectTo: window.location.origin + window.location.pathname }
+          })
+          if (error) throw new Error(error.message)
+        }}
+        /* 13-oct-2026 · LOGIN único (#16, Henrry: «entramos todos con los mismos métodos»): Google, Microsoft de trabajo
+         * y código al correo, sobre la misma cuenta. Microsoft es el proveedor `azure` del proyecto (solo cuentas de
+         * organización); una cuenta personal entra por el código al correo. */
+        onMicrosoft={async () => {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'azure',
+            options: { scopes: 'email', redirectTo: window.location.origin + window.location.pathname }
           })
           if (error) throw new Error(error.message)
         }}
@@ -171,6 +181,11 @@ function Login({ onDemo, onAvisoC1 }) {
             options: { emailRedirectTo: window.location.origin + window.location.pathname }
           })
           if (error) throw new Error(error.message)
+        }}
+        /* El mismo correo trae el código de 6 dígitos: sirve si el correo se abre en otro aparato (auth-ui 1.2.0). */
+        onEmailCode={async (email, codigo) => {
+          const { error } = await supabase.auth.verifyOtp({ email, token: codigo, type: 'email' })
+          if (error) throw new Error('El código no es válido o ya caducó.')
         }}
       />
       <button type="button" className="link demo-link" style={{ marginTop: 12, display: 'block', width: '100%', textAlign: 'center' }} onClick={onDemo}>
