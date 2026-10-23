@@ -1,0 +1,87 @@
+{
+ "id": "grupo-autorizar-auditor",
+ "orden": 84,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Autorizar al auditor del organismo certificador",
+ "resumen": "El auditor entra en solo lectura a su grupo, hasta la fecha que usted ponga (un año como máximo). Se revoca en cualquier momento.",
+ "gancho": "¿Viene la auditoría externa?",
+ "pasos": [
+  {
+   "texto": "Abra «Mi grupo».",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    }
+   ],
+   "ms": 2400
+  },
+  {
+   "texto": "Toque la pestaña «Auditores».",
+   "acciones": [
+    {
+     "pestana": "Auditores"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Escriba el correo del auditor y su organismo certificador.",
+   "corto": "Correo y organismo del auditor.",
+   "acciones": [
+    {
+     "llenar": [
+      "Correo del auditor",
+      "auditor@certificador.demo"
+     ]
+    },
+    {
+     "llenar": [
+      "Organismo certificador",
+      "Organismo demo"
+     ]
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Elija hasta qué fecha puede entrar: un año como máximo.",
+   "corto": "Hasta qué fecha: un año como máximo.",
+   "acciones": [
+    {
+     "ver": "Vence el"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Toque «Autorizar auditor».",
+   "acciones": [
+    {
+     "clic": "Autorizar auditor"
+    },
+    {
+     "ver": "Auditor autorizado"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Para quitarle el acceso antes, toque «Revocar».",
+   "corto": "«Revocar» le quita el acceso.",
+   "acciones": [
+    {
+     "ver": "Revocar"
+    }
+   ],
+   "ms": 3000
+  }
+ ],
+ "nota": "Visión Geográfica activa la cuenta del auditor con el rol de auditor. El auditor ve el registro y el historial, pero no edita.",
+ "cierre": "La auditoría, en solo lectura",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

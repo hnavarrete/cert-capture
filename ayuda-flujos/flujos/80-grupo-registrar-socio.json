@@ -1,0 +1,116 @@
+{
+ "id": "grupo-registrar-socio",
+ "orden": 80,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Registrar un socio del grupo (GlobalG.A.P. opción 2)",
+ "resumen": "El registro interno de miembros que pide el QMS: cédula, productos con su área, sitios y certificador. Un socio nuevo entra como aspirante.",
+ "gancho": "¿Lleva el registro de socios en Excel?",
+ "pasos": [
+  {
+   "texto": "Arriba, toque «Mi grupo».",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Ve cuántos socios están activos, aspirantes, suspendidos y excluidos, y cuántas hectáreas suman.",
+   "corto": "Socios por estado y hectáreas activas.",
+   "acciones": [
+    {
+     "ver": "ha de socios activos"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Toque «Registrar socio».",
+   "acciones": [
+    {
+     "clic": "Registrar socio"
+    }
+   ],
+   "ms": 2400
+  },
+  {
+   "texto": "Escriba la cédula o el RUC y el nombre del socio.",
+   "corto": "Cédula o RUC y nombre.",
+   "acciones": [
+    {
+     "llenar": [
+      "Cédula o RUC",
+      "1599999920"
+     ]
+    },
+    {
+     "llenar": [
+      "Nombre del socio",
+      "Productora demo H"
+     ]
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Anote cada producto con su área en hectáreas.",
+   "corto": "Cada producto, con su área.",
+   "acciones": [
+    {
+     "llenar": [
+      "Cultivo",
+      "pitahaya amarilla"
+     ]
+    },
+    {
+     "llenar": [
+      "Hectáreas",
+      "1.7"
+     ]
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Anote el sitio y marque si está certificado.",
+   "corto": "El sitio, y si está certificado.",
+   "acciones": [
+    {
+     "llenar": [
+      "Nombre del sitio",
+      "Finca demo H"
+     ]
+    },
+    {
+     "llenar": [
+      "Hectáreas del sitio",
+      "1.7"
+     ]
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Toque «Registrar como aspirante». Se activa después de su auditoría interna.",
+   "corto": "Entra como aspirante.",
+   "acciones": [
+    {
+     "clic": "Registrar como aspirante"
+    },
+    {
+     "ver": "registrado como aspirante"
+    }
+   ],
+   "ms": 3600
+  }
+ ],
+ "nota": "El registro se puede descargar para el auditor con «Descargar registro».",
+ "cierre": "El registro del grupo, siempre al día",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

@@ -1,0 +1,32 @@
+{
+ "id": "auditor-revisar-grupo",
+ "actor": "auditor",
+ "actor_txt": "Auditor externo",
+ "orden": 86,
+ "solo_texto": true,
+ "titulo": "Revisar un grupo como auditor externo",
+ "resumen": "Con el permiso que le dio la directiva, el auditor ve el registro de socios y su historial, sin modificar nada.",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/",
+ "pasos": [
+  {
+   "texto": "Entre con el correo que la directiva autorizó. La aplicación abre directamente el grupo, en solo lectura."
+  },
+  {
+   "texto": "Arriba se ve hasta qué fecha tiene acceso."
+  },
+  {
+   "texto": "Revise el registro de socios: estado, productos, áreas, certificador y fecha de la última auditoría interna."
+  },
+  {
+   "texto": "Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo."
+  },
+  {
+   "texto": "Use «Descargar registro» para llevarse el registro interno de miembros."
+  }
+ ],
+ "nota": "Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.",
+ "musica_estilo": "eudr",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

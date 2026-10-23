@@ -447,12 +447,88 @@ flujo(id='productor-vista-previa', orden=60, **P,
            'acciones': centrar('Vista previa para el certificador') + [{'clic': 'Vista previa para el certificador'}], 'ms': 2800},
           {'texto': 'Ve el informe con sus respuestas, tal como lo leería el auditor.',
            'foco': 'centro', 'ms': 3400},
-          {'texto': 'Es un borrador con marca de agua; el informe sin marca requiere un plan de pago.',
-           'corto': 'Borrador con marca de agua; sin marca, con un plan de pago.',
+          {'texto': 'Es un borrador con marca de agua; el informe sin marca es una función premium.',
+           'corto': 'Borrador con marca de agua; sin marca, función premium.',
            'foco': 'centro', 'ms': 3400},
           {'texto': 'Toque «Cerrar» para volver al formulario.', 'acciones': [{'clic': 'Cerrar'}], 'ms': 2400},
       ],
       cierre='Revise antes de la auditoría')
+
+# ───────────────────────── grupo (GlobalG.A.P. opción 2) ─────────────────────────
+# src/Grupo.jsx (23-oct-2026). En el modo demostración trabaja con una asociación sintética en memoria (apiDemo): no
+# escribe en la base. Cédulas y nombres ficticios.
+G = dict(actor='grupo', actor_txt='Directiva del grupo', url=DEMO, probar=PROBAR, musica_estilo='eudr')
+SOCIO_C = '.qms-socio:has-text("Productora demo C")'
+
+flujo(id='grupo-registrar-socio', orden=80, **G,
+      titulo='Registrar un socio del grupo (GlobalG.A.P. opción 2)',
+      resumen='El registro interno de miembros que pide el QMS: cédula, productos con su área, sitios y certificador. Un socio nuevo entra como aspirante.',
+      gancho='¿Lleva el registro de socios en Excel?',
+      pasos=[
+          {'texto': 'Arriba, toque «Mi grupo».', 'acciones': [{'clic': 'Mi grupo'}], 'ms': 2600},
+          {'texto': 'Ve cuántos socios están activos, aspirantes, suspendidos y excluidos, y cuántas hectáreas suman.',
+           'corto': 'Socios por estado y hectáreas activas.', 'acciones': [{'ver': 'ha de socios activos'}], 'ms': 3400},
+          {'texto': 'Toque «Registrar socio».', 'acciones': [{'clic': 'Registrar socio'}], 'ms': 2400},
+          {'texto': 'Escriba la cédula o el RUC y el nombre del socio.', 'corto': 'Cédula o RUC y nombre.',
+           'acciones': [{'llenar': ['Cédula o RUC', '1599999920']}, {'llenar': ['Nombre del socio', 'Productora demo H']}], 'ms': 3200},
+          {'texto': 'Anote cada producto con su área en hectáreas.', 'corto': 'Cada producto, con su área.',
+           'acciones': [{'llenar': ['Cultivo', 'pitahaya amarilla']}, {'llenar': ['Hectáreas', '1.7']}], 'ms': 3200},
+          {'texto': 'Anote el sitio y marque si está certificado.', 'corto': 'El sitio, y si está certificado.',
+           'acciones': [{'llenar': ['Nombre del sitio', 'Finca demo H']}, {'llenar': ['Hectáreas del sitio', '1.7']}], 'ms': 3200},
+          {'texto': 'Toque «Registrar como aspirante». Se activa después de su auditoría interna.',
+           'corto': 'Entra como aspirante.', 'acciones': [{'clic': 'Registrar como aspirante'}, {'ver': 'registrado como aspirante'}], 'ms': 3600},
+      ],
+      nota='El registro se puede descargar para el auditor con «Descargar registro».',
+      cierre='El registro del grupo, siempre al día')
+
+flujo(id='grupo-sancionar-socio', orden=82, **G,
+      titulo='Suspender o excluir a un socio',
+      resumen='Un socio no se borra: se suspende o se excluye con su motivo, y el cambio queda en su historial con la fecha y quién lo hizo.',
+      gancho='¿Qué pasa si un socio incumple?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo».', 'acciones': [{'clic': 'Mi grupo'}], 'ms': 2400},
+          {'texto': 'En el socio, toque «Suspender» o «Excluir».', 'corto': 'Toque «Suspender» o «Excluir».',
+           'acciones': [{'clic_css': SOCIO_C + ' button:has-text("Excluir")'}], 'ms': 2800},
+          {'texto': 'Escriba el motivo. Sin motivo no se puede confirmar.', 'corto': 'El motivo es obligatorio.',
+           'acciones': [{'llenar': ['Motivo', 'Producto no autorizado en la bodega']}], 'ms': 3200},
+          {'texto': 'Toque «Confirmar».', 'acciones': [{'clic': 'Confirmar'}, {'ver': 'Productora demo C: excluido'}], 'ms': 2800},
+          {'texto': 'En «Historial» queda cada cambio con su fecha, su motivo y quién lo hizo. No se puede borrar.',
+           'corto': 'El historial no se borra.',
+           'acciones': [{'clic_css': SOCIO_C + ' button:has-text("Historial")'}, {'ver': 'Motivo: Producto no autorizado'}], 'ms': 3800},
+      ],
+      nota='Un socio excluido se puede readmitir como aspirante; el historial conserva todo.',
+      cierre='Cada sanción, con su motivo')
+
+flujo(id='grupo-autorizar-auditor', orden=84, **G,
+      titulo='Autorizar al auditor del organismo certificador',
+      resumen='El auditor entra en solo lectura a su grupo, hasta la fecha que usted ponga (un año como máximo). Se revoca en cualquier momento.',
+      gancho='¿Viene la auditoría externa?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo».', 'acciones': [{'clic': 'Mi grupo'}], 'ms': 2400},
+          {'texto': 'Toque la pestaña «Auditores».', 'acciones': [{'pestana': 'Auditores'}], 'ms': 2600},
+          {'texto': 'Escriba el correo del auditor y su organismo certificador.', 'corto': 'Correo y organismo del auditor.',
+           'acciones': [{'llenar': ['Correo del auditor', 'auditor@certificador.demo']}, {'llenar': ['Organismo certificador', 'Organismo demo']}], 'ms': 3400},
+          {'texto': 'Elija hasta qué fecha puede entrar: un año como máximo.', 'corto': 'Hasta qué fecha: un año como máximo.',
+           'acciones': [{'ver': 'Vence el'}], 'ms': 3000},
+          {'texto': 'Toque «Autorizar auditor».', 'acciones': [{'clic': 'Autorizar auditor'}, {'ver': 'Auditor autorizado'}], 'ms': 3000},
+          {'texto': 'Para quitarle el acceso antes, toque «Revocar».', 'corto': '«Revocar» le quita el acceso.',
+           'acciones': [{'ver': 'Revocar'}], 'ms': 3000},
+      ],
+      nota='Visión Geográfica activa la cuenta del auditor con el rol de auditor. El auditor ve el registro y el historial, pero no edita.',
+      cierre='La auditoría, en solo lectura')
+
+flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', orden=86, solo_texto=True,
+      titulo='Revisar un grupo como auditor externo',
+      resumen='Con el permiso que le dio la directiva, el auditor ve el registro de socios y su historial, sin modificar nada.',
+      url=DEMO, probar=PUBLICA + '/',
+      pasos=[
+          {'texto': 'Entre con el correo que la directiva autorizó. La aplicación abre directamente el grupo, en solo lectura.'},
+          {'texto': 'Arriba se ve hasta qué fecha tiene acceso.'},
+          {'texto': 'Revise el registro de socios: estado, productos, áreas, certificador y fecha de la última auditoría interna.'},
+          {'texto': 'Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo.'},
+          {'texto': 'Use «Descargar registro» para llevarse el registro interno de miembros.'},
+      ],
+      nota='Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.')
 
 # ───────────────────────── solo lectura ─────────────────────────
 flujo(id='lector-solo-lectura', actor='lector', actor_txt='Solo lectura', orden=70, solo_texto=True,

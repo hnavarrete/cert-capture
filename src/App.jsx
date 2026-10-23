@@ -14,6 +14,7 @@ const EMBEBIDO = estamosEmbebidos()
 import bundle from './schemas.bundle.json'
 import RoadmapCert from './RoadmapCert.jsx'
 import Boveda from './Boveda.jsx'
+import Grupo from './Grupo.jsx'
 import { VGLogin } from '@vgsdk/auth-ui'
 /* C1 · comprobacion de contrasenas filtradas. Vive en @vgsdk/auth y se exporta desde la entrada
    principal (index.ts:83), asi que NO hace falta subruta ni subir de version de auth-ui: el
@@ -71,7 +72,9 @@ const ROLES = {
   tecnico: { label: 'Técnico', nivel: 'captura' },
   fumigador: { label: 'Fumigador', nivel: 'captura' },
   packhouse_operator: { label: 'Operador de empacadora', nivel: 'captura' }, // 13º canónico (A6, #03 G1)
-  lector: { label: 'Solo lectura', nivel: 'lectura' }
+  lector: { label: 'Solo lectura', nivel: 'lectura' },
+  // Rol de alianza (Capa 0): nunca lleva fincas propias; entra a un grupo solo si la directiva lo autoriza (Mi grupo).
+  auditor: { label: 'Auditor externo', nivel: 'lectura' }
 }
 // Capacidades derivadas del nivel (gating de UI). El servidor es la fuente de verdad; esto es UX.
 function capsDeRol(rol) {
@@ -430,6 +433,9 @@ export default function App() {
   const [preview, setPreview] = useState(null)
   const [tablero, setTablero] = useState(false)
   const [boveda, setBoveda] = useState(false)
+  const [grupo, setGrupo] = useState(false)
+  // Grupos del QMS (GlobalG.A.P. opción 2) donde la cuenta gestiona o audita. null = sin consultar todavía.
+  const [gruposQms, setGruposQms] = useState(null)
   const [estadoPorForm, setEstadoPorForm] = useState({}) // progreso por formulario del cert actual (hoja de ruta)
   const [salida, setSalida] = useState(null) // null · { pendientes } (pide confirmar) · 'saliendo'
 
@@ -619,6 +625,13 @@ export default function App() {
     return () => { on = false }
   }, [certSel, slug, productor, finca, formKey, grouped])
 
+  useEffect(() => {
+    if (!user) { setGruposQms(null); return }
+    let on = true
+    supabase.rpc('cert_qms_mis_grupos').then(({ data, error }) => { if (on) setGruposQms(error ? [] : (data || [])) })
+    return () => { on = false }
+  }, [user])
+
   // si la cert seleccionada deja de estar permitida (cambió el grant), salta a la primera visible
   useEffect(() => {
     if (certKeys.length && !certKeys.includes(certSel)) { setCertSel(certKeys[0]); setFormKey('') }
@@ -685,6 +698,20 @@ export default function App() {
     </div></div>
   )
   // En embebido, "cambiar de cuenta" NO cierra la sesión (es compartida con el shell); recarga el módulo.
+  // El auditor externo no tiene fincas propias (rol de alianza): si una directiva lo autorizó, entra directo a su grupo.
+  if (user && accesoEudr !== 'error' && (rol === 'auditor' || accesoEudr === false) && (gruposQms || []).some(g => g.nivel === 'auditor')) return (
+    <div className="wrap">
+      <header className="topbar">
+        <span className="brand"><span className="dot" /> VG · Certificaciones</span>
+        <span className="rolbadge lectura">Auditor externo</span>
+        <span className="spacer" />
+        <a className="link" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
+        {!EMBEBIDO ? <button className="link" onClick={() => salir()}>Salir</button> : null}
+      </header>
+      <Grupo pantallaCompleta />
+      {hojaSalida}
+    </div>
+  )
   if (user && accesoEudr === false) return <>{hojaSalida}<SinAcceso email={user.email} onSalir={() => EMBEBIDO ? window.location.reload() : salir()} /></>
   if (user && accesoEudr && perfil === 'necesita')
     return <MiPerfilGate email={user.email} inicial={perfilInicial?.datos} avisoInicial={perfilInicial?.aviso}
@@ -705,6 +732,7 @@ export default function App() {
         <span className="spacer" />
         <button className="link" onClick={() => setTablero(true)}><Icono n="bar_chart" />Mi progreso</button>
         <button className="link" onClick={() => setBoveda(true)}><Icono n="lock" />Mi bóveda</button>
+        {(demo && !user) || (gruposQms || []).length ? <button className="link" onClick={() => setGrupo(true)}><Icono n="hub" />Mi grupo</button> : null}
         <a className="link" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
         <SyncBadge status={status} />
         {!EMBEBIDO ? (
@@ -815,6 +843,8 @@ export default function App() {
           onClose={() => setBoveda(false)}
         />
       ) : null}
+
+      {grupo ? <Grupo demo={demo && !user} onClose={() => setGrupo(false)} /> : null}
 
       {hojaSalida}
 
