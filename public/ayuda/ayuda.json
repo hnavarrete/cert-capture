@@ -1,6 +1,6 @@
 {
  "generado_por": "kit_video.py",
- "generado": "2026-10-06T01:04:03",
+ "generado": "2026-10-23T00:01:49",
  "flujos": [
   {
    "id": "cuenta-entrar",
@@ -404,7 +404,7 @@
    "pasos": [
     "Debajo del formulario, toque «Vista previa para el certificador».",
     "Ve el informe con sus respuestas, tal como lo leería el auditor.",
-    "Es un borrador con marca de agua; el informe sin marca es una función premium.",
+    "Es un borrador con marca de agua; el informe sin marca requiere un plan de pago.",
     "Toque «Cerrar» para volver al formulario."
    ],
    "nota": "",
@@ -428,6 +428,88 @@
     "Para cambiar algo, pídaselo al responsable de la finca: su rol no guarda capturas."
    ],
    "nota": "Este flujo necesita una cuenta real con rol de solo lectura: el video está en preparación.",
+   "video": null,
+   "portada": null
+  },
+  {
+   "id": "grupo-registrar-socio",
+   "actor": "grupo",
+   "orden": 80,
+   "titulo": "Registrar un socio del grupo (GlobalG.A.P. opción 2)",
+   "resumen": "El registro interno de miembros que pide el QMS: cédula, productos con su área, sitios y certificador. Un socio nuevo entra como aspirante.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 42,
+   "pasos": [
+    "Arriba, toque «Mi grupo».",
+    "Ve cuántos socios están activos, aspirantes, suspendidos y excluidos, y cuántas hectáreas suman.",
+    "Toque «Registrar socio».",
+    "Escriba la cédula o el RUC y el nombre del socio.",
+    "Anote cada producto con su área en hectáreas.",
+    "Anote el sitio y marque si está certificado.",
+    "Toque «Registrar como aspirante». Se activa después de su auditoría interna."
+   ],
+   "nota": "El registro se puede descargar para el auditor con «Descargar registro».",
+   "video": "https://vg-cert-videos.pages.dev/grupo-registrar-socio.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-registrar-socio.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-registrar-socio-redes.mp4"
+  },
+  {
+   "id": "grupo-sancionar-socio",
+   "actor": "grupo",
+   "orden": 82,
+   "titulo": "Suspender o excluir a un socio",
+   "resumen": "Un socio no se borra: se suspende o se excluye con su motivo, y el cambio queda en su historial con la fecha y quién lo hizo.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 32,
+   "pasos": [
+    "Abra «Mi grupo».",
+    "En el socio, toque «Suspender» o «Excluir».",
+    "Escriba el motivo. Sin motivo no se puede confirmar.",
+    "Toque «Confirmar».",
+    "En «Historial» queda cada cambio con su fecha, su motivo y quién lo hizo. No se puede borrar."
+   ],
+   "nota": "Un socio excluido se puede readmitir como aspirante; el historial conserva todo.",
+   "video": "https://vg-cert-videos.pages.dev/grupo-sancionar-socio.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-sancionar-socio.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-sancionar-socio-redes.mp4"
+  },
+  {
+   "id": "grupo-autorizar-auditor",
+   "actor": "grupo",
+   "orden": 84,
+   "titulo": "Autorizar al auditor del organismo certificador",
+   "resumen": "El auditor entra en solo lectura a su grupo, hasta la fecha que usted ponga (un año como máximo). Se revoca en cualquier momento.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 36,
+   "pasos": [
+    "Abra «Mi grupo».",
+    "Toque la pestaña «Auditores».",
+    "Escriba el correo del auditor y su organismo certificador.",
+    "Elija hasta qué fecha puede entrar: un año como máximo.",
+    "Toque «Autorizar auditor».",
+    "Para quitarle el acceso antes, toque «Revocar»."
+   ],
+   "nota": "Visión Geográfica activa la cuenta del auditor con el rol de auditor. El auditor ve el registro y el historial, pero no edita.",
+   "video": "https://vg-cert-videos.pages.dev/grupo-autorizar-auditor.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-autorizar-auditor.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-autorizar-auditor-redes.mp4"
+  },
+  {
+   "id": "auditor-revisar-grupo",
+   "actor": "auditor",
+   "orden": 86,
+   "titulo": "Revisar un grupo como auditor externo",
+   "resumen": "Con el permiso que le dio la directiva, el auditor ve el registro de socios y su historial, sin modificar nada.",
+   "probar": "https://cert.visiongeografica.com/",
+   "segundos": 0,
+   "pasos": [
+    "Entre con el correo que la directiva autorizó. La aplicación abre directamente el grupo, en solo lectura.",
+    "Arriba se ve hasta qué fecha tiene acceso.",
+    "Revise el registro de socios: estado, productos, áreas, certificador y fecha de la última auditoría interna.",
+    "Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo.",
+    "Use «Descargar registro» para llevarse el registro interno de miembros."
+   ],
+   "nota": "Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.",
    "video": null,
    "portada": null
   }
