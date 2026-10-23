@@ -384,3 +384,6 @@ button.link.demo-link:hover { color: var(--blue-dk); }
 .qms-cuerpo button.link, .qms-pantalla button.link, .qms-form button.link { color: var(--blue-dk); font-weight: 600; }
 .qms-cuerpo button.link:disabled, .qms-pantalla button.link:disabled { color: var(--muted); opacity: .6; cursor: default; }
 .qms-pantalla { background: var(--card); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+/* Un correo largo (auditores) empujaba la etiqueta de estado fuera de la tarjeta a 360 px: el texto se parte y la etiqueta no se encoge. */
+.qms-socio-cab strong { min-width: 0; overflow-wrap: anywhere; }
+.qms-estado { flex-shrink: 0; }
