@@ -119,9 +119,10 @@ function mensaje(e) {
   return t || 'No se pudo completar.'
 }
 
-// CSV para entregar el registro al auditor (4.1.2.2). Una celda que empieza con = + - @ se neutraliza (inyección en Excel).
+// CSV para entregar el registro al auditor (4.1.2.2). Una celda que empieza con = + - @, tabulador o retorno —también
+// después de espacios: Excel los salta— se neutraliza con un apóstrofo (inyección de fórmulas en Excel).
 function csvRegistro(socios) {
-  const celda = (v) => { let s = v == null ? '' : String(v); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"' }
+  const celda = (v) => { let s = v == null ? '' : String(v); if (/^[\s]*[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"' }
   const cab = ['Cédula/RUC', 'Socio', 'Teléfono', 'Correo', 'Dirección', 'Productos', 'Área total (ha)', 'Sitios', 'Certificador', 'GGN',
     'Estado interno', 'Motivo del estado', 'Fecha de ingreso', 'Contrato', 'Última auditoría interna']
   const filas = socios.map(m => [m.identificacion, m.nombre, m.telefono, m.correo, m.direccion,
