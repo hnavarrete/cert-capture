@@ -415,7 +415,9 @@ button.link.demo-link:hover { color: var(--blue-dk); }
 .ai-firmas figure { margin: 0; border: 1px solid var(--line); border-radius: 12px; padding: 8px; text-align: center; font-size: 13px; }
 .ai-firmas img { max-width: 100%; height: 90px; object-fit: contain; display: block; margin: 0 auto 4px; }
 .ai-radios { display: flex; flex-direction: column; gap: 6px; }
-.ai-radios label { color: var(--ink) !important; font-size: 14px !important; }
+.ai-radios label { color: var(--ink) !important; font-size: 14px !important; justify-content: flex-start; }
+/* el estilo general de input (ancho completo) estiraba el círculo y empujaba el texto a la derecha */
+.ai-radios input[type=radio] { width: auto; flex: none; margin: 0; }
 .ai-senal { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 999px; align-self: flex-start; }
 .ai-senal.on { background: var(--ok-bg); color: var(--ok-ink); }
 .ai-senal.off { background: var(--warn-bg); color: var(--warn-ink); }

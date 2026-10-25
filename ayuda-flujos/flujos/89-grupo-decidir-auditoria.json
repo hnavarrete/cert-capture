@@ -1,0 +1,111 @@
+{
+ "id": "grupo-decidir-auditoria",
+ "orden": 89,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Leer el informe de auditoría interna y decidir",
+ "resumen": "Calidad del grupo lee el informe con el cálculo, los incumplimientos y las firmas, y decide si el socio cumple. Quien hizo la auditoría no la aprueba.",
+ "gancho": "¿Quién aprueba la auditoría interna?",
+ "pasos": [
+  {
+   "texto": "Abra «Mi grupo» y toque «Auditorías internas».",
+   "corto": "«Mi grupo» → «Auditorías internas».",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "pestana": "Auditorías internas"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "En la auditoría «Por decidir», toque «Ver informe y decidir».",
+   "corto": "Toque «Ver informe y decidir».",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"Productora demo C\") button:has-text(\"Ver informe\")"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "El informe trae el socio, sus sitios y productos, la hora de inicio y fin, y el auditor interno.",
+   "corto": "Socio, sitios, productos, horas y auditor.",
+   "acciones": [
+    {
+     "ver": "Inicio y fin"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Ve el cálculo del cumplimiento y cada incumplimiento con su plazo.",
+   "corto": "El cálculo y los plazos.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Incumplimientos y plazo\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Incumplimientos y plazo"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Abajo, las firmas del socio y del auditor interno.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Firmas (ii, iv)\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Firmas (ii, iv)"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Elija «Conforme» o «No conforme» y escriba su nombre: queda en el informe.",
+   "corto": "Decida y escriba su nombre.",
+   "acciones": [
+    {
+     "llenar": [
+      "Su nombre",
+      "Responsable de calidad"
+     ]
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Toque «Guardar la decisión»: la fecha queda en el registro del socio.",
+   "corto": "La fecha queda en el registro.",
+   "acciones": [
+    {
+     "clic": "Guardar la decisión"
+    },
+    {
+     "ver": "Decisión guardada"
+    }
+   ],
+   "ms": 3400
+  }
+ ],
+ "nota": "«Conforme» solo se puede elegir si el cálculo cumple (Major 100 % y Minor 95 %). Quien hizo la auditoría no la aprueba (QMS 12.5 a). El informe se puede imprimir con «Imprimir».",
+ "cierre": "Cada auditoría, revisada y firmada",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

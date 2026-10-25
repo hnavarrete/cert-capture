@@ -517,6 +517,112 @@ flujo(id='grupo-autorizar-auditor', orden=84, **G,
       nota='Visión Geográfica activa la cuenta del auditor con el rol de auditor. El auditor ve el registro y el historial, pero no edita.',
       cierre='La auditoría, en solo lectura')
 
+# ── auditoría interna de finca (src/AuditoriaInterna.jsx, 25-oct-2026; QMS 05.02). La demo aplica las mismas reglas del
+# servidor y, sin señal, el envío falla como fallaría de verdad: el informe queda en el equipo hasta que vuelve la señal.
+# «Sin señal» reversible (a diferencia de SIN_SENAL, que no vuelve): window.__vgSinSenal manda.
+SENAL_OFF = ("Object.defineProperty(Navigator.prototype,'onLine',{get:()=>!window.__vgSinSenal,configurable:true});"
+             "window.__vgSinSenal=true;window.dispatchEvent(new Event('offline'))")
+SENAL_ON = "window.__vgSinSenal=false;window.dispatchEvent(new Event('online'))"
+
+def firmar_js(id_lienzo, semilla):
+    """Un trazo de firma con eventos de puntero reales sobre el lienzo (el dedo, en el video)."""
+    return ("(() => { const c = document.getElementById(%s); c.scrollIntoView({block: 'center'}); const r = c.getBoundingClientRect();"
+            " const ev = (t, x, y) => c.dispatchEvent(new PointerEvent(t, {bubbles: true, pointerId: 7, clientX: r.left + x, clientY: r.top + y}));"
+            " ev('pointerdown', 18, 80); for (let x = 18; x <= r.width - 18; x += 7) ev('pointermove', x, 70 + Math.sin(x / %d) * 26 * Math.sin(x / 70));"
+            " ev('pointerup', r.width - 18, 70); })()") % (json.dumps(id_lienzo), semilla)
+
+def poner_js(selector, valor):   # fecha u otro campo controlado por React: valor nativo + evento input
+    return ("(() => { const e = document.querySelector(%s); const p = e.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;"
+            " Object.getOwnPropertyDescriptor(p, 'value').set.call(e, %s); e.dispatchEvent(new Event('input', {bubbles: true})); })()") % (json.dumps(selector), json.dumps(valor))
+
+# El resto de los 97 puntos, de una vez (el video muestra 2 puntos a mano; el subtítulo dice que se sigue así con todos).
+RESTO_CUMPLE = ("(async () => { const s = (ms) => new Promise((r) => setTimeout(r, ms));"
+                " const set = (e, v) => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(e, v); e.dispatchEvent(new Event('input', {bubbles: true})); };"
+                " for (const a of document.querySelectorAll('.ai-punto')) { if (!a.querySelector('.ai-res-b.sel')) { a.querySelector('.ai-res-b.cumple').click(); await s(4); } }"
+                " await s(80); for (const t of document.querySelectorAll('.ai-punto textarea')) { if (!t.value) { set(t, 'Verificado en la finca'); await s(4); } }"
+                " window.scrollTo(0, 0); document.querySelector('.ai-puntos').scrollTop = 0; })()")
+PRIMER = '.ai-puntos section:first-of-type article:nth-of-type(1)'
+SEGUNDO = '.ai-puntos section:first-of-type article:nth-of-type(2)'
+
+flujo(id='grupo-planificar-auditoria', orden=87, **G,
+      titulo='Planificar la auditoría interna de cada socio',
+      resumen='GlobalG.A.P. pide una auditoría interna por socio y por año. Se planifica con fecha y auditor interno asignado, y se ve quién la tiene al día.',
+      gancho='¿Sabe a qué socio le toca la auditoría interna?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» y toque la pestaña «Auditorías internas».', 'corto': '«Mi grupo» → «Auditorías internas».',
+           'acciones': [{'clic': 'Mi grupo'}, {'pausa': 500}, {'pestana': 'Auditorías internas'}], 'ms': 3000},
+          {'texto': 'Ve cuántos socios tienen la auditoría al día, cuántos no tienen ni plan y cuántas esperan decisión.',
+           'corto': 'Al día, sin plan y por decidir.', 'acciones': [{'ver': 'sin auditoría ni plan'}], 'ms': 3600},
+          {'texto': 'Abajo están los socios que no tienen auditoría vigente ni planificada.', 'corto': 'Los socios sin auditoría ni plan.',
+           'acciones': centrar('Nunca auditado'), 'ms': 3000},
+          {'texto': 'Toque «Planificar» en el socio, elija la fecha y escriba el correo del auditor interno.',
+           'corto': 'La fecha y el correo del auditor interno.',
+           'acciones': [{'clic_css': '.qms-socio:has-text("Productor demo D") button:has-text("Planificar")'}, {'pausa': 600},
+                        {'ver': 'Fecha'}, {'llenar': ['Correo del auditor interno', 'tecnico@asociacion.demo']}], 'ms': 3800},
+          {'texto': 'Toque «Planificar»: la auditoría le aparece a esa cuenta en «Mis auditorías».',
+           'corto': 'Le aparece en «Mis auditorías».', 'acciones': [{'clic_exacto': 'Planificar'}, {'ver': 'Auditoría planificada'}], 'ms': 3400},
+          {'texto': 'Si no se hará, se cancela con su motivo. Nada se borra.', 'corto': 'Se cancela con motivo; nada se borra.',
+           'acciones': centrar('tecnico@asociacion.demo'), 'ms': 3200},
+      ],
+      nota='El auditor interno no audita su propio trabajo diario (QMS 05.02 d). Un aspirante se audita y se aprueba antes de activarlo (05.02 e).',
+      cierre='Cada socio, auditado una vez al año')
+
+flujo(id='auditor-interno-auditoria-sin-senal', actor='auditor_interno', actor_txt='Auditor interno del grupo', orden=88,
+      url=DEMO, probar=PROBAR, musica_estilo='eudr',
+      titulo='Hacer la auditoría interna en la finca, sin señal',
+      resumen='Se descarga con señal, se hace en la finca sin señal punto por punto, firman el socio y el auditor, y el informe se envía solo al volver la señal.',
+      gancho='¿En la finca no hay señal?',
+      pasos=[
+          {'texto': 'Antes de salir, con señal, toque «Mis auditorías»: lo asignado queda guardado en el equipo.',
+           'corto': 'Con señal: «Mis auditorías» la guarda en el equipo.',
+           'acciones': [{'clic': 'Mis auditorías'}, {'ver': 'guardada'}], 'ms': 3000},
+          {'texto': 'En la finca, sin señal, toque «Empezar» y «Empezar la auditoría»: queda la hora de inicio.',
+           'corto': 'Sin señal: «Empezar la auditoría» anota la hora.',
+           'acciones': [{'js': SENAL_OFF}, {'clic_css': '.qms-socio button:has-text("Empezar")'}, {'pausa': 700},
+                        {'clic_css': '#ai-empezar'}, {'pausa': 300}, {'ver': 'desde las'}], 'ms': 3200},
+          {'texto': 'En cada punto toque «Cumple», «No cumple» o «No aplica». Si no cumple: qué encontró y el plazo para corregir.',
+           'corto': 'Si no cumple: qué encontró y el plazo.',
+           'acciones': [{'clic_css': PRIMER + ' .ai-res-b.no_cumple'}, {'llenar_ph': ['Qué se encontró', 'Sin registro']},
+                        {'js': poner_js(PRIMER + ' input[type=date]', '2026-11-30')}], 'ms': 3400},
+          {'texto': 'Los puntos Major llevan comentario siempre: qué se verificó.', 'corto': 'Los Major: qué se verificó.',
+           'acciones': [{'clic_css': SEGUNDO + ' .ai-res-b.cumple'}, {'llenar_ph': ['Qué se verificó', 'Con título']}], 'ms': 2800},
+          {'texto': 'Se sigue así con los 97 puntos. Cada toque queda guardado en el equipo.',
+           'corto': 'Así con los 97 puntos; cada toque se guarda.',
+           'acciones': [{'js': RESTO_CUMPLE}, {'pausa': 1000}, {'ver': '97 de 97'}], 'ms': 2800},
+          {'texto': 'Toque «Cerrar y firmar»: ve el cálculo. Se exige Major 100 % y Minor 95 %.',
+           'corto': 'El cálculo: Major 100 %, Minor 95 %.', 'acciones': [{'clic_css': '#ai-firmar'}, {'ver': 'cálculo preliminar'}], 'ms': 3000},
+          {'texto': 'Firma el socio con el dedo, y después el auditor interno.', 'corto': 'Firman el socio y el auditor.',
+           'acciones': [{'js': firmar_js('ai-fir-socio', 15)}, {'pausa': 400}, {'js': poner_js('#ai-fir-insp-n', 'Técnico del grupo')},
+                        {'js': firmar_js('ai-fir-insp', 11)}, {'pausa': 300}], 'ms': 3000},
+          {'texto': 'Toque «Terminar y guardar»: sin señal, queda firmada en el equipo.', 'corto': 'Sin señal: queda firmada en el equipo.',
+           'acciones': [{'clic_css': '#ai-terminar'}, {'ver': 'Firmada, sin enviar'}], 'ms': 3000},
+          {'texto': 'Al volver la señal, el informe se envía solo.', 'acciones': [{'js': SENAL_ON}, {'pausa': 700}, {'ver': 'Informe enviado'}], 'ms': 2800},
+      ],
+      nota='Después de enviado, el informe ya no se edita (QMS 05.02 f). Si el servidor no lo acepta, la app dice por qué y deja corregirlo y volver a firmar.',
+      cierre='La auditoría, aunque no haya señal')
+
+flujo(id='grupo-decidir-auditoria', orden=89, **G,
+      titulo='Leer el informe de auditoría interna y decidir',
+      resumen='Calidad del grupo lee el informe con el cálculo, los incumplimientos y las firmas, y decide si el socio cumple. Quien hizo la auditoría no la aprueba.',
+      gancho='¿Quién aprueba la auditoría interna?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» y toque «Auditorías internas».', 'corto': '«Mi grupo» → «Auditorías internas».',
+           'acciones': [{'clic': 'Mi grupo'}, {'pausa': 500}, {'pestana': 'Auditorías internas'}], 'ms': 2800},
+          {'texto': 'En la auditoría «Por decidir», toque «Ver informe y decidir».', 'corto': 'Toque «Ver informe y decidir».',
+           'acciones': [{'clic_css': '.qms-socio:has-text("Productora demo C") button:has-text("Ver informe")'}], 'ms': 2800},
+          {'texto': 'El informe trae el socio, sus sitios y productos, la hora de inicio y fin, y el auditor interno.',
+           'corto': 'Socio, sitios, productos, horas y auditor.', 'acciones': [{'ver': 'Inicio y fin'}], 'ms': 3400},
+          {'texto': 'Ve el cálculo del cumplimiento y cada incumplimiento con su plazo.', 'corto': 'El cálculo y los plazos.',
+           'acciones': centrar('Incumplimientos y plazo'), 'ms': 3400},
+          {'texto': 'Abajo, las firmas del socio y del auditor interno.', 'acciones': centrar('Firmas (ii, iv)'), 'ms': 3000},
+          {'texto': 'Elija «Conforme» o «No conforme» y escriba su nombre: queda en el informe.', 'corto': 'Decida y escriba su nombre.',
+           'acciones': [{'llenar': ['Su nombre', 'Responsable de calidad']}], 'ms': 3400},
+          {'texto': 'Toque «Guardar la decisión»: la fecha queda en el registro del socio.', 'corto': 'La fecha queda en el registro.',
+           'acciones': [{'clic': 'Guardar la decisión'}, {'ver': 'Decisión guardada'}], 'ms': 3400},
+      ],
+      nota='«Conforme» solo se puede elegir si el cálculo cumple (Major 100 % y Minor 95 %). Quien hizo la auditoría no la aprueba (QMS 12.5 a). El informe se puede imprimir con «Imprimir».',
+      cierre='Cada auditoría, revisada y firmada')
+
 flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', orden=86, solo_texto=True,
       titulo='Revisar un grupo como auditor externo',
       resumen='Con el permiso que le dio la directiva, el auditor ve el registro de socios y su historial, sin modificar nada.',
@@ -527,6 +633,7 @@ flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', 
           {'texto': 'Revise el registro de socios: estado, productos, áreas, certificador y fecha de la última auditoría interna.'},
           {'texto': 'Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo.'},
           {'texto': 'Use «Descargar registro» para llevarse el registro interno de miembros.'},
+          {'texto': 'En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó.'},
       ],
       nota='Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.')
 

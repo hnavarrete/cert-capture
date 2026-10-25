@@ -250,7 +250,8 @@ function FirmaPad({ id, valor, onCambio }) {
   useEffect(() => { preparar(valor) }, [])
   const pos = (e) => { const r = ref.current.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top] }
   const abajo = (e) => {
-    e.preventDefault(); preparar(valor); ref.current.setPointerCapture(e.pointerId); dibujando.current = true
+    // la captura del dedo es una mejora: si el navegador la rechaza, se firma igual
+    e.preventDefault(); preparar(valor); try { ref.current.setPointerCapture(e.pointerId) } catch { /* se sigue sin captura */ } dibujando.current = true
     const g = ref.current.getContext('2d'); g.beginPath(); g.moveTo(...pos(e))
   }
   const mueve = (e) => { if (!dibujando.current) return; const g = ref.current.getContext('2d'); g.lineTo(...pos(e)); g.stroke() }
@@ -332,6 +333,10 @@ export function MisAuditorias({ api, demo, cuenta, onClose }) {
                       <button className="link" onClick={() => tabla.update(b.id, { estado_local: 'en_curso', error: null }).then(() => setAbierta(b.id))}><Icono n="edit" />Corregir y volver a firmar</button>
                     ) : null}
                     {b.estado_local === 'enviada' ? <button className="link" onClick={() => tabla.delete(b.id).then(leer)}><Icono n="delete" />Quitar de este equipo</button> : null}
+                    {b.estado_local === 'por_enviar' && b.error ? (
+                      <button className="link" onClick={() => { if (window.confirm('Este informe no llegó al servidor. Si lo quita, se pierde. ¿Quitarlo de este equipo?')) tabla.delete(b.id).then(leer) }}>
+                        <Icono n="delete" />Quitar de este equipo</button>
+                    ) : null}
                   </div>
                 </li>) })}
             </ul>

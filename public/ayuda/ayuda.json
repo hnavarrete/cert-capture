@@ -1,6 +1,6 @@
 {
  "generado_por": "kit_video.py",
- "generado": "2026-10-23T00:01:49",
+ "generado": "2026-10-25T02:13:42",
  "flujos": [
   {
    "id": "cuenta-entrar",
@@ -507,11 +507,79 @@
     "Arriba se ve hasta qué fecha tiene acceso.",
     "Revise el registro de socios: estado, productos, áreas, certificador y fecha de la última auditoría interna.",
     "Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo.",
-    "Use «Descargar registro» para llevarse el registro interno de miembros."
+    "Use «Descargar registro» para llevarse el registro interno de miembros.",
+    "En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó."
    ],
    "nota": "Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.",
    "video": null,
    "portada": null
+  },
+  {
+   "id": "grupo-planificar-auditoria",
+   "actor": "grupo",
+   "orden": 87,
+   "titulo": "Planificar la auditoría interna de cada socio",
+   "resumen": "GlobalG.A.P. pide una auditoría interna por socio y por año. Se planifica con fecha y auditor interno asignado, y se ve quién la tiene al día.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 42,
+   "pasos": [
+    "Abra «Mi grupo» y toque la pestaña «Auditorías internas».",
+    "Ve cuántos socios tienen la auditoría al día, cuántos no tienen ni plan y cuántas esperan decisión.",
+    "Abajo están los socios que no tienen auditoría vigente ni planificada.",
+    "Toque «Planificar» en el socio, elija la fecha y escriba el correo del auditor interno.",
+    "Toque «Planificar»: la auditoría le aparece a esa cuenta en «Mis auditorías».",
+    "Si no se hará, se cancela con su motivo. Nada se borra."
+   ],
+   "nota": "El auditor interno no audita su propio trabajo diario (QMS 05.02 d). Un aspirante se audita y se aprueba antes de activarlo (05.02 e).",
+   "video": "https://vg-cert-videos.pages.dev/grupo-planificar-auditoria.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-planificar-auditoria.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-planificar-auditoria-redes.mp4"
+  },
+  {
+   "id": "auditor-interno-auditoria-sin-senal",
+   "actor": "auditor_interno",
+   "orden": 88,
+   "titulo": "Hacer la auditoría interna en la finca, sin señal",
+   "resumen": "Se descarga con señal, se hace en la finca sin señal punto por punto, firman el socio y el auditor, y el informe se envía solo al volver la señal.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 59,
+   "pasos": [
+    "Antes de salir, con señal, toque «Mis auditorías»: lo asignado queda guardado en el equipo.",
+    "En la finca, sin señal, toque «Empezar» y «Empezar la auditoría»: queda la hora de inicio.",
+    "En cada punto toque «Cumple», «No cumple» o «No aplica». Si no cumple: qué encontró y el plazo para corregir.",
+    "Los puntos Major llevan comentario siempre: qué se verificó.",
+    "Se sigue así con los 97 puntos. Cada toque queda guardado en el equipo.",
+    "Toque «Cerrar y firmar»: ve el cálculo. Se exige Major 100 % y Minor 95 %.",
+    "Firma el socio con el dedo, y después el auditor interno.",
+    "Toque «Terminar y guardar»: sin señal, queda firmada en el equipo.",
+    "Al volver la señal, el informe se envía solo."
+   ],
+   "nota": "Después de enviado, el informe ya no se edita (QMS 05.02 f). Si el servidor no lo acepta, la app dice por qué y deja corregirlo y volver a firmar.",
+   "video": "https://vg-cert-videos.pages.dev/auditor-interno-auditoria-sin-senal.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/auditor-interno-auditoria-sin-senal.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/auditor-interno-auditoria-sin-senal-redes.mp4"
+  },
+  {
+   "id": "grupo-decidir-auditoria",
+   "actor": "grupo",
+   "orden": 89,
+   "titulo": "Leer el informe de auditoría interna y decidir",
+   "resumen": "Calidad del grupo lee el informe con el cálculo, los incumplimientos y las firmas, y decide si el socio cumple. Quien hizo la auditoría no la aprueba.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 44,
+   "pasos": [
+    "Abra «Mi grupo» y toque «Auditorías internas».",
+    "En la auditoría «Por decidir», toque «Ver informe y decidir».",
+    "El informe trae el socio, sus sitios y productos, la hora de inicio y fin, y el auditor interno.",
+    "Ve el cálculo del cumplimiento y cada incumplimiento con su plazo.",
+    "Abajo, las firmas del socio y del auditor interno.",
+    "Elija «Conforme» o «No conforme» y escriba su nombre: queda en el informe.",
+    "Toque «Guardar la decisión»: la fecha queda en el registro del socio."
+   ],
+   "nota": "«Conforme» solo se puede elegir si el cálculo cumple (Major 100 % y Minor 95 %). Quien hizo la auditoría no la aprueba (QMS 12.5 a). El informe se puede imprimir con «Imprimir».",
+   "video": "https://vg-cert-videos.pages.dev/grupo-decidir-auditoria.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-decidir-auditoria.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-decidir-auditoria-redes.mp4"
   }
  ]
 }

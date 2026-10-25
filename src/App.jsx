@@ -16,7 +16,7 @@ import RoadmapCert from './RoadmapCert.jsx'
 import Boveda from './Boveda.jsx'
 import Grupo, { apiQms } from './Grupo.jsx'
 import { MisAuditorias } from './AuditoriaInterna.jsx'
-import { almacen as almacenAuditorias } from './qms-auditoria.js'
+import { almacen as almacenAuditorias, borrarBaseCompartidaV21 } from './qms-auditoria.js'
 import { VGLogin } from '@vgsdk/auth-ui'
 /* C1 · comprobacion de contrasenas filtradas. Vive en @vgsdk/auth y se exporta desde la entrada
    principal (index.ts:83), asi que NO hace falta subruta ni subir de version de auth-ui: el
@@ -637,6 +637,7 @@ export default function App() {
     return () => { on = false }
   }, [user])
 
+  useEffect(() => { borrarBaseCompartidaV21() }, [])
   useEffect(() => {
     let on = true
     setHayAuditorias(false)   // al cambiar de cuenta, el botón se vuelve a decidir con lo de la cuenta nueva

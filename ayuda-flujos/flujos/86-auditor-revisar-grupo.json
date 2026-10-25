@@ -23,6 +23,9 @@
   },
   {
    "texto": "Use «Descargar registro» para llevarse el registro interno de miembros."
+  },
+  {
+   "texto": "En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó."
   }
  ],
  "nota": "Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.",

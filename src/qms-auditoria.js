@@ -83,7 +83,13 @@ export function almacen(demo, cuenta) {
   return bases[nombre].auditorias
 }
 
-/** Trae las asignadas del servidor sin pisar lo que ya se empezó en el equipo. Devuelve cuántas nuevas llegaron. */
+/** La v21 (25-oct, unos minutos en el aire) usó una sola base para todas las cuentas. No llegó a tener auditorías reales
+ *  (0 en el servidor en todo ese tiempo), así que se borra sin migrar nada. */
+export async function borrarBaseCompartidaV21() { try { await Dexie.delete('vg-cert-qms') } catch { /* sin IndexedDB: nada que borrar */ } }
+
+const SIETE_DIAS = 7 * 864e5
+/** Trae las asignadas del servidor sin pisar lo que ya se empezó en el equipo. Devuelve cuántas nuevas llegaron.
+ *  Lo ya enviado queda en el equipo 7 días, como constancia, y después se quita: el original vive en el servidor. */
 export async function descargar(api, demo, cuenta) {
   const tabla = almacen(demo, cuenta)
   const asignadas = await api.misInspecciones()
@@ -95,7 +101,10 @@ export async function descargar(api, demo, cuenta) {
     else await tabla.update(a.id, { socio_nombre: a.socio_nombre, direccion: a.direccion, productos: a.productos, sitios: a.sitios, fecha_plan: a.fecha_plan })
   }
   // Lo que el servidor ya no asigna (cancelada o reasignada) se quita solo si nadie la empezó en este equipo.
-  for (const b of await tabla.toArray()) if (!ids.has(b.id) && b.estado_local === 'pendiente') await tabla.delete(b.id)
+  for (const b of await tabla.toArray()) {
+    if (!ids.has(b.id) && b.estado_local === 'pendiente') await tabla.delete(b.id)
+    else if (b.estado_local === 'enviada' && Date.now() - new Date(b.enviada_en || 0) > SIETE_DIAS) await tabla.delete(b.id)
+  }
   return nuevas
 }
 

@@ -1,0 +1,111 @@
+{
+ "id": "grupo-planificar-auditoria",
+ "orden": 87,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Planificar la auditoría interna de cada socio",
+ "resumen": "GlobalG.A.P. pide una auditoría interna por socio y por año. Se planifica con fecha y auditor interno asignado, y se ve quién la tiene al día.",
+ "gancho": "¿Sabe a qué socio le toca la auditoría interna?",
+ "pasos": [
+  {
+   "texto": "Abra «Mi grupo» y toque la pestaña «Auditorías internas».",
+   "corto": "«Mi grupo» → «Auditorías internas».",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "pestana": "Auditorías internas"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Ve cuántos socios tienen la auditoría al día, cuántos no tienen ni plan y cuántas esperan decisión.",
+   "corto": "Al día, sin plan y por decidir.",
+   "acciones": [
+    {
+     "ver": "sin auditoría ni plan"
+    }
+   ],
+   "ms": 3600
+  },
+  {
+   "texto": "Abajo están los socios que no tienen auditoría vigente ni planificada.",
+   "corto": "Los socios sin auditoría ni plan.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Nunca auditado\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Nunca auditado"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Toque «Planificar» en el socio, elija la fecha y escriba el correo del auditor interno.",
+   "corto": "La fecha y el correo del auditor interno.",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"Productor demo D\") button:has-text(\"Planificar\")"
+    },
+    {
+     "pausa": 600
+    },
+    {
+     "ver": "Fecha"
+    },
+    {
+     "llenar": [
+      "Correo del auditor interno",
+      "tecnico@asociacion.demo"
+     ]
+    }
+   ],
+   "ms": 3800
+  },
+  {
+   "texto": "Toque «Planificar»: la auditoría le aparece a esa cuenta en «Mis auditorías».",
+   "corto": "Le aparece en «Mis auditorías».",
+   "acciones": [
+    {
+     "clic_exacto": "Planificar"
+    },
+    {
+     "ver": "Auditoría planificada"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Si no se hará, se cancela con su motivo. Nada se borra.",
+   "corto": "Se cancela con motivo; nada se borra.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"tecnico@asociacion.demo\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "tecnico@asociacion.demo"
+    }
+   ],
+   "ms": 3200
+  }
+ ],
+ "nota": "El auditor interno no audita su propio trabajo diario (QMS 05.02 d). Un aspirante se audita y se aprueba antes de activarlo (05.02 e).",
+ "cierre": "Cada socio, auditado una vez al año",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

@@ -1,0 +1,170 @@
+{
+ "id": "auditor-interno-auditoria-sin-senal",
+ "actor": "auditor_interno",
+ "actor_txt": "Auditor interno del grupo",
+ "orden": 88,
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Hacer la auditoría interna en la finca, sin señal",
+ "resumen": "Se descarga con señal, se hace en la finca sin señal punto por punto, firman el socio y el auditor, y el informe se envía solo al volver la señal.",
+ "gancho": "¿En la finca no hay señal?",
+ "pasos": [
+  {
+   "texto": "Antes de salir, con señal, toque «Mis auditorías»: lo asignado queda guardado en el equipo.",
+   "corto": "Con señal: «Mis auditorías» la guarda en el equipo.",
+   "acciones": [
+    {
+     "clic": "Mis auditorías"
+    },
+    {
+     "ver": "guardada"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "En la finca, sin señal, toque «Empezar» y «Empezar la auditoría»: queda la hora de inicio.",
+   "corto": "Sin señal: «Empezar la auditoría» anota la hora.",
+   "acciones": [
+    {
+     "js": "Object.defineProperty(Navigator.prototype,'onLine',{get:()=>!window.__vgSinSenal,configurable:true});window.__vgSinSenal=true;window.dispatchEvent(new Event('offline'))"
+    },
+    {
+     "clic_css": ".qms-socio button:has-text(\"Empezar\")"
+    },
+    {
+     "pausa": 700
+    },
+    {
+     "clic_css": "#ai-empezar"
+    },
+    {
+     "pausa": 300
+    },
+    {
+     "ver": "desde las"
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "En cada punto toque «Cumple», «No cumple» o «No aplica». Si no cumple: qué encontró y el plazo para corregir.",
+   "corto": "Si no cumple: qué encontró y el plazo.",
+   "acciones": [
+    {
+     "clic_css": ".ai-puntos section:first-of-type article:nth-of-type(1) .ai-res-b.no_cumple"
+    },
+    {
+     "llenar_ph": [
+      "Qué se encontró",
+      "Sin registro"
+     ]
+    },
+    {
+     "js": "(() => { const e = document.querySelector(\".ai-puntos section:first-of-type article:nth-of-type(1) input[type=date]\"); const p = e.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(p, 'value').set.call(e, \"2026-11-30\"); e.dispatchEvent(new Event('input', {bubbles: true})); })()"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Los puntos Major llevan comentario siempre: qué se verificó.",
+   "corto": "Los Major: qué se verificó.",
+   "acciones": [
+    {
+     "clic_css": ".ai-puntos section:first-of-type article:nth-of-type(2) .ai-res-b.cumple"
+    },
+    {
+     "llenar_ph": [
+      "Qué se verificó",
+      "Con título"
+     ]
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Se sigue así con los 97 puntos. Cada toque queda guardado en el equipo.",
+   "corto": "Así con los 97 puntos; cada toque se guarda.",
+   "acciones": [
+    {
+     "js": "(async () => { const s = (ms) => new Promise((r) => setTimeout(r, ms)); const set = (e, v) => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(e, v); e.dispatchEvent(new Event('input', {bubbles: true})); }; for (const a of document.querySelectorAll('.ai-punto')) { if (!a.querySelector('.ai-res-b.sel')) { a.querySelector('.ai-res-b.cumple').click(); await s(4); } } await s(80); for (const t of document.querySelectorAll('.ai-punto textarea')) { if (!t.value) { set(t, 'Verificado en la finca'); await s(4); } } window.scrollTo(0, 0); document.querySelector('.ai-puntos').scrollTop = 0; })()"
+    },
+    {
+     "pausa": 1000
+    },
+    {
+     "ver": "97 de 97"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "Toque «Cerrar y firmar»: ve el cálculo. Se exige Major 100 % y Minor 95 %.",
+   "corto": "El cálculo: Major 100 %, Minor 95 %.",
+   "acciones": [
+    {
+     "clic_css": "#ai-firmar"
+    },
+    {
+     "ver": "cálculo preliminar"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Firma el socio con el dedo, y después el auditor interno.",
+   "corto": "Firman el socio y el auditor.",
+   "acciones": [
+    {
+     "js": "(() => { const c = document.getElementById(\"ai-fir-socio\"); c.scrollIntoView({block: 'center'}); const r = c.getBoundingClientRect(); const ev = (t, x, y) => c.dispatchEvent(new PointerEvent(t, {bubbles: true, pointerId: 7, clientX: r.left + x, clientY: r.top + y})); ev('pointerdown', 18, 80); for (let x = 18; x <= r.width - 18; x += 7) ev('pointermove', x, 70 + Math.sin(x / 15) * 26 * Math.sin(x / 70)); ev('pointerup', r.width - 18, 70); })()"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "js": "(() => { const e = document.querySelector(\"#ai-fir-insp-n\"); const p = e.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(p, 'value').set.call(e, \"T\\u00e9cnico del grupo\"); e.dispatchEvent(new Event('input', {bubbles: true})); })()"
+    },
+    {
+     "js": "(() => { const c = document.getElementById(\"ai-fir-insp\"); c.scrollIntoView({block: 'center'}); const r = c.getBoundingClientRect(); const ev = (t, x, y) => c.dispatchEvent(new PointerEvent(t, {bubbles: true, pointerId: 7, clientX: r.left + x, clientY: r.top + y})); ev('pointerdown', 18, 80); for (let x = 18; x <= r.width - 18; x += 7) ev('pointermove', x, 70 + Math.sin(x / 11) * 26 * Math.sin(x / 70)); ev('pointerup', r.width - 18, 70); })()"
+    },
+    {
+     "pausa": 300
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Toque «Terminar y guardar»: sin señal, queda firmada en el equipo.",
+   "corto": "Sin señal: queda firmada en el equipo.",
+   "acciones": [
+    {
+     "clic_css": "#ai-terminar"
+    },
+    {
+     "ver": "Firmada, sin enviar"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Al volver la señal, el informe se envía solo.",
+   "acciones": [
+    {
+     "js": "window.__vgSinSenal=false;window.dispatchEvent(new Event('online'))"
+    },
+    {
+     "pausa": 700
+    },
+    {
+     "ver": "Informe enviado"
+    }
+   ],
+   "ms": 2800
+  }
+ ],
+ "nota": "Después de enviado, el informe ya no se edita (QMS 05.02 f). Si el servidor no lo acepta, la app dice por qué y deja corregirlo y volver a firmar.",
+ "cierre": "La auditoría, aunque no haya señal",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}
