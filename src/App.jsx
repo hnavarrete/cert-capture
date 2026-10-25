@@ -639,7 +639,8 @@ export default function App() {
 
   useEffect(() => {
     let on = true
-    almacenAuditorias(demo && !user).count().then(n => { if (on && n) setHayAuditorias(true) }).catch(() => {})
+    setHayAuditorias(false)   // al cambiar de cuenta, el botón se vuelve a decidir con lo de la cuenta nueva
+    if (user || demo) Promise.resolve().then(() => almacenAuditorias(demo && !user, user?.id).count()).then(n => { if (on && n) setHayAuditorias(true) }).catch(() => {})
     if (user) supabase.rpc('cert_qms_mis_inspecciones').then(({ data }) => { if (on && (data || []).length) setHayAuditorias(true) })
     return () => { on = false }
   }, [user, demo])
@@ -858,7 +859,7 @@ export default function App() {
       ) : null}
 
       {grupo ? <Grupo demo={demo && !user} email={effEmail} onClose={() => setGrupo(false)} /> : null}
-      {misAud ? <MisAuditorias api={apiQms(demo && !user)} demo={demo && !user} onClose={() => setMisAud(false)} /> : null}
+      {misAud ? <MisAuditorias api={apiQms(demo && !user)} demo={demo && !user} cuenta={user?.id} onClose={() => setMisAud(false)} /> : null}
 
       {hojaSalida}
 

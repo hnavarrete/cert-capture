@@ -270,22 +270,22 @@ function FirmaPad({ id, valor, onCambio }) {
 }
 
 // ═════════ el auditor interno: sus auditorías, con y sin señal ═════════
-export function MisAuditorias({ api, demo, onClose }) {
+export function MisAuditorias({ api, demo, cuenta, onClose }) {
   const [lista, setLista] = useState(null)
   const [abierta, setAbierta] = useState(null)
   const [msg, setMsg] = useState(null)   // { t, cls }
   const [senal, setSenal] = useState(enLinea())
-  const tabla = useMemo(() => almacen(demo), [demo])
+  const tabla = useMemo(() => almacen(demo, cuenta), [demo, cuenta])
 
   const leer = () => tabla.toArray().then(l => setLista(l.sort((a, b) => (a.estado_local === 'enviada') - (b.estado_local === 'enviada') || a.fecha_plan.localeCompare(b.fecha_plan))))
   const enviar = async (silencioso) => {
-    const r = await enviarPendientes(api, demo); await leer()
+    const r = await enviarPendientes(api, demo, cuenta); await leer()
     if (r.enviadas) setMsg({ t: r.enviadas === 1 ? 'Informe enviado.' : `${r.enviadas} informes enviados.`, cls: 'ok' })
     else if (r.sinRed && !silencioso) setMsg({ t: 'Sin señal: los informes firmados siguen guardados en este equipo y se envían solos al volver la señal.', cls: 'err' })
   }
   const actualizar = async () => {
     setMsg(null)
-    try { const n = await descargar(api, demo); await leer(); setMsg({ t: n ? `${n} auditoría${n === 1 ? '' : 's'} nueva${n === 1 ? '' : 's'} guardada${n === 1 ? '' : 's'} en este equipo: ya se pueden hacer sin señal.` : 'Lista al día y guardada en este equipo.', cls: 'ok' }) } catch (e) {
+    try { const n = await descargar(api, demo, cuenta); await leer(); setMsg({ t: n ? `${n} auditoría${n === 1 ? '' : 's'} nueva${n === 1 ? '' : 's'} guardada${n === 1 ? '' : 's'} en este equipo: ya se pueden hacer sin señal.` : 'Lista al día y guardada en este equipo.', cls: 'ok' }) } catch (e) {
       await leer(); setMsg({ t: enLinea() ? String(e?.message || e) : 'Sin señal: se muestra lo que ya está guardado en este equipo.', cls: 'err' })
     }
     enviar(true)

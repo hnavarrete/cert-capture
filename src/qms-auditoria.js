@@ -68,10 +68,13 @@ export const nivelDe = (code) => NIVEL[code]
 
 // ───────── almacén del equipo (IndexedDB) ─────────
 // Una base aparte de la de captura: así no se toca su versión. La demo usa la suya, para no mezclar con lo real.
+// 🔴 Una base POR CUENTA (su id): en un equipo compartido, otra cuenta que entra no ve las auditorías, los datos del
+// socio ni las firmas de la anterior. Lo firmado y no enviado de una cuenta espera en SU base hasta que vuelva a entrar.
 // estado_local: pendiente (descargada) · en_curso · por_enviar (firmada, espera señal) · enviada
 const bases = {}
-export function almacen(demo) {
-  const nombre = demo ? 'vg-cert-qms-demo' : 'vg-cert-qms'
+export function almacen(demo, cuenta) {
+  if (!demo && !cuenta) throw new Error('sin cuenta: las auditorías del equipo son de cada cuenta')
+  const nombre = demo ? 'vg-cert-qms-demo' : 'vg-cert-qms-' + cuenta
   if (!bases[nombre]) {
     const db = new Dexie(nombre)
     db.version(1).stores({ auditorias: 'id,estado_local,fecha_plan' })
@@ -81,8 +84,8 @@ export function almacen(demo) {
 }
 
 /** Trae las asignadas del servidor sin pisar lo que ya se empezó en el equipo. Devuelve cuántas nuevas llegaron. */
-export async function descargar(api, demo) {
-  const tabla = almacen(demo)
+export async function descargar(api, demo, cuenta) {
+  const tabla = almacen(demo, cuenta)
   const asignadas = await api.misInspecciones()
   const ids = new Set(asignadas.map(a => a.id))
   let nuevas = 0
@@ -100,8 +103,8 @@ const esRed = (e) => /failed to fetch|networkerror|load failed|network request f
   (typeof navigator !== 'undefined' && navigator.onLine === false)
 
 /** Envía lo firmado que espera señal. Sin señal no hace nada y lo deja para la próxima. */
-export async function enviarPendientes(api, demo) {
-  const tabla = almacen(demo)
+export async function enviarPendientes(api, demo, cuenta) {
+  const tabla = almacen(demo, cuenta)
   const r = { enviadas: 0, sinRed: false, errores: 0 }
   for (const b of await tabla.where('estado_local').equals('por_enviar').toArray()) {
     try {
