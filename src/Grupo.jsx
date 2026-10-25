@@ -5,6 +5,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from './supabase.js'
 import { Icono } from './eudr-react/CertForm.jsx'
+import { CronogramaGrupo } from './AuditoriaInterna.jsx'
+import { PUNTOS, calcular, faltantes, pidePlazo } from './qms-auditoria.js'
 
 const ESTADOS = {
   aspirante: { label: 'Aspirante', cls: 'warn' },
@@ -46,9 +48,19 @@ function apiServidor() {
     cambiarEstado: (id, estado, motivo) => rpc('cert_qms_cambiar_estado', { p_miembro: id, p_estado: estado, p_motivo: motivo || null }),
     auditores: (slug) => rpc('cert_qms_auditores', { p_slug: slug }),
     autorizar: (slug, correo, organismo, vence) => rpc('cert_qms_autorizar_auditor', { p_slug: slug, p_correo: correo, p_organismo: organismo, p_vence: vence }),
-    revocar: (id) => rpc('cert_qms_revocar_auditor', { p_id: id })
+    revocar: (id) => rpc('cert_qms_revocar_auditor', { p_id: id }),
+    // parte 2: auditoría interna de finca (migración 20261025000000)
+    cronograma: (slug) => rpc('cert_qms_cronograma', { p_slug: slug }),
+    planificar: (slug, miembro, fecha, inspector) => rpc('cert_qms_planificar', { p_slug: slug, p_miembro: miembro, p_fecha: fecha, p_inspector: inspector }),
+    cancelar: (id, motivo) => rpc('cert_qms_cancelar_inspeccion', { p_id: id, p_motivo: motivo }),
+    misInspecciones: () => rpc('cert_qms_mis_inspecciones'),
+    enviar: (p) => rpc('cert_qms_enviar_inspeccion', { p }),
+    informe: (id) => rpc('cert_qms_informe', { p_id: id }).then(f => (f || [])[0] || null),
+    decidir: (id, decision, nombre, comentario) => rpc('cert_qms_decidir', { p_id: id, p_decision: decision, p_nombre: nombre, p_comentario: comentario || null })
   }
 }
+/** La misma API para la pantalla del auditor interno (Mis auditorías), fuera de «Mi grupo». */
+export const apiQms = (demo) => (demo ? apiDemo() : apiServidor())
 
 // Asociación SINTÉTICA para el modo demo y los videos de ayuda (R-AYUDA: nunca datos de clientes).
 let DEMO = null
@@ -73,8 +85,48 @@ function demoInicial() {
     miembros: s,
     historial: s.flatMap(m => [{ id: m.id + '-h0', miembro_id: m.id, de: null, a: 'aspirante', motivo: null, por_correo: 'directiva@demo', en: m.fecha_ingreso + 'T09:00:00Z' }]
       .concat(m.estado !== 'aspirante' ? [{ id: m.id + '-h1', miembro_id: m.id, de: 'aspirante', a: m.estado, motivo: m.estado_motivo, por_correo: 'directiva@demo', en: m.fecha_ingreso + 'T15:00:00Z' }] : [])),
-    auditores: [{ id: 'demo-aud-1', client_slug: 'demo-pitahaya', correo: 'auditora@certificador.demo', organismo: 'Organismo certificador demo', vence: masDias(60), otorgado_en: new Date().toISOString(), revocado_en: null }]
+    auditores: [{ id: 'demo-aud-1', client_slug: 'demo-pitahaya', correo: 'auditora@certificador.demo', organismo: 'Organismo certificador demo', vence: masDias(60), otorgado_en: new Date().toISOString(), revocado_en: null }],
+    inspecciones: inspeccionesDemo(s)
   }
+}
+
+// Firma sintética para la demo (un trazo dibujado; nunca la de una persona real).
+function firmaDemo(semilla) {
+  try {
+    const c = document.createElement('canvas'); c.width = 360; c.height = 120
+    const g = c.getContext('2d'); g.strokeStyle = '#0A1128'; g.lineWidth = 2.4; g.lineCap = 'round'; g.beginPath()
+    for (let x = 20; x <= 330; x += 6) { const y = 64 + Math.sin(x / (14 + semilla)) * 22 * Math.sin(x / 90); if (x === 20) g.moveTo(x, y); else g.lineTo(x, y) }
+    g.stroke(); return c.toDataURL('image/png')
+  } catch { return null }
+}
+// Resultados sintéticos con la lista oficial: `nc` puntos Minor no cumplen (con plazo); el resto cumple.
+function resultadosDemo(nc, fecha) {
+  let k = 0
+  return PUNTOS.map(p => {
+    const falla = p.nivel === 'Minor' && k++ < nc
+    return { code: p.code, resultado: falla ? 'no_cumple' : 'cumple',
+      comentario: falla ? 'Registro incompleto en la visita (demo)' : p.nivel === 'Major' ? 'Verificado en la finca (demo)' : null,
+      plazo: falla ? fecha : null }
+  })
+}
+const comoMapa = (arr) => Object.fromEntries((arr || []).map(x => [x.code, x]))
+// La demo se porta como el servidor también sin señal: lo que va al servidor falla y queda en el equipo.
+const sinSenal = () => typeof navigator !== 'undefined' && navigator.onLine === false
+function inspeccionesDemo(socios) {
+  const base = (m, extra) => ({ client_slug: 'demo-pitahaya', miembro_id: m.id, checklist: 'globalgap_fv_smart', socio_identificacion: m.identificacion,
+    socio_nombre: m.nombre, productos: m.productos, sitios: m.sitios, decision: null, cancelada_motivo: null, ...extra })
+  const hecha = (m, id, dias, nc, inspector, extra) => {
+    const ini = new Date(Date.now() - dias * 864e5); ini.setHours(9, 10, 0, 0); const fin = new Date(ini.getTime() + 95 * 60e3)
+    const resultados = resultadosDemo(nc, local(new Date(ini.getTime() + 30 * 864e5)))
+    return base(m, { id, fecha_plan: local(ini), inspector_correo: inspector, inspector_nombre: 'Técnico de campo (demo)', estado: 'enviada',
+      inicio: ini.toISOString(), fin: fin.toISOString(), firmante_nombre: m.nombre, firma_socio: firmaDemo(3), firma_inspector: firmaDemo(7),
+      resultados, cumplimiento: calcular(comoMapa(resultados)), enviada_en: fin.toISOString(), ...extra })
+  }
+  return [
+    hecha(socios[0], 'demo-ai-1', 200, 1, 'tecnico@demo', { estado: 'decidida', decision: 'conforme', decidida_por_nombre: 'Responsable de calidad (demo)', decidida_en: new Date(Date.now() - 198 * 864e5).toISOString() }),
+    hecha(socios[2], 'demo-ai-2', 2, 3, 'tecnico@demo'),
+    base(socios[1], { id: 'demo-ai-3', fecha_plan: hoy(), inspector_correo: 'demo@vg.local', estado: 'planificada' })
+  ]
 }
 function apiDemo() {
   if (!DEMO) DEMO = demoInicial()
@@ -103,19 +155,76 @@ function apiDemo() {
       DEMO.auditores.unshift({ id: 'demo-aud-' + Date.now(), client_slug: slug, correo: correo.toLowerCase(), organismo, vence, otorgado_en: new Date().toISOString(), revocado_en: null })
       return pausa('ok')
     },
-    revocar: (id) => { DEMO.auditores.find(a => a.id === id).revocado_en = new Date().toISOString(); return pausa(null) }
+    revocar: (id) => { DEMO.auditores.find(a => a.id === id).revocado_en = new Date().toISOString(); return pausa(null) },
+    // parte 2: las MISMAS reglas que el servidor (cert_qms_* de 20261025000000)
+    cronograma: () => pausa(DEMO.inspecciones.map(i => ({ ...i, socio_estado: (DEMO.miembros.find(m => m.id === i.miembro_id) || {}).estado }))
+      .sort((a, b) => (a.estado === 'cancelada') - (b.estado === 'cancelada') || b.fecha_plan.localeCompare(a.fecha_plan))),
+    planificar: (slug, miembro, fecha, inspector) => {
+      const m = DEMO.miembros.find(x => x.id === miembro)
+      if (!m) return Promise.reject(new Error('ese socio no es de este grupo'))
+      if (m.estado === 'excluido') return Promise.reject(new Error('un socio excluido no se audita; primero se readmite'))
+      if (!fecha) return Promise.reject(new Error('la auditoría necesita una fecha dentro del próximo año'))
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((inspector || '').trim())) return Promise.reject(new Error('falta el correo del auditor interno'))
+      if (DEMO.inspecciones.some(i => i.miembro_id === miembro && i.estado === 'planificada')) return Promise.reject(new Error('qms_insp_una_abierta'))
+      const id = 'demo-ai-' + Date.now()
+      DEMO.inspecciones.push({ id, client_slug: slug, miembro_id: m.id, checklist: 'globalgap_fv_smart', fecha_plan: fecha,
+        inspector_correo: inspector.trim().toLowerCase(), estado: 'planificada', socio_nombre: m.nombre })
+      return pausa(id)
+    },
+    cancelar: (id, motivo) => {
+      const i = DEMO.inspecciones.find(x => x.id === id)
+      if (i.estado !== 'planificada') return Promise.reject(new Error('solo se cancela una auditoría que todavía no se hizo'))
+      if (!(motivo || '').trim()) return Promise.reject(new Error('cancelar una auditoría exige el motivo'))
+      Object.assign(i, { estado: 'cancelada', cancelada_motivo: motivo.trim() }); return pausa(null)
+    },
+    misInspecciones: () => sinSenal() ? Promise.reject(new Error('Failed to fetch')) : pausa(DEMO.inspecciones.filter(i => i.estado === 'planificada' && i.inspector_correo === 'demo@vg.local').map(i => {
+      const m = DEMO.miembros.find(x => x.id === i.miembro_id)
+      return { id: i.id, client_slug: i.client_slug, checklist: i.checklist, fecha_plan: i.fecha_plan, socio_identificacion: m.identificacion,
+        socio_nombre: m.nombre, direccion: m.direccion, productos: m.productos, sitios: m.sitios }
+    })),
+    enviar: (p) => {
+      if (sinSenal()) return Promise.reject(new Error('Failed to fetch'))   // como el servidor: sin señal no llega
+      const i = DEMO.inspecciones.find(x => x.id === p.id)
+      if (!i) return Promise.reject(new Error('esa auditoría no existe'))
+      if (i.estado === 'cancelada') return Promise.reject(new Error('esta auditoría ya no está abierta (cancelada)'))
+      if (i.estado !== 'planificada') return pausa(i.cumplimiento)
+      const mapa = comoMapa(p.resultados); const f = faltantes(mapa)
+      if (f.sinResultado.length) return Promise.reject(new Error(`QMS: faltan ${f.sinResultado.length} puntos de control sin resultado`))
+      if (f.sinComentario.length) return Promise.reject(new Error(`QMS: ${f.sinComentario.length} puntos necesitan comentario`))
+      if (f.sinPlazo.length) return Promise.reject(new Error(`QMS: ${f.sinPlazo.length} incumplimientos sin plazo para la acción correctiva`))
+      if (!p.firma_socio || !p.firma_inspector) return Promise.reject(new Error('faltan las firmas del socio y del auditor'))
+      const m = DEMO.miembros.find(x => x.id === i.miembro_id)
+      Object.assign(i, { ...p, estado: 'enviada', socio_identificacion: m.identificacion, socio_nombre: m.nombre, productos: m.productos,
+        sitios: m.sitios, cumplimiento: calcular(mapa), enviada_en: new Date().toISOString() })
+      return pausa(i.cumplimiento)
+    },
+    informe: (id) => pausa({ ...DEMO.inspecciones.find(x => x.id === id) }),
+    decidir: (id, decision, nombre, comentario) => {
+      const i = DEMO.inspecciones.find(x => x.id === id)
+      if (i.estado !== 'enviada') return Promise.reject(new Error('esta auditoría no espera decisión'))
+      if (i.inspector_correo === 'demo@vg.local') return Promise.reject(new Error('quien hizo la auditoría no la aprueba (QMS 12.5 a)'))
+      if (!(nombre || '').trim()) return Promise.reject(new Error('falta el nombre de quien aprueba (05.02 g xi)'))
+      if (decision === 'conforme' && !i.cumplimiento.cumple) return Promise.reject(new Error('no se puede declarar conforme: el cálculo no cumple'))
+      if (decision === 'no_conforme' && !(comentario || '').trim()) return Promise.reject(new Error('declarar no conforme exige el motivo'))
+      Object.assign(i, { estado: 'decidida', decision, decidida_por_nombre: nombre.trim(), decision_comentario: (comentario || '').trim() || null, decidida_en: new Date().toISOString() })
+      const m = DEMO.miembros.find(x => x.id === i.miembro_id); const d = local(new Date(i.inicio))
+      if (!m.ultima_auditoria_interna || m.ultima_auditoria_interna < d) m.ultima_auditoria_interna = d
+      return pausa(null)
+    }
   }
 }
 
 // Mensajes del servidor → texto para la persona (sin códigos).
-function mensaje(e) {
+export function mensaje(e) {
   const t = String(e?.message || e || '')
+  if (/qms_insp_una_abierta/i.test(t)) return 'Ese socio ya tiene una auditoría interna planificada. Para planificar otra, primero se cancela esa.'
+  if (/quien hizo la auditoría/i.test(t)) return 'Usted hizo esta auditoría: la aprueba otra persona de calidad o el responsable del QMS (QMS 12.5 a).'
   if (/unique|duplicate|ya está registrada/i.test(t)) return 'Esa cédula o RUC ya está registrada en el grupo.'
   if (/qms_auditores_vence_max_un_anio|un año como máximo/i.test(t)) return 'El permiso de un auditor vence en un año como máximo.'
   if (/qms_miembros_identificacion_check/i.test(t)) return 'La cédula debe tener 10 dígitos, o 13 si es RUC.'
   if (/ggn_check/i.test(t)) return 'El GGN tiene 13 dígitos.'
-  if (/sin acceso|solo la directiva|sin permiso/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
-  if (/Failed to fetch|NetworkError/i.test(t)) return 'Sin conexión: el registro de socios necesita señal para guardar.'
+  if (/sin acceso|solo la directiva|sin permiso|el cronograma lo ven/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
+  if (/Failed to fetch|NetworkError/i.test(t)) return 'Sin conexión: «Mi grupo» necesita señal para guardar. La auditoría en la finca, en cambio, se hace sin señal.'
   return t || 'No se pudo completar.'
 }
 
@@ -133,7 +242,7 @@ function csvRegistro(socios) {
   return '﻿' + [cab, ...filas].map(f => f.map(celda).join(';')).join('\r\n')
 }
 
-export default function Grupo({ demo = false, onClose, pantallaCompleta = false }) {
+export default function Grupo({ demo = false, onClose, pantallaCompleta = false, email = null }) {
   const api = useMemo(() => (demo ? apiDemo() : apiServidor()), [demo])
   const [grupos, setGrupos] = useState(null)
   const [slug, setSlug] = useState('')
@@ -200,6 +309,7 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false 
         <>
           <div className="chips qms-tabs" role="tablist">
             <button role="tab" aria-selected={tab === 'socios'} className={'chip ' + (tab === 'socios' ? 'sel' : '')} onClick={() => setTab('socios')}><Icono n="hub" className="ic" />Registro de socios</button>
+            <button role="tab" aria-selected={tab === 'auditorias'} className={'chip ' + (tab === 'auditorias' ? 'sel' : '')} onClick={() => setTab('auditorias')}><Icono n="fact_check" className="ic" />Auditorías internas</button>
             {gestiona ? <button role="tab" aria-selected={tab === 'auditores'} className={'chip ' + (tab === 'auditores' ? 'sel' : '')} onClick={() => setTab('auditores')}><Icono n="verified" className="ic" />Auditores</button> : null}
           </div>
 
@@ -246,6 +356,9 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false 
                 </ul>
               )}
             </>
+          ) : tab === 'auditorias' ? (
+            <CronogramaGrupo slug={slug} gestiona={gestiona} api={api} socios={socios || []} email={email}
+              onSocios={cargarSocios} onOk={ok} onError={e => setError(mensaje(e))} />
           ) : (
             <Auditores lista={auditores} slug={slug} api={api} onCambio={cargarAuditores} onOk={ok} onError={e => setError(mensaje(e))} />
           )}
