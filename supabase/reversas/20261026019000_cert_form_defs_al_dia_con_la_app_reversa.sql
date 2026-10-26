@@ -1,0 +1,3 @@
+-- Reversa de 20261026019000_cert_form_defs_al_dia_con_la_app.sql: quita los 21 formularios agregados, solo si ninguna
+-- respuesta los usa (si alguna los usa, la llave foránea lo impide y la reversa falla: es lo correcto).
+delete from compliance.cert_form_defs where form_key in ('carbono_arr_mrv', 'globalgap_coc', 'globalgap_fv_gfs', 'globalgap_fv_smart', 'globalgap_qms', 'guia_agrocalidad_registro_operador', 'iscc_eu_hacienda', 'iscc_ish_smallholder', 'legacy_clmrs', 'legacy_cosecha', 'legacy_eudr_check', 'legacy_eudr_finca', 'legacy_fertilizacion', 'legacy_fumigacion', 'legacy_nominas', 'legacy_recoleccion_envase', 'legacy_siembra', 'pefc_cadena_custodia', 'pefc_manejo_forestal', 'rspo_ish_smallholder', 'rspo_pc_hacienda');
