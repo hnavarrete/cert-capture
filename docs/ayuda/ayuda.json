@@ -1,6 +1,6 @@
 {
  "generado_por": "kit_video.py",
- "generado": "2026-10-25T23:12:54",
+ "generado": "2026-10-25T23:32:43",
  "flujos": [
   {
    "id": "cuenta-entrar",
@@ -509,7 +509,8 @@
     "Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo.",
     "Use «Descargar registro» para llevarse el registro interno de miembros.",
     "En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó.",
-    "En «Incumplimientos» ve cada uno con su acción correctiva, su responsable, su plazo y su cierre, y las sanciones con el aviso al certificador."
+    "En «Incumplimientos» ve cada uno con su acción correctiva, su responsable, su plazo y su cierre, y las sanciones con el aviso al certificador.",
+    "En «Reclamos y retiro» ve los reclamos con su investigación, los simulacros y retiros con su conciliación, y el balance de masas de cada producto."
    ],
    "nota": "Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.",
    "video": null,
@@ -624,6 +625,67 @@
    "video": "https://vg-cert-videos.pages.dev/grupo-sancionar.mp4",
    "portada": "https://vg-cert-videos.pages.dev/grupo-sancionar.jpg",
    "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-sancionar-redes.mp4"
+  },
+  {
+   "id": "grupo-reclamo",
+   "actor": "grupo",
+   "orden": 92,
+   "titulo": "Registrar, investigar y cerrar un reclamo",
+   "resumen": "Cada reclamo contra el grupo o un socio se registra, se investiga y se cierra con su conclusión. Los de inocuidad, trabajadores o ambiente exigen avisar al certificador.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 53,
+   "pasos": [
+    "Abra «Mi grupo» y toque la pestaña «Reclamos y retiro».",
+    "Toque «Registrar reclamo»: la fecha, de quién viene, el tema y contra quién.",
+    "Si es de inocuidad, trabajadores o ambiente, hay que avisar al organismo certificador.",
+    "En «Investigación», anote qué se revisó y qué se encontró.",
+    "Anote el día del aviso al certificador.",
+    "Toque «Cerrar», escriba la conclusión y su nombre."
+   ],
+   "nota": "Si el reclamo exige corregir algo, «Abrir incumplimiento» lo lleva a «Incumplimientos», ligado al reclamo (QMS 05.03 a).",
+   "video": "https://vg-cert-videos.pages.dev/grupo-reclamo.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-reclamo.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-reclamo-redes.mp4"
+  },
+  {
+   "id": "grupo-simulacro-retiro",
+   "actor": "grupo",
+   "orden": 93,
+   "titulo": "Hacer el simulacro anual de retiro de producto",
+   "resumen": "GlobalG.A.P. pide probar el retiro una vez al año. Se registra el evento, los lotes, a quién se avisó y cuánto se localizó.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 50,
+   "pasos": [
+    "Abra «Mi grupo» → «Reclamos y retiro». Arriba se ve si el simulacro del año está al día.",
+    "Toque «Iniciar simulacro»: el evento, los lotes de VG Custody y quién decide.",
+    "Toque «Iniciar»: queda la hora de inicio.",
+    "En «Conciliación», anote cuánto se afectó y cuánto se localizó, y a qué clientes se avisó.",
+    "Toque «Guardar» y luego «Cerrar» con su nombre: queda la hora de fin."
+   ],
+   "nota": "Un retiro real se registra igual con «Registrar retiro real», y se cierra con el aviso al organismo certificador (QMS 07 b). Uno real en los últimos 12 meses cuenta como el ejercicio del año (07 d).",
+   "video": "https://vg-cert-videos.pages.dev/grupo-simulacro-retiro.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-simulacro-retiro.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-simulacro-retiro-redes.mp4"
+  },
+  {
+   "id": "grupo-balance-masas",
+   "actor": "grupo",
+   "orden": 94,
+   "titulo": "Registrar el balance de masas anual",
+   "resumen": "Uno al año por producto registrado, con lo certificado y lo no certificado por separado. Las cifras se toman del balance de VG Custody.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 38,
+   "pasos": [
+    "Abra «Mi grupo» → «Reclamos y retiro» y baje a «Balance de masas».",
+    "Cada producto dice si su balance del año está al día. Toque «Registrar balance».",
+    "Pase las cifras del balance de VG Custody: lo que entró, salió y queda.",
+    "La diferencia se calcula sola: si no cuadra, hay que explicarlo.",
+    "Escriba la conclusión y su nombre, y toque «Registrar el balance»."
+   ],
+   "nota": "Registrado, el balance ya no se edita: si algo cambió, se registra otro (QMS 06 b, k).",
+   "video": "https://vg-cert-videos.pages.dev/grupo-balance-masas.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-balance-masas.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-balance-masas-redes.mp4"
   }
  ]
 }
