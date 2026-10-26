@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from './supabase.js'
 import { Icono } from './eudr-react/CertForm.jsx'
 import { CronogramaGrupo } from './AuditoriaInterna.jsx'
+import { Incumplimientos } from './Incumplimientos.jsx'
 import { PUNTOS, calcular, faltantes, pidePlazo } from './qms-auditoria.js'
 
 const ESTADOS = {
@@ -56,7 +57,16 @@ function apiServidor() {
     misInspecciones: () => rpc('cert_qms_mis_inspecciones'),
     enviar: (p) => rpc('cert_qms_enviar_inspeccion', { p }),
     informe: (id) => rpc('cert_qms_informe', { p_id: id }).then(f => (f || [])[0] || null),
-    decidir: (id, decision, nombre, comentario) => rpc('cert_qms_decidir', { p_id: id, p_decision: decision, p_nombre: nombre, p_comentario: comentario || null })
+    decidir: (id, decision, nombre, comentario) => rpc('cert_qms_decidir', { p_id: id, p_decision: decision, p_nombre: nombre, p_comentario: comentario || null }),
+    // parte 3a: incumplimientos y sanciones (migración 20261026000000)
+    ncLista: (slug) => rpc('cert_qms_nc_lista', { p_slug: slug }),
+    ncGuardar: (p) => rpc('cert_qms_nc_guardar', { p }),
+    ncCerrar: (id, evidencia, nombre) => rpc('cert_qms_nc_cerrar', { p_id: id, p_evidencia: evidencia, p_nombre: nombre }),
+    sanciones: (slug) => rpc('cert_qms_sanciones', { p_slug: slug }),
+    sancionar: (slug, miembro, tipo, motivo, nombre, nc, producto) => rpc('cert_qms_sancionar',
+      { p_slug: slug, p_miembro: miembro, p_tipo: tipo, p_motivo: motivo, p_nombre: nombre, p_nc: nc || null, p_producto: producto || null }),
+    avisoCb: (id, fecha) => rpc('cert_qms_sancion_aviso_cb', { p_id: id, p_fecha: fecha }),
+    levantar: (id, motivo, nombre) => rpc('cert_qms_sancion_levantar', { p_id: id, p_motivo: motivo, p_nombre: nombre })
   }
 }
 /** La misma API para la pantalla del auditor interno (Mis auditorías), fuera de «Mi grupo». */
@@ -86,8 +96,40 @@ function demoInicial() {
     historial: s.flatMap(m => [{ id: m.id + '-h0', miembro_id: m.id, de: null, a: 'aspirante', motivo: null, por_correo: 'directiva@demo', en: m.fecha_ingreso + 'T09:00:00Z' }]
       .concat(m.estado !== 'aspirante' ? [{ id: m.id + '-h1', miembro_id: m.id, de: 'aspirante', a: m.estado, motivo: m.estado_motivo, por_correo: 'directiva@demo', en: m.fecha_ingreso + 'T15:00:00Z' }] : [])),
     auditores: [{ id: 'demo-aud-1', client_slug: 'demo-pitahaya', correo: 'auditora@certificador.demo', organismo: 'Organismo certificador demo', vence: masDias(60), otorgado_en: new Date().toISOString(), revocado_en: null }],
-    inspecciones: inspeccionesDemo(s)
+    ...incumplimientosDemo(s, inspeccionesDemo(s))
   }
+}
+
+// Como el disparador del servidor (_qms_nc_desde_informe): un incumplimiento por cada «no cumple» del informe enviado.
+function ncsDesde(i) {
+  return (i.resultados || []).filter(x => x.resultado === 'no_cumple').map(x => ({
+    id: `demo-nc-${i.id}-${x.code}`, client_slug: i.client_slug, miembro_id: i.miembro_id, socio_nombre: i.socio_nombre, nivel: 'socio',
+    origen: 'auditoria_interna', inspeccion_id: i.id, code: x.code, gravedad: (PUNTOS.find(p => p.code === x.code) || {}).nivel,
+    descripcion: (x.comentario || '').trim() || 'No cumple ' + x.code, accion_correctiva: null, responsable: null, plazo: x.plazo,
+    estado: 'abierta', creada_en: i.enviada_en || new Date().toISOString() }))
+}
+function incumplimientosDemo(socios, inspecciones) {
+  const nc = inspecciones.filter(i => i.estado !== 'planificada').flatMap(ncsDesde)
+  // la de hace 200 días ya se cerró; de la reciente, una ya está en curso
+  Object.assign(nc[0], { estado: 'cerrada', accion_correctiva: 'Registro diario de capacitaciones', responsable: 'Técnico del grupo (demo)',
+    cierre_evidencia: 'Registro de 30 días revisado en la finca (demo)', cerrada_por_nombre: 'Responsable de calidad (demo)',
+    cerrada_en: new Date(Date.now() - 170 * 864e5).toISOString() })
+  Object.assign(nc[1], { estado: 'en_curso', accion_correctiva: 'Capacitar al personal de cosecha', responsable: 'Técnico del grupo (demo)' })
+  const s5 = socios[4], s6 = socios[5]
+  nc.push({ id: 'demo-nc-ext', client_slug: 'demo-pitahaya', miembro_id: null, socio_nombre: null, nivel: 'qms', origen: 'auditoria_externa',
+    inspeccion_id: null, code: null, gravedad: null, descripcion: 'El procedimiento de retiro de producto no se probó este año (demo)',
+    accion_correctiva: null, responsable: null, plazo: masDias(-3), estado: 'abierta', creada_en: new Date(Date.now() - 20 * 864e5).toISOString() })
+  nc.push({ id: 'demo-nc-s5', client_slug: 'demo-pitahaya', miembro_id: s5.id, socio_nombre: s5.nombre, nivel: 'socio', origen: 'qms',
+    inspeccion_id: null, code: null, gravedad: null, descripcion: s5.estado_motivo, accion_correctiva: 'Completar el registro de aplicaciones del año',
+    responsable: s5.nombre, plazo: masDias(10), estado: 'en_curso', creada_en: new Date(Date.now() - 12 * 864e5).toISOString() })
+  const sanciones = [
+    { id: 'demo-san-1', client_slug: 'demo-pitahaya', miembro_id: s5.id, socio_nombre: s5.nombre, nc_id: 'demo-nc-s5', tipo: 'suspension',
+      producto: 'pitahaya amarilla', motivo: s5.estado_motivo, decidida_por_nombre: 'Responsable de calidad (demo)',
+      decidida_en: new Date(Date.now() - 12 * 864e5).toISOString(), aviso_cb_en: masDias(-11), levantada_en: null },
+    { id: 'demo-san-2', client_slug: 'demo-pitahaya', miembro_id: s6.id, socio_nombre: s6.nombre, nc_id: null, tipo: 'cancelacion',
+      producto: null, motivo: s6.estado_motivo, decidida_por_nombre: 'Directiva (demo)', decidida_en: s6.excluido_en, aviso_cb_en: '2026-06-03', levantada_en: null }
+  ]
+  return { inspecciones, nc, sanciones }
 }
 
 // Firma sintética para la demo (un trazo dibujado; nunca la de una persona real).
@@ -196,6 +238,7 @@ function apiDemo() {
       const m = DEMO.miembros.find(x => x.id === i.miembro_id)
       Object.assign(i, { ...p, estado: 'enviada', socio_identificacion: m.identificacion, socio_nombre: m.nombre, productos: m.productos,
         sitios: m.sitios, cumplimiento: calcular(mapa), enviada_en: new Date().toISOString() })
+      DEMO.nc.push(...ncsDesde(i))   // como el disparador del servidor
       return pausa(i.cumplimiento)
     },
     informe: (id) => pausa({ ...DEMO.inspecciones.find(x => x.id === id) }),
@@ -210,6 +253,61 @@ function apiDemo() {
       const m = DEMO.miembros.find(x => x.id === i.miembro_id); const d = local(new Date(i.inicio))
       if (!m.ultima_auditoria_interna || m.ultima_auditoria_interna < d) m.ultima_auditoria_interna = d
       return pausa(null)
+    },
+    // parte 3a: las MISMAS reglas que el servidor (cert_qms_nc_* y cert_qms_sancion* de 20261026000000)
+    ncLista: () => pausa([...DEMO.nc].sort((a, b) => (a.estado === 'cerrada') - (b.estado === 'cerrada') || a.plazo.localeCompare(b.plazo))),
+    ncGuardar: (p) => {
+      if (!p.plazo) return Promise.reject(new Error('el incumplimiento necesita un plazo para la acción correctiva (05.03 b)'))
+      if (!p.id) {
+        if (p.origen === 'auditoria_interna') return Promise.reject(new Error('los de la auditoría interna los crea el informe, no se cargan a mano'))
+        const m = DEMO.miembros.find(x => x.id === p.miembro_id)
+        DEMO.nc.push({ id: 'demo-nc-' + Date.now(), client_slug: 'demo-pitahaya', miembro_id: m ? m.id : null, socio_nombre: m ? m.nombre : null,
+          nivel: m ? 'socio' : 'qms', origen: p.origen, inspeccion_id: null, code: null, gravedad: null, descripcion: (p.descripcion || '').trim(),
+          accion_correctiva: (p.accion_correctiva || '').trim() || null, responsable: (p.responsable || '').trim() || null, plazo: p.plazo,
+          estado: p.en_curso ? 'en_curso' : 'abierta', creada_en: new Date().toISOString() })
+        return pausa('ok')
+      }
+      const n = DEMO.nc.find(x => x.id === p.id)
+      if (n.estado === 'cerrada') return Promise.reject(new Error('QMS: este incumplimiento ya está cerrado'))
+      Object.assign(n, { accion_correctiva: (p.accion_correctiva || '').trim() || null, responsable: (p.responsable || '').trim() || null, plazo: p.plazo,
+        estado: p.en_curso ? 'en_curso' : n.estado, descripcion: n.origen === 'auditoria_interna' ? n.descripcion : ((p.descripcion || '').trim() || n.descripcion) })
+      return pausa(n.id)
+    },
+    ncCerrar: (id, evidencia, nombre) => {
+      const n = DEMO.nc.find(x => x.id === id)
+      if (!(n.accion_correctiva || '').trim() || !(n.responsable || '').trim()) return Promise.reject(new Error('antes de cerrar, anote la acción correctiva y su responsable (05.03 c)'))
+      if (!(evidencia || '').trim() || !(nombre || '').trim()) return Promise.reject(new Error('cerrar exige la evidencia y el nombre de quien verificó'))
+      Object.assign(n, { estado: 'cerrada', cierre_evidencia: evidencia.trim(), cerrada_por_nombre: nombre.trim(), cerrada_en: new Date().toISOString() })
+      return pausa(null)
+    },
+    sanciones: () => pausa(DEMO.sanciones.map(s => { const n = DEMO.nc.find(x => x.id === s.nc_id); return { ...s, nc_descripcion: n?.descripcion, nc_estado: n?.estado } })
+      .sort((a, b) => b.decidida_en.localeCompare(a.decidida_en))),
+    sancionar: (slug, miembro, tipo, motivo, nombre, nc, producto) => {
+      const m = DEMO.miembros.find(x => x.id === miembro)
+      if (m.estado === 'excluido') return Promise.reject(new Error('ese socio ya está excluido'))
+      if (tipo === 'suspension' && m.estado === 'suspendido') return Promise.reject(new Error('ese socio ya está suspendido'))
+      if (!(motivo || '').trim() || !(nombre || '').trim()) return Promise.reject(new Error('la sanción necesita el motivo y el nombre de quien decide'))
+      DEMO.sanciones.push({ id: 'demo-san-' + Date.now(), client_slug: slug, miembro_id: m.id, socio_nombre: m.nombre, nc_id: nc || null, tipo,
+        producto: (producto || '').trim() || null, motivo: motivo.trim(), decidida_por_nombre: nombre.trim(), decidida_en: new Date().toISOString(),
+        aviso_cb_en: null, levantada_en: null })
+      if (tipo !== 'advertencia') {
+        const de = m.estado; Object.assign(m, { estado: tipo === 'suspension' ? 'suspendido' : 'excluido', estado_motivo: motivo.trim(),
+          excluido_en: tipo === 'cancelacion' ? new Date().toISOString() : null }); hist(m, de, m.estado)
+      }
+      return pausa('ok')
+    },
+    avisoCb: (id, fecha) => {
+      if (!fecha || fecha > hoy()) return Promise.reject(new Error('la fecha del aviso no puede estar en el futuro'))
+      DEMO.sanciones.find(x => x.id === id).aviso_cb_en = fecha; return pausa(null)
+    },
+    levantar: (id, motivo, nombre) => {
+      const s = DEMO.sanciones.find(x => x.id === id); const n = DEMO.nc.find(x => x.id === s.nc_id)
+      if (n && n.estado !== 'cerrada') return Promise.reject(new Error('la suspensión se levanta cuando su incumplimiento está cerrado (05.03 h)'))
+      if (!(motivo || '').trim() || !(nombre || '').trim()) return Promise.reject(new Error('levantar exige el motivo y el nombre de quien decide'))
+      Object.assign(s, { levantada_en: new Date().toISOString(), levantada_motivo: motivo.trim(), levantada_por_nombre: nombre.trim() })
+      const m = DEMO.miembros.find(x => x.id === s.miembro_id)
+      if (m.estado === 'suspendido') { Object.assign(m, { estado: 'activo', estado_motivo: motivo.trim() }); hist(m, 'suspendido', 'activo') }
+      return pausa(null)
     }
   }
 }
@@ -223,7 +321,7 @@ export function mensaje(e) {
   if (/qms_auditores_vence_max_un_anio|un año como máximo/i.test(t)) return 'El permiso de un auditor vence en un año como máximo.'
   if (/qms_miembros_identificacion_check/i.test(t)) return 'La cédula debe tener 10 dígitos, o 13 si es RUC.'
   if (/ggn_check/i.test(t)) return 'El GGN tiene 13 dígitos.'
-  if (/sin acceso|solo la directiva|sin permiso|el cronograma lo ven/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
+  if (/sin acceso|solo la directiva|sin permiso|el cronograma lo ven|los incumplimientos los ven|las sanciones las ven/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
   if (/Failed to fetch|NetworkError/i.test(t)) return 'Sin conexión: «Mi grupo» necesita señal para guardar. La auditoría en la finca, en cambio, se hace sin señal.'
   return t || 'No se pudo completar.'
 }
@@ -310,6 +408,7 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false,
           <div className="chips qms-tabs" role="tablist">
             <button role="tab" aria-selected={tab === 'socios'} className={'chip ' + (tab === 'socios' ? 'sel' : '')} onClick={() => setTab('socios')}><Icono n="hub" className="ic" />Registro de socios</button>
             <button role="tab" aria-selected={tab === 'auditorias'} className={'chip ' + (tab === 'auditorias' ? 'sel' : '')} onClick={() => setTab('auditorias')}><Icono n="fact_check" className="ic" />Auditorías internas</button>
+            <button role="tab" aria-selected={tab === 'incumplimientos'} className={'chip ' + (tab === 'incumplimientos' ? 'sel' : '')} onClick={() => setTab('incumplimientos')}><Icono n="report" className="ic" />Incumplimientos</button>
             {gestiona ? <button role="tab" aria-selected={tab === 'auditores'} className={'chip ' + (tab === 'auditores' ? 'sel' : '')} onClick={() => setTab('auditores')}><Icono n="verified" className="ic" />Auditores</button> : null}
           </div>
 
@@ -356,6 +455,9 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false,
                 </ul>
               )}
             </>
+          ) : tab === 'incumplimientos' ? (
+            <Incumplimientos slug={slug} gestiona={gestiona} api={api} socios={socios || []}
+              onSocios={cargarSocios} onOk={ok} onError={e => setError(mensaje(e))} />
           ) : tab === 'auditorias' ? (
             <CronogramaGrupo slug={slug} gestiona={gestiona} api={api} socios={socios || []} email={email}
               onSocios={cargarSocios} onOk={ok} onError={e => setError(mensaje(e))} />

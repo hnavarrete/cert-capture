@@ -37,6 +37,9 @@ export function CronogramaGrupo({ slug, gestiona, api, socios, email, onSocios, 
   const [plan, setPlan] = useState(null)        // { miembro, fecha, inspector }
   const [cancelar, setCancelar] = useState(null) // { i, motivo }
   const [informe, setInforme] = useState(null)
+  const [err, setErr] = useState('')   // el error va DENTRO de la ventana abierta: detrás no se ve
+  useEffect(() => setErr(''), [plan, cancelar])
+  const falla = (e) => { const t = String(e?.message || e || ''); setErr(t.charAt(0).toUpperCase() + t.slice(1)) }
 
   const cargar = () => { setLista(null); api.cronograma(slug).then(setLista).catch(e => { setLista([]); onError(e) }) }
   useEffect(cargar, [slug])
@@ -118,7 +121,8 @@ export function CronogramaGrupo({ slug, gestiona, api, socios, email, onSocios, 
               <p className="muted">La auditoría le aparece en «Mis auditorías» a esa cuenta, que debe tener acceso al grupo. La descarga con señal y la hace en la finca sin señal.</p>
               <button className="primary" disabled={!plan.miembro || !plan.fecha || !plan.inspector.trim()}
                 onClick={() => api.planificar(slug, plan.miembro, plan.fecha, plan.inspector.trim())
-                  .then(() => { setPlan(null); cargar(); onOk('Auditoría planificada.') }).catch(onError)}>Planificar</button>
+                  .then(() => { setPlan(null); cargar(); onOk('Auditoría planificada.') }).catch(falla)}>Planificar</button>
+              {err ? <div className="qms-msg err" role="alert">{err}</div> : null}
             </div>
           </div>
         </div>
@@ -132,7 +136,8 @@ export function CronogramaGrupo({ slug, gestiona, api, socios, email, onSocios, 
             <div className="qms-form">
               <label>Motivo (obligatorio)<textarea id="ai-canc-motivo" rows={3} maxLength={500} value={cancelar.motivo} onChange={e => setCancelar({ ...cancelar, motivo: e.target.value })} /></label>
               <button className="primary" disabled={!cancelar.motivo.trim()} onClick={() => api.cancelar(cancelar.i.id, cancelar.motivo)
-                .then(() => { setCancelar(null); cargar(); onOk('Auditoría cancelada.') }).catch(onError)}>Cancelar la auditoría</button>
+                .then(() => { setCancelar(null); cargar(); onOk('Auditoría cancelada.') }).catch(falla)}>Cancelar la auditoría</button>
+              {err ? <div className="qms-msg err" role="alert">{err}</div> : null}
             </div>
           </div>
         </div>
@@ -148,6 +153,7 @@ export function CronogramaGrupo({ slug, gestiona, api, socios, email, onSocios, 
 // ═════════ el informe (05.02 g) ═════════
 export function Informe({ informe: i, slug, api, puedeDecidir, propia, onCerrar, onDecidido, onError }) {
   const [d, setD] = useState({ decision: i.cumplimiento?.cumple ? 'conforme' : 'no_conforme', nombre: '', comentario: '' })
+  const [err, setErr] = useState('')
   const res = Array.isArray(i.resultados) ? i.resultados : []
   const ncs = res.filter(x => x.resultado === 'no_cumple')
   // un <details> cerrado no se imprime: se abren antes (R-PDF: lo impreso va desplegado)
@@ -225,7 +231,8 @@ export function Informe({ informe: i, slug, api, puedeDecidir, propia, onCerrar,
               <label>Comentario {d.decision === 'no_conforme' ? '(obligatorio)' : '(opcional)'}
                 <textarea id="ai-dec-com" rows={3} maxLength={1000} value={d.comentario} onChange={e => setD({ ...d, comentario: e.target.value })} /></label>
               <button className="primary" disabled={!d.nombre.trim() || (d.decision === 'no_conforme' && !d.comentario.trim())}
-                onClick={() => api.decidir(i.id, d.decision, d.nombre.trim(), d.comentario).then(onDecidido).catch(onError)}>Guardar la decisión</button>
+                onClick={() => api.decidir(i.id, d.decision, d.nombre.trim(), d.comentario).then(onDecidido).catch(e => { const t = String(e?.message || e || ''); setErr(t.charAt(0).toUpperCase() + t.slice(1)) })}>Guardar la decisión</button>
+              {err ? <div className="qms-msg err" role="alert">{err}</div> : null}
             </div>
           ) : <p className="muted">Pendiente: la decide la directiva o el responsable de calidad del grupo.</p>}
         </div>
