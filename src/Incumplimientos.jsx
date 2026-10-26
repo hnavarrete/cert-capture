@@ -15,7 +15,7 @@ const ESTADO_NC = { abierta: ['Abierta', 'warn'], en_curso: ['En curso', 'warn']
 const TIPO = { advertencia: 'Advertencia', suspension: 'Suspensión', cancelacion: 'Cancelación' }
 const vencida = (n) => n.estado !== 'cerrada' && n.plazo < hoy()
 // El error del servidor va DENTRO de la ventana abierta: detrás de ella no se ve.
-const texto = (e) => { const t = String(e?.message || e || 'No se pudo completar.'); return t.charAt(0).toUpperCase() + t.slice(1) }
+export const texto = (e) => { const t = String(e?.message || e || 'No se pudo completar.'); return t.charAt(0).toUpperCase() + t.slice(1) }
 
 export function Incumplimientos({ slug, gestiona, api, socios, onSocios, onOk, onError }) {
   const [lista, setLista] = useState(null)
@@ -169,7 +169,7 @@ export function Incumplimientos({ slug, gestiona, api, socios, onSocios, onOk, o
   )
 }
 
-function Hoja({ titulo, onCerrar, children, err }) {
+export function Hoja({ titulo, onCerrar, children, err }) {
   return (
     <div className="overlay" onClick={onCerrar}>
       <div className="sheet qms-mini" onClick={e => e.stopPropagation()} role="dialog" aria-label={titulo}>

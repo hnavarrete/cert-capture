@@ -7,6 +7,7 @@ import { supabase } from './supabase.js'
 import { Icono } from './eudr-react/CertForm.jsx'
 import { CronogramaGrupo } from './AuditoriaInterna.jsx'
 import { Incumplimientos } from './Incumplimientos.jsx'
+import { ReclamosRetiro } from './ReclamosRetiro.jsx'
 import { PUNTOS, calcular, faltantes, pidePlazo } from './qms-auditoria.js'
 
 const ESTADOS = {
@@ -66,7 +67,17 @@ function apiServidor() {
     sancionar: (slug, miembro, tipo, motivo, nombre, nc, producto) => rpc('cert_qms_sancionar',
       { p_slug: slug, p_miembro: miembro, p_tipo: tipo, p_motivo: motivo, p_nombre: nombre, p_nc: nc || null, p_producto: producto || null }),
     avisoCb: (id, fecha) => rpc('cert_qms_sancion_aviso_cb', { p_id: id, p_fecha: fecha }),
-    levantar: (id, motivo, nombre) => rpc('cert_qms_sancion_levantar', { p_id: id, p_motivo: motivo, p_nombre: nombre })
+    levantar: (id, motivo, nombre) => rpc('cert_qms_sancion_levantar', { p_id: id, p_motivo: motivo, p_nombre: nombre }),
+    // parte 3b: reclamos, retiro y balance de masas (migración 20261026010000)
+    reclamos: (slug) => rpc('cert_qms_reclamos', { p_slug: slug }),
+    reclamoGuardar: (p) => rpc('cert_qms_reclamo_guardar', { p }),
+    reclamoAviso: (id, fecha) => rpc('cert_qms_reclamo_aviso_cb', { p_id: id, p_fecha: fecha }),
+    reclamoCerrar: (id, conclusion, nombre) => rpc('cert_qms_reclamo_cerrar', { p_id: id, p_conclusion: conclusion, p_nombre: nombre }),
+    retiros: (slug) => rpc('cert_qms_retiros', { p_slug: slug }),
+    retiroGuardar: (p) => rpc('cert_qms_retiro_guardar', { p }),
+    retiroCerrar: (id, nombre) => rpc('cert_qms_retiro_cerrar', { p_id: id, p_nombre: nombre }),
+    balances: (slug) => rpc('cert_qms_balances', { p_slug: slug }),
+    balanceRegistrar: (p) => rpc('cert_qms_balance_registrar', { p })
   }
 }
 /** La misma API para la pantalla del auditor interno (Mis auditorías), fuera de «Mi grupo». */
@@ -129,7 +140,28 @@ function incumplimientosDemo(socios, inspecciones) {
     { id: 'demo-san-2', client_slug: 'demo-pitahaya', miembro_id: s6.id, socio_nombre: s6.nombre, nc_id: null, tipo: 'cancelacion',
       producto: null, motivo: s6.estado_motivo, decidida_por_nombre: 'Directiva (demo)', decidida_en: s6.excluido_en, aviso_cb_en: '2026-06-03', levantada_en: null }
   ]
-  return { inspecciones, nc, sanciones }
+  const hace = (d) => new Date(Date.now() - d * 864e5).toISOString()
+  const reclamos = [
+    { id: 'demo-rec-1', recibido_en: masDias(-40), origen: 'cliente', miembro_id: s6.id, socio_nombre: s6.nombre, tema: 'inocuidad',
+      descripcion: 'Residuo de plaguicida sobre el límite en un embarque (demo)', investigacion: 'Se revisó el registro de aplicaciones del lote (demo)',
+      seguimiento: 'Análisis de residuos repetido (demo)', estado: 'cerrado', aviso_cb_en: masDias(-39), requiere_aviso: true,
+      conclusion: 'Producto no autorizado en la finca: socio cancelado y lote retirado (demo)', cerrado_por_nombre: 'Responsable de calidad (demo)', cerrado_en: hace(30) },
+    { id: 'demo-rec-2', recibido_en: masDias(-4), origen: 'cliente', miembro_id: null, socio_nombre: null, tema: 'calidad',
+      descripcion: 'Fruta con calibre menor al pedido (demo)', investigacion: null, seguimiento: null, estado: 'recibido', aviso_cb_en: null,
+      requiere_aviso: false, conclusion: null, cerrado_por_nombre: null, cerrado_en: null }
+  ]
+  const retiros = [
+    { id: 'demo-ret-1', tipo: 'simulacro', iniciado_en: hace(300), terminado_en: new Date(Date.now() - 300 * 864e5 + 160 * 60e3).toISOString(),
+      producto: 'pitahaya amarilla', lotes: 'L-DEMO-041, L-DEMO-042', motivo: 'Simulacro anual: residuo sobre el límite (demo)',
+      decide_nombre: 'Responsable de calidad (demo)', clientes_avisados: 'Exportadora demo (correo)', aviso_cb_en: null, unidad: 'kg',
+      cantidad_afectada: 1200, cantidad_localizada: 1176, resultado: '98 % localizado en 2 h 40 min (demo)', estado: 'cerrado', cerrado_por_nombre: 'Responsable de calidad (demo)' }
+  ]
+  const balances = [
+    { id: 'demo-bal-1', producto: 'pitahaya amarilla', desde: masDias(-400), hasta: masDias(-36), unidad: 'kg', entradas_cert: 152000, entradas_no_cert: 8000,
+      salidas_cert: 149500, salidas_no_cert: 8000, existencias_cert: 2500, existencias_no_cert: 0, conclusion: 'Cuadra (demo)',
+      fuente: 'VG Custody · balance de masas', hecho_por_nombre: 'Responsable de calidad (demo)', hecho_en: hace(35) }
+  ]
+  return { inspecciones, nc, sanciones, reclamos, retiros, balances }
 }
 
 // Firma sintética para la demo (un trazo dibujado; nunca la de una persona real).
@@ -262,7 +294,7 @@ function apiDemo() {
         if (p.origen === 'auditoria_interna') return Promise.reject(new Error('los de la auditoría interna los crea el informe, no se cargan a mano'))
         const m = DEMO.miembros.find(x => x.id === p.miembro_id)
         DEMO.nc.push({ id: 'demo-nc-' + Date.now(), client_slug: 'demo-pitahaya', miembro_id: m ? m.id : null, socio_nombre: m ? m.nombre : null,
-          nivel: m ? 'socio' : 'qms', origen: p.origen, inspeccion_id: null, code: null, gravedad: null, descripcion: (p.descripcion || '').trim(),
+          nivel: m ? 'socio' : 'qms', origen: p.reclamo_id ? 'reclamo' : p.origen, reclamo_id: p.reclamo_id || null, inspeccion_id: null, code: null, gravedad: null, descripcion: (p.descripcion || '').trim(),
           accion_correctiva: (p.accion_correctiva || '').trim() || null, responsable: (p.responsable || '').trim() || null, plazo: p.plazo,
           estado: p.en_curso ? 'en_curso' : 'abierta', creada_en: new Date().toISOString() })
         return pausa('ok')
@@ -308,6 +340,69 @@ function apiDemo() {
       const m = DEMO.miembros.find(x => x.id === s.miembro_id)
       if (m.estado === 'suspendido') { Object.assign(m, { estado: 'activo', estado_motivo: motivo.trim() }); hist(m, 'suspendido', 'activo') }
       return pausa(null)
+    },
+    // parte 3b: las MISMAS reglas que el servidor (cert_qms_reclamo*, cert_qms_retiro*, cert_qms_balance* de 20261026010000)
+    reclamos: () => pausa(DEMO.reclamos.map(r => ({ ...r, nc_abiertas: DEMO.nc.filter(n => n.reclamo_id === r.id && n.estado !== 'cerrada').length }))
+      .sort((a, b) => (a.estado === 'cerrado') - (b.estado === 'cerrado') || b.recibido_en.localeCompare(a.recibido_en))),
+    reclamoGuardar: (p) => {
+      if (!p.id) {
+        if (!p.recibido_en || p.recibido_en > hoy()) return Promise.reject(new Error('el reclamo necesita la fecha en que se recibió (no futura)'))
+        const m = DEMO.miembros.find(x => x.id === p.miembro_id); const inv = (p.investigacion || '').trim()
+        DEMO.reclamos.push({ id: 'demo-rec-' + Date.now(), recibido_en: p.recibido_en, origen: p.origen, miembro_id: m ? m.id : null, socio_nombre: m ? m.nombre : null,
+          tema: p.tema, descripcion: (p.descripcion || '').trim(), investigacion: inv || null, seguimiento: (p.seguimiento || '').trim() || null,
+          estado: inv ? 'en_investigacion' : 'recibido', aviso_cb_en: null, requiere_aviso: ['inocuidad', 'trabajadores', 'ambiente'].includes(p.tema),
+          conclusion: null, cerrado_por_nombre: null, cerrado_en: null })
+        return pausa('ok')
+      }
+      const r = DEMO.reclamos.find(x => x.id === p.id)
+      if (r.estado === 'cerrado') return Promise.reject(new Error('QMS: este registro ya está cerrado'))
+      const inv = (p.investigacion || '').trim()
+      Object.assign(r, { investigacion: inv || null, seguimiento: (p.seguimiento || '').trim() || null, estado: inv ? 'en_investigacion' : 'recibido' })
+      return pausa(r.id)
+    },
+    reclamoAviso: (id, fecha) => {
+      const r = DEMO.reclamos.find(x => x.id === id)
+      if (r.aviso_cb_en) return Promise.reject(new Error('el aviso de este reclamo ya está anotado'))
+      if (!fecha || fecha > hoy()) return Promise.reject(new Error('la fecha del aviso no puede estar en el futuro'))
+      r.aviso_cb_en = fecha; return pausa(null)
+    },
+    reclamoCerrar: (id, conclusion, nombre) => {
+      const r = DEMO.reclamos.find(x => x.id === id)
+      if (!(r.investigacion || '').trim()) return Promise.reject(new Error('antes de cerrar, anote la investigación (QMS 04 b)'))
+      if (r.requiere_aviso && !r.aviso_cb_en) return Promise.reject(new Error('un reclamo de inocuidad, trabajadores o ambiente se cierra con el aviso al organismo certificador (QMS 04 e)'))
+      if (!(conclusion || '').trim() || !(nombre || '').trim()) return Promise.reject(new Error('cerrar exige la conclusión y el nombre de quien cierra'))
+      Object.assign(r, { estado: 'cerrado', conclusion: conclusion.trim(), cerrado_por_nombre: nombre.trim(), cerrado_en: new Date().toISOString() })
+      return pausa(null)
+    },
+    retiros: () => pausa([...DEMO.retiros].sort((a, b) => (a.estado === 'cerrado') - (b.estado === 'cerrado') || b.iniciado_en.localeCompare(a.iniciado_en))),
+    retiroGuardar: (p) => {
+      if (p.aviso_cb_en && p.aviso_cb_en > hoy()) return Promise.reject(new Error('la fecha del aviso no puede estar en el futuro'))
+      const num = (v) => (v === '' || v == null ? null : Number(v))
+      if (!p.id) {
+        if (!p.iniciado_en || new Date(p.iniciado_en) > new Date(Date.now() + 15 * 60e3)) return Promise.reject(new Error('el retiro necesita su fecha y hora de inicio (no futura)'))
+        DEMO.retiros.push({ id: 'demo-ret-' + Date.now(), tipo: p.tipo, iniciado_en: new Date(p.iniciado_en).toISOString(), terminado_en: null,
+          producto: (p.producto || '').trim(), lotes: (p.lotes || '').trim() || null, motivo: (p.motivo || '').trim(), decide_nombre: (p.decide_nombre || '').trim(),
+          clientes_avisados: null, aviso_cb_en: null, unidad: null, cantidad_afectada: null, cantidad_localizada: null, resultado: null, estado: 'en_curso' })
+        return pausa('ok')
+      }
+      const r = DEMO.retiros.find(x => x.id === p.id)
+      if (r.estado === 'cerrado') return Promise.reject(new Error('QMS: este registro ya está cerrado'))
+      Object.assign(r, { lotes: (p.lotes || '').trim() || null, clientes_avisados: (p.clientes_avisados || '').trim() || null, aviso_cb_en: r.aviso_cb_en || p.aviso_cb_en || null,
+        unidad: p.unidad || null, cantidad_afectada: num(p.cantidad_afectada), cantidad_localizada: num(p.cantidad_localizada), resultado: (p.resultado || '').trim() || null })
+      return pausa(r.id)
+    },
+    retiroCerrar: (id, nombre) => {
+      const r = DEMO.retiros.find(x => x.id === id)
+      if (!r.unidad || r.cantidad_afectada == null || r.cantidad_localizada == null) return Promise.reject(new Error('antes de cerrar, anote la conciliación: cantidad afectada y cantidad localizada (QMS 07 b)'))
+      if (!(r.clientes_avisados || '').trim()) return Promise.reject(new Error('antes de cerrar, anote a qué clientes se avisó (QMS 07 b)'))
+      if (r.tipo === 'real' && !r.aviso_cb_en) return Promise.reject(new Error('un retiro real se cierra con el aviso al organismo certificador (QMS 07 b)'))
+      if (!(r.resultado || '').trim() || !(nombre || '').trim()) return Promise.reject(new Error('cerrar exige el resultado y el nombre de quien cierra'))
+      Object.assign(r, { estado: 'cerrado', terminado_en: new Date().toISOString(), cerrado_por_nombre: nombre.trim() }); return pausa(null)
+    },
+    balances: () => pausa([...DEMO.balances]),
+    balanceRegistrar: (p) => {
+      if (!p.desde || !p.hasta || p.hasta < p.desde || p.hasta > hoy()) return Promise.reject(new Error('el balance necesita un periodo válido que ya terminó'))
+      DEMO.balances.unshift({ ...p, id: 'demo-bal-' + Date.now(), hecho_en: new Date().toISOString() }); return pausa('ok')
     }
   }
 }
@@ -321,7 +416,7 @@ export function mensaje(e) {
   if (/qms_auditores_vence_max_un_anio|un año como máximo/i.test(t)) return 'El permiso de un auditor vence en un año como máximo.'
   if (/qms_miembros_identificacion_check/i.test(t)) return 'La cédula debe tener 10 dígitos, o 13 si es RUC.'
   if (/ggn_check/i.test(t)) return 'El GGN tiene 13 dígitos.'
-  if (/sin acceso|solo la directiva|sin permiso|el cronograma lo ven|los incumplimientos los ven|las sanciones las ven/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
+  if (/sin acceso|solo la directiva|sin permiso|el cronograma lo ven|los incumplimientos los ven|las sanciones las ven|los reclamos los ven|los retiros los ven|los balances los ven/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
   if (/Failed to fetch|NetworkError/i.test(t)) return 'Sin conexión: «Mi grupo» necesita señal para guardar. La auditoría en la finca, en cambio, se hace sin señal.'
   return t || 'No se pudo completar.'
 }
@@ -409,6 +504,7 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false,
             <button role="tab" aria-selected={tab === 'socios'} className={'chip ' + (tab === 'socios' ? 'sel' : '')} onClick={() => setTab('socios')}><Icono n="hub" className="ic" />Registro de socios</button>
             <button role="tab" aria-selected={tab === 'auditorias'} className={'chip ' + (tab === 'auditorias' ? 'sel' : '')} onClick={() => setTab('auditorias')}><Icono n="fact_check" className="ic" />Auditorías internas</button>
             <button role="tab" aria-selected={tab === 'incumplimientos'} className={'chip ' + (tab === 'incumplimientos' ? 'sel' : '')} onClick={() => setTab('incumplimientos')}><Icono n="report" className="ic" />Incumplimientos</button>
+            <button role="tab" aria-selected={tab === 'reclamos'} className={'chip ' + (tab === 'reclamos' ? 'sel' : '')} onClick={() => setTab('reclamos')}><Icono n="inventory_2" className="ic" />Reclamos y retiro</button>
             {gestiona ? <button role="tab" aria-selected={tab === 'auditores'} className={'chip ' + (tab === 'auditores' ? 'sel' : '')} onClick={() => setTab('auditores')}><Icono n="verified" className="ic" />Auditores</button> : null}
           </div>
 
@@ -455,6 +551,8 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false,
                 </ul>
               )}
             </>
+          ) : tab === 'reclamos' ? (
+            <ReclamosRetiro slug={slug} gestiona={gestiona} api={api} socios={socios || []} onOk={ok} />
           ) : tab === 'incumplimientos' ? (
             <Incumplimientos slug={slug} gestiona={gestiona} api={api} socios={socios || []}
               onSocios={cargarSocios} onOk={ok} onError={e => setError(mensaje(e))} />
