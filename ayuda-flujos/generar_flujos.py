@@ -670,6 +670,73 @@ flujo(id='grupo-sancionar', orden=91, **G,
       nota='Las sanciones no se editan ni se borran (QMS 05.03 g). La cancelación pasa al socio a «excluido».',
       cierre='Cada sanción, con su registro')
 
+# ── reclamos, retiro y balance de masas (src/ReclamosRetiro.jsx, 26-oct-2026; QMS 04, 07, 06 b).
+ABRIR_RECLAMOS = [{'clic': 'Mi grupo'}, {'pausa': 500}, {'pestana': 'Reclamos y retiro'}]
+
+flujo(id='grupo-reclamo', orden=92, **G,
+      titulo='Registrar, investigar y cerrar un reclamo',
+      resumen='Cada reclamo contra el grupo o un socio se registra, se investiga y se cierra con su conclusión. Los de inocuidad, trabajadores o ambiente exigen avisar al certificador.',
+      gancho='¿Le llegó un reclamo de un cliente?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» y toque la pestaña «Reclamos y retiro».', 'corto': '«Mi grupo» → «Reclamos y retiro».', 'acciones': ABRIR_RECLAMOS, 'ms': 3000},
+          {'texto': 'Toque «Registrar reclamo»: la fecha, de quién viene, el tema y contra quién.', 'corto': 'Fecha, origen, tema y contra quién.',
+           'acciones': [{'clic': 'Registrar reclamo'}, {'pausa': 400}, {'elegir': ['Tema', 'Inocuidad']}, {'ver': 'Este tema exige avisar'}], 'ms': 3600},
+          {'texto': 'Si es de inocuidad, trabajadores o ambiente, hay que avisar al organismo certificador.', 'corto': 'Inocuidad: avisar al certificador.',
+           'acciones': [{'llenar': ['Qué dice el reclamo', 'Residuo sobre el límite en un embarque']}, {'clic_exacto': 'Registrar'}, {'ver': 'Reclamo registrado'}], 'ms': 3600},
+          {'texto': 'En «Investigación», anote qué se revisó y qué se encontró.', 'corto': 'Qué se revisó y qué se encontró.',
+           'acciones': [{'clic_css': '.qms-socio:has-text("Residuo sobre el límite") button:has-text("Investigación")'}, {'pausa': 400},
+                        {'llenar': ['Investigación (qué se revisó', 'Registro de aplicaciones revisado']}, {'clic_exacto': 'Guardar'}], 'ms': 3600},
+          {'texto': 'Anote el día del aviso al certificador.', 'acciones': [{'clic_css': '.qms-socio:has-text("Residuo sobre el límite") button:has-text("Anotar el aviso")'},
+           {'pausa': 400}, {'clic_css': '.qms-mini button.primary'}, {'ver': 'Aviso anotado'}], 'ms': 3000},
+          {'texto': 'Toque «Cerrar», escriba la conclusión y su nombre.', 'corto': 'La conclusión y su nombre.',
+           'acciones': [{'clic_css': '.qms-socio:has-text("Residuo sobre el límite") button:has-text("Cerrar")'}, {'pausa': 400},
+                        {'llenar': ['Conclusión', 'Origen identificado y corregido']}, {'llenar': ['Su nombre', 'Calidad del grupo']},
+                        {'clic': 'Cerrar el reclamo'}, {'ver': 'Reclamo cerrado'}], 'ms': 3800},
+      ],
+      nota='Si el reclamo exige corregir algo, «Abrir incumplimiento» lo lleva a «Incumplimientos», ligado al reclamo (QMS 05.03 a).',
+      cierre='Cada reclamo, con su conclusión')
+
+flujo(id='grupo-simulacro-retiro', orden=93, **G,
+      titulo='Hacer el simulacro anual de retiro de producto',
+      resumen='GlobalG.A.P. pide probar el retiro una vez al año. Se registra el evento, los lotes, a quién se avisó y cuánto se localizó.',
+      gancho='¿Podría retirar un lote en un día?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» → «Reclamos y retiro». Arriba se ve si el simulacro del año está al día.', 'corto': 'Se ve si el simulacro está al día.',
+           'acciones': ABRIR_RECLAMOS + [{'ver': 'simulacro de retiro anual'}], 'ms': 3400},
+          {'texto': 'Toque «Iniciar simulacro»: el evento, los lotes de VG Custody y quién decide.', 'corto': 'El evento, los lotes y quién decide.',
+           'acciones': [{'clic': 'Iniciar simulacro'}, {'pausa': 400}, {'llenar': ['Evento que lo origina', 'Simulacro: residuo sobre el límite']},
+                        {'llenar': ['Lotes afectados', 'L-041, L-042']}, {'llenar': ['Quién decide', 'Calidad del grupo']}], 'ms': 4000},
+          {'texto': 'Toque «Iniciar»: queda la hora de inicio.', 'acciones': [{'clic_exacto': 'Iniciar'}, {'ver': 'Simulacro iniciado'}], 'ms': 2800},
+          {'texto': 'En «Conciliación», anote cuánto se afectó y cuánto se localizó, y a qué clientes se avisó.', 'corto': 'Afectado, localizado y clientes avisados.',
+           'acciones': [{'clic_css': '.qms-socio:has-text("Simulacro: residuo") button:has-text("Conciliación")'}, {'pausa': 400},
+                        {'llenar': ['Cantidad afectada', '500']}, {'llenar': ['Cantidad localizada', '490']}, {'llenar': ['Clientes avisados', 'Exportadora']},
+                        {'llenar': ['Resultado', '98 % en 2 horas']}, {'ver': 'Localizado'}], 'ms': 4200},
+          {'texto': 'Toque «Guardar» y luego «Cerrar» con su nombre: queda la hora de fin.', 'corto': 'Guardar y cerrar: queda la hora de fin.',
+           'acciones': [{'clic_exacto': 'Guardar'}, {'pausa': 600}, {'clic_css': '.qms-socio:has-text("Simulacro: residuo") button:has-text("Cerrar")'},
+                        {'pausa': 400}, {'llenar': ['Su nombre', 'Calidad del grupo']}, {'clic': 'Cerrar el retiro'}, {'ver': 'Retiro cerrado'}], 'ms': 3800},
+      ],
+      nota='Un retiro real se registra igual con «Registrar retiro real», y se cierra con el aviso al organismo certificador (QMS 07 b). Uno real en los últimos 12 meses cuenta como el ejercicio del año (07 d).',
+      cierre='El retiro, probado cada año')
+
+flujo(id='grupo-balance-masas', orden=94, **G,
+      titulo='Registrar el balance de masas anual',
+      resumen='Uno al año por producto registrado, con lo certificado y lo no certificado por separado. Las cifras se toman del balance de VG Custody.',
+      gancho='¿Cuadra lo certificado que entró y salió?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» → «Reclamos y retiro» y baje a «Balance de masas».', 'corto': 'Baje a «Balance de masas».',
+           'acciones': ABRIR_RECLAMOS + centrar('Balance de masas (QMS 06 b)'), 'ms': 3400},
+          {'texto': 'Cada producto dice si su balance del año está al día. Toque «Registrar balance».', 'corto': 'Toque «Registrar balance».',
+           'acciones': [{'clic_css': '.qms-socio:has-text("pitahaya roja") button:has-text("Registrar balance")'}, {'pausa': 400}], 'ms': 3200},
+          {'texto': 'Pase las cifras del balance de VG Custody: lo que entró, salió y queda.', 'corto': 'Entró, salió y queda, de VG Custody.',
+           'acciones': [{'llenar': ['Entró certificado', '5000']}, {'llenar': ['Salió certificado', '4800']}, {'llenar': ['Queda certificado', '200']}], 'ms': 4000},
+          {'texto': 'La diferencia se calcula sola: si no cuadra, hay que explicarlo.', 'corto': 'La diferencia se calcula sola.',
+           'acciones': [{'ver': 'Diferencia en lo certificado'}], 'ms': 3000},
+          {'texto': 'Escriba la conclusión y su nombre, y toque «Registrar el balance».', 'corto': 'Conclusión, nombre y registrar.',
+           'acciones': [{'llenar': ['Conclusión', 'Cuadra']}, {'llenar': ['Su nombre', 'Calidad del grupo']}, {'clic': 'Registrar el balance'}, {'ver': 'Balance registrado'}], 'ms': 3600},
+      ],
+      nota='Registrado, el balance ya no se edita: si algo cambió, se registra otro (QMS 06 b, k).',
+      cierre='Lo certificado, siempre cuadrado')
+
 flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', orden=86, solo_texto=True,
       titulo='Revisar un grupo como auditor externo',
       resumen='Con el permiso que le dio la directiva, el auditor ve el registro de socios y su historial, sin modificar nada.',
@@ -682,6 +749,7 @@ flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', 
           {'texto': 'Use «Descargar registro» para llevarse el registro interno de miembros.'},
           {'texto': 'En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó.'},
           {'texto': 'En «Incumplimientos» ve cada uno con su acción correctiva, su responsable, su plazo y su cierre, y las sanciones con el aviso al certificador.'},
+          {'texto': 'En «Reclamos y retiro» ve los reclamos con su investigación, los simulacros y retiros con su conciliación, y el balance de masas de cada producto.'},
       ],
       nota='Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.')
 

@@ -1,0 +1,151 @@
+{
+ "id": "grupo-simulacro-retiro",
+ "orden": 93,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Hacer el simulacro anual de retiro de producto",
+ "resumen": "GlobalG.A.P. pide probar el retiro una vez al año. Se registra el evento, los lotes, a quién se avisó y cuánto se localizó.",
+ "gancho": "¿Podría retirar un lote en un día?",
+ "pasos": [
+  {
+   "texto": "Abra «Mi grupo» → «Reclamos y retiro». Arriba se ve si el simulacro del año está al día.",
+   "corto": "Se ve si el simulacro está al día.",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "pestana": "Reclamos y retiro"
+    },
+    {
+     "ver": "simulacro de retiro anual"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Toque «Iniciar simulacro»: el evento, los lotes de VG Custody y quién decide.",
+   "corto": "El evento, los lotes y quién decide.",
+   "acciones": [
+    {
+     "clic": "Iniciar simulacro"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "llenar": [
+      "Evento que lo origina",
+      "Simulacro: residuo sobre el límite"
+     ]
+    },
+    {
+     "llenar": [
+      "Lotes afectados",
+      "L-041, L-042"
+     ]
+    },
+    {
+     "llenar": [
+      "Quién decide",
+      "Calidad del grupo"
+     ]
+    }
+   ],
+   "ms": 4000
+  },
+  {
+   "texto": "Toque «Iniciar»: queda la hora de inicio.",
+   "acciones": [
+    {
+     "clic_exacto": "Iniciar"
+    },
+    {
+     "ver": "Simulacro iniciado"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "En «Conciliación», anote cuánto se afectó y cuánto se localizó, y a qué clientes se avisó.",
+   "corto": "Afectado, localizado y clientes avisados.",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"Simulacro: residuo\") button:has-text(\"Conciliación\")"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "llenar": [
+      "Cantidad afectada",
+      "500"
+     ]
+    },
+    {
+     "llenar": [
+      "Cantidad localizada",
+      "490"
+     ]
+    },
+    {
+     "llenar": [
+      "Clientes avisados",
+      "Exportadora"
+     ]
+    },
+    {
+     "llenar": [
+      "Resultado",
+      "98 % en 2 horas"
+     ]
+    },
+    {
+     "ver": "Localizado"
+    }
+   ],
+   "ms": 4200
+  },
+  {
+   "texto": "Toque «Guardar» y luego «Cerrar» con su nombre: queda la hora de fin.",
+   "corto": "Guardar y cerrar: queda la hora de fin.",
+   "acciones": [
+    {
+     "clic_exacto": "Guardar"
+    },
+    {
+     "pausa": 600
+    },
+    {
+     "clic_css": ".qms-socio:has-text(\"Simulacro: residuo\") button:has-text(\"Cerrar\")"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "llenar": [
+      "Su nombre",
+      "Calidad del grupo"
+     ]
+    },
+    {
+     "clic": "Cerrar el retiro"
+    },
+    {
+     "ver": "Retiro cerrado"
+    }
+   ],
+   "ms": 3800
+  }
+ ],
+ "nota": "Un retiro real se registra igual con «Registrar retiro real», y se cierra con el aviso al organismo certificador (QMS 07 b). Uno real en los últimos 12 meses cuenta como el ejercicio del año (07 d).",
+ "cierre": "El retiro, probado cada año",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

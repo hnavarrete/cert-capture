@@ -1,0 +1,146 @@
+{
+ "id": "grupo-reclamo",
+ "orden": 92,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Registrar, investigar y cerrar un reclamo",
+ "resumen": "Cada reclamo contra el grupo o un socio se registra, se investiga y se cierra con su conclusión. Los de inocuidad, trabajadores o ambiente exigen avisar al certificador.",
+ "gancho": "¿Le llegó un reclamo de un cliente?",
+ "pasos": [
+  {
+   "texto": "Abra «Mi grupo» y toque la pestaña «Reclamos y retiro».",
+   "corto": "«Mi grupo» → «Reclamos y retiro».",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "pestana": "Reclamos y retiro"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Toque «Registrar reclamo»: la fecha, de quién viene, el tema y contra quién.",
+   "corto": "Fecha, origen, tema y contra quién.",
+   "acciones": [
+    {
+     "clic": "Registrar reclamo"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "elegir": [
+      "Tema",
+      "Inocuidad"
+     ]
+    },
+    {
+     "ver": "Este tema exige avisar"
+    }
+   ],
+   "ms": 3600
+  },
+  {
+   "texto": "Si es de inocuidad, trabajadores o ambiente, hay que avisar al organismo certificador.",
+   "corto": "Inocuidad: avisar al certificador.",
+   "acciones": [
+    {
+     "llenar": [
+      "Qué dice el reclamo",
+      "Residuo sobre el límite en un embarque"
+     ]
+    },
+    {
+     "clic_exacto": "Registrar"
+    },
+    {
+     "ver": "Reclamo registrado"
+    }
+   ],
+   "ms": 3600
+  },
+  {
+   "texto": "En «Investigación», anote qué se revisó y qué se encontró.",
+   "corto": "Qué se revisó y qué se encontró.",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"Residuo sobre el límite\") button:has-text(\"Investigación\")"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "llenar": [
+      "Investigación (qué se revisó",
+      "Registro de aplicaciones revisado"
+     ]
+    },
+    {
+     "clic_exacto": "Guardar"
+    }
+   ],
+   "ms": 3600
+  },
+  {
+   "texto": "Anote el día del aviso al certificador.",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"Residuo sobre el límite\") button:has-text(\"Anotar el aviso\")"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "clic_css": ".qms-mini button.primary"
+    },
+    {
+     "ver": "Aviso anotado"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Toque «Cerrar», escriba la conclusión y su nombre.",
+   "corto": "La conclusión y su nombre.",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"Residuo sobre el límite\") button:has-text(\"Cerrar\")"
+    },
+    {
+     "pausa": 400
+    },
+    {
+     "llenar": [
+      "Conclusión",
+      "Origen identificado y corregido"
+     ]
+    },
+    {
+     "llenar": [
+      "Su nombre",
+      "Calidad del grupo"
+     ]
+    },
+    {
+     "clic": "Cerrar el reclamo"
+    },
+    {
+     "ver": "Reclamo cerrado"
+    }
+   ],
+   "ms": 3800
+  }
+ ],
+ "nota": "Si el reclamo exige corregir algo, «Abrir incumplimiento» lo lleva a «Incumplimientos», ligado al reclamo (QMS 05.03 a).",
+ "cierre": "Cada reclamo, con su conclusión",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

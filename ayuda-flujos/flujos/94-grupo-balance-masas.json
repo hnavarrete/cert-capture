@@ -1,0 +1,116 @@
+{
+ "id": "grupo-balance-masas",
+ "orden": 94,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Registrar el balance de masas anual",
+ "resumen": "Uno al año por producto registrado, con lo certificado y lo no certificado por separado. Las cifras se toman del balance de VG Custody.",
+ "gancho": "¿Cuadra lo certificado que entró y salió?",
+ "pasos": [
+  {
+   "texto": "Abra «Mi grupo» → «Reclamos y retiro» y baje a «Balance de masas».",
+   "corto": "Baje a «Balance de masas».",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "pestana": "Reclamos y retiro"
+    },
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Balance de masas (QMS 06 b)\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Balance de masas (QMS 06 b)"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Cada producto dice si su balance del año está al día. Toque «Registrar balance».",
+   "corto": "Toque «Registrar balance».",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"pitahaya roja\") button:has-text(\"Registrar balance\")"
+    },
+    {
+     "pausa": 400
+    }
+   ],
+   "ms": 3200
+  },
+  {
+   "texto": "Pase las cifras del balance de VG Custody: lo que entró, salió y queda.",
+   "corto": "Entró, salió y queda, de VG Custody.",
+   "acciones": [
+    {
+     "llenar": [
+      "Entró certificado",
+      "5000"
+     ]
+    },
+    {
+     "llenar": [
+      "Salió certificado",
+      "4800"
+     ]
+    },
+    {
+     "llenar": [
+      "Queda certificado",
+      "200"
+     ]
+    }
+   ],
+   "ms": 4000
+  },
+  {
+   "texto": "La diferencia se calcula sola: si no cuadra, hay que explicarlo.",
+   "corto": "La diferencia se calcula sola.",
+   "acciones": [
+    {
+     "ver": "Diferencia en lo certificado"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Escriba la conclusión y su nombre, y toque «Registrar el balance».",
+   "corto": "Conclusión, nombre y registrar.",
+   "acciones": [
+    {
+     "llenar": [
+      "Conclusión",
+      "Cuadra"
+     ]
+    },
+    {
+     "llenar": [
+      "Su nombre",
+      "Calidad del grupo"
+     ]
+    },
+    {
+     "clic": "Registrar el balance"
+    },
+    {
+     "ver": "Balance registrado"
+    }
+   ],
+   "ms": 3600
+  }
+ ],
+ "nota": "Registrado, el balance ya no se edita: si algo cambió, se registra otro (QMS 06 b, k).",
+ "cierre": "Lo certificado, siempre cuadrado",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}
