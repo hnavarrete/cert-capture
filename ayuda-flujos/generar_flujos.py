@@ -623,6 +623,53 @@ flujo(id='grupo-decidir-auditoria', orden=89, **G,
       nota='«Conforme» solo se puede elegir si el cálculo cumple (Major 100 % y Minor 95 %). Quien hizo la auditoría no la aprueba (QMS 12.5 a). El informe se puede imprimir con «Imprimir».',
       cierre='Cada auditoría, revisada y firmada')
 
+# ── incumplimientos y sanciones (src/Incumplimientos.jsx, 26-oct-2026; QMS 05.03). Demo con las mismas reglas del servidor.
+NC_C = '.qms-socio:has-text("Productora demo C"):has-text("Abierta")'
+
+flujo(id='grupo-incumplimiento-seguimiento', orden=90, **G,
+      titulo='Dar seguimiento a un incumplimiento hasta cerrarlo',
+      resumen='Cada «no cumple» de una auditoría interna llega solo. Se anota la acción correctiva, el responsable y el plazo, y se cierra con la evidencia.',
+      gancho='¿Quién corrige lo que encontró la auditoría?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» y toque la pestaña «Incumplimientos».', 'corto': '«Mi grupo» → «Incumplimientos».',
+           'acciones': [{'clic': 'Mi grupo'}, {'pausa': 500}, {'pestana': 'Incumplimientos'}], 'ms': 3000},
+          {'texto': 'Cada «no cumple» de una auditoría interna aparece aquí solo, con su plazo.', 'corto': 'Cada «no cumple» llega solo, con su plazo.',
+           'acciones': centrar('Auditoría interna · FV-Smart 03.03'), 'ms': 3400},
+          {'texto': 'Toque «Acción y responsable»: qué se hará y quién responde.', 'corto': 'Qué se hará y quién responde.',
+           'acciones': [{'clic_css': NC_C + ' button:has-text("Acción y responsable")'}, {'pausa': 500},
+                        {'llenar': ['Acción correctiva', 'Llevar el registro diario']}, {'llenar': ['Responsable (05.03 c)', 'Técnico del grupo']}], 'ms': 3800},
+          {'texto': 'Toque «Guardar».', 'acciones': [{'clic_exacto': 'Guardar'}, {'ver': 'Cambios guardados'}], 'ms': 2600},
+          {'texto': 'Cuando esté corregido, toque «Cerrar» y escriba la evidencia y su nombre.', 'corto': 'Corregido: la evidencia y su nombre.',
+           'acciones': [{'clic_css': '.qms-socio:has-text("Llevar el registro diario") button:has-text("Cerrar")'}, {'pausa': 500},
+                        {'llenar': ['Evidencia', 'Registro de 15 días revisado']}, {'llenar': ['Su nombre', 'Calidad del grupo']}], 'ms': 3800},
+          {'texto': 'Toque «Cerrar el incumplimiento»: queda con su fecha y ya no cambia.', 'corto': 'Cerrado, ya no cambia.',
+           'acciones': [{'clic': 'Cerrar el incumplimiento'}, {'ver': 'Incumplimiento cerrado'}], 'ms': 3000},
+      ],
+      nota='También se registran a mano los incumplimientos del organismo certificador, de un reclamo o del QMS, con «Registrar incumplimiento» (QMS 05.03 a).',
+      cierre='Cada incumplimiento, hasta cerrarlo')
+
+flujo(id='grupo-sancionar', orden=91, **G,
+      titulo='Sancionar a un socio y avisar al certificador',
+      resumen='Advertencia, suspensión o cancelación, con motivo y nombre. La suspensión se levanta cuando su incumplimiento está cerrado.',
+      gancho='¿Cómo se sanciona a un socio?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» y toque «Incumplimientos».', 'corto': '«Mi grupo» → «Incumplimientos».',
+           'acciones': [{'clic': 'Mi grupo'}, {'pausa': 500}, {'pestana': 'Incumplimientos'}], 'ms': 2800},
+          {'texto': 'En el incumplimiento, toque «Sancionar».', 'acciones': [{'clic_css': NC_C + ' button:has-text("Sancionar")'}], 'ms': 2600},
+          {'texto': 'Elija advertencia, suspensión o cancelación. La suspensión es del producto entero.', 'corto': 'Advertencia, suspensión o cancelación.',
+           'acciones': [{'clic_css': '.ai-radios label:has-text("Suspensión") input'}, {'pausa': 300}, {'ver': 'producto entero'}], 'ms': 3400},
+          {'texto': 'Revise el motivo y escriba su nombre.', 'acciones': [{'ver': 'Motivo'}, {'llenar': ['Su nombre', 'Calidad del grupo']}], 'ms': 3000},
+          {'texto': 'Toque «Registrar la sanción»: el socio pasa a suspendido.', 'corto': 'El socio pasa a suspendido.',
+           'acciones': [{'clic': 'Registrar la sanción'}, {'ver': 'Sanción registrada'}], 'ms': 3000},
+          {'texto': 'Anote el día en que avisó al organismo certificador.', 'corto': 'El día del aviso al certificador.',
+           'acciones': centrar('Falta anotar el aviso') + [{'clic_css': '.qms-socio:has-text("Falta anotar el aviso") button:has-text("Anotar el aviso")'},
+                        {'pausa': 500}, {'clic_css': '.qms-mini button.primary'}, {'ver': 'Aviso anotado'}], 'ms': 3600},
+          {'texto': 'La suspensión se levanta con «Levantar», cuando su incumplimiento esté cerrado.', 'corto': '«Levantar», con el incumplimiento cerrado.',
+           'acciones': centrar('Suspensión'), 'ms': 3200},
+      ],
+      nota='Las sanciones no se editan ni se borran (QMS 05.03 g). La cancelación pasa al socio a «excluido».',
+      cierre='Cada sanción, con su registro')
+
 flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', orden=86, solo_texto=True,
       titulo='Revisar un grupo como auditor externo',
       resumen='Con el permiso que le dio la directiva, el auditor ve el registro de socios y su historial, sin modificar nada.',
@@ -634,6 +681,7 @@ flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', 
           {'texto': 'Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo.'},
           {'texto': 'Use «Descargar registro» para llevarse el registro interno de miembros.'},
           {'texto': 'En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó.'},
+          {'texto': 'En «Incumplimientos» ve cada uno con su acción correctiva, su responsable, su plazo y su cierre, y las sanciones con el aviso al certificador.'},
       ],
       nota='Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.')
 

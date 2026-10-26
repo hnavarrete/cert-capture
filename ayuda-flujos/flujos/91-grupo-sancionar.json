@@ -1,0 +1,131 @@
+{
+ "id": "grupo-sancionar",
+ "orden": 91,
+ "actor": "grupo",
+ "actor_txt": "Directiva del grupo",
+ "url": "http://localhost:4173/?demo=1",
+ "probar": "https://cert.visiongeografica.com/?demo=1",
+ "musica_estilo": "eudr",
+ "titulo": "Sancionar a un socio y avisar al certificador",
+ "resumen": "Advertencia, suspensión o cancelación, con motivo y nombre. La suspensión se levanta cuando su incumplimiento está cerrado.",
+ "gancho": "¿Cómo se sanciona a un socio?",
+ "pasos": [
+  {
+   "texto": "Abra «Mi grupo» y toque «Incumplimientos».",
+   "corto": "«Mi grupo» → «Incumplimientos».",
+   "acciones": [
+    {
+     "clic": "Mi grupo"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "pestana": "Incumplimientos"
+    }
+   ],
+   "ms": 2800
+  },
+  {
+   "texto": "En el incumplimiento, toque «Sancionar».",
+   "acciones": [
+    {
+     "clic_css": ".qms-socio:has-text(\"Productora demo C\"):has-text(\"Abierta\") button:has-text(\"Sancionar\")"
+    }
+   ],
+   "ms": 2600
+  },
+  {
+   "texto": "Elija advertencia, suspensión o cancelación. La suspensión es del producto entero.",
+   "corto": "Advertencia, suspensión o cancelación.",
+   "acciones": [
+    {
+     "clic_css": ".ai-radios label:has-text(\"Suspensión\") input"
+    },
+    {
+     "pausa": 300
+    },
+    {
+     "ver": "producto entero"
+    }
+   ],
+   "ms": 3400
+  },
+  {
+   "texto": "Revise el motivo y escriba su nombre.",
+   "acciones": [
+    {
+     "ver": "Motivo"
+    },
+    {
+     "llenar": [
+      "Su nombre",
+      "Calidad del grupo"
+     ]
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Toque «Registrar la sanción»: el socio pasa a suspendido.",
+   "corto": "El socio pasa a suspendido.",
+   "acciones": [
+    {
+     "clic": "Registrar la sanción"
+    },
+    {
+     "ver": "Sanción registrada"
+    }
+   ],
+   "ms": 3000
+  },
+  {
+   "texto": "Anote el día en que avisó al organismo certificador.",
+   "corto": "El día del aviso al certificador.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Falta anotar el aviso\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Falta anotar el aviso"
+    },
+    {
+     "clic_css": ".qms-socio:has-text(\"Falta anotar el aviso\") button:has-text(\"Anotar el aviso\")"
+    },
+    {
+     "pausa": 500
+    },
+    {
+     "clic_css": ".qms-mini button.primary"
+    },
+    {
+     "ver": "Aviso anotado"
+    }
+   ],
+   "ms": 3600
+  },
+  {
+   "texto": "La suspensión se levanta con «Levantar», cuando su incumplimiento esté cerrado.",
+   "corto": "«Levantar», con el incumplimiento cerrado.",
+   "acciones": [
+    {
+     "js": "(() => { document.body.style.paddingBottom = '420px'; const t = \"Suspensi\\u00f3n\"; const e = [...document.querySelectorAll('body *')].find(x => x.offsetParent && [...x.childNodes].some(n => n.nodeType === 3 && n.textContent.includes(t))); if (e) e.scrollIntoView({ block: 'center' }); })()"
+    },
+    {
+     "pausa": 350
+    },
+    {
+     "ver": "Suspensión"
+    }
+   ],
+   "ms": 3200
+  }
+ ],
+ "nota": "Las sanciones no se editan ni se borran (QMS 05.03 g). La cancelación pasa al socio a «excluido».",
+ "cierre": "Cada sanción, con su registro",
+ "limpiar": true,
+ "cierre_sub": "cert.visiongeografica.com/ayuda"
+}

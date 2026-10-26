@@ -1,6 +1,6 @@
 {
  "generado_por": "kit_video.py",
- "generado": "2026-10-25T02:13:42",
+ "generado": "2026-10-25T23:12:54",
  "flujos": [
   {
    "id": "cuenta-entrar",
@@ -508,7 +508,8 @@
     "Revise el registro de socios: estado, productos, áreas, certificador y fecha de la última auditoría interna.",
     "Toque «Historial» en un socio para ver sus cambios de estado con fecha, motivo y quién los hizo.",
     "Use «Descargar registro» para llevarse el registro interno de miembros.",
-    "En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó."
+    "En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó.",
+    "En «Incumplimientos» ve cada uno con su acción correctiva, su responsable, su plazo y su cierre, y las sanciones con el aviso al certificador."
    ],
    "nota": "Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.",
    "video": null,
@@ -580,6 +581,49 @@
    "video": "https://vg-cert-videos.pages.dev/grupo-decidir-auditoria.mp4",
    "portada": "https://vg-cert-videos.pages.dev/grupo-decidir-auditoria.jpg",
    "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-decidir-auditoria-redes.mp4"
+  },
+  {
+   "id": "grupo-incumplimiento-seguimiento",
+   "actor": "grupo",
+   "orden": 90,
+   "titulo": "Dar seguimiento a un incumplimiento hasta cerrarlo",
+   "resumen": "Cada «no cumple» de una auditoría interna llega solo. Se anota la acción correctiva, el responsable y el plazo, y se cierra con la evidencia.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 47,
+   "pasos": [
+    "Abra «Mi grupo» y toque la pestaña «Incumplimientos».",
+    "Cada «no cumple» de una auditoría interna aparece aquí solo, con su plazo.",
+    "Toque «Acción y responsable»: qué se hará y quién responde.",
+    "Toque «Guardar».",
+    "Cuando esté corregido, toque «Cerrar» y escriba la evidencia y su nombre.",
+    "Toque «Cerrar el incumplimiento»: queda con su fecha y ya no cambia."
+   ],
+   "nota": "También se registran a mano los incumplimientos del organismo certificador, de un reclamo o del QMS, con «Registrar incumplimiento» (QMS 05.03 a).",
+   "video": "https://vg-cert-videos.pages.dev/grupo-incumplimiento-seguimiento.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-incumplimiento-seguimiento.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-incumplimiento-seguimiento-redes.mp4"
+  },
+  {
+   "id": "grupo-sancionar",
+   "actor": "grupo",
+   "orden": 91,
+   "titulo": "Sancionar a un socio y avisar al certificador",
+   "resumen": "Advertencia, suspensión o cancelación, con motivo y nombre. La suspensión se levanta cuando su incumplimiento está cerrado.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 46,
+   "pasos": [
+    "Abra «Mi grupo» y toque «Incumplimientos».",
+    "En el incumplimiento, toque «Sancionar».",
+    "Elija advertencia, suspensión o cancelación. La suspensión es del producto entero.",
+    "Revise el motivo y escriba su nombre.",
+    "Toque «Registrar la sanción»: el socio pasa a suspendido.",
+    "Anote el día en que avisó al organismo certificador.",
+    "La suspensión se levanta con «Levantar», cuando su incumplimiento esté cerrado."
+   ],
+   "nota": "Las sanciones no se editan ni se borran (QMS 05.03 g). La cancelación pasa al socio a «excluido».",
+   "video": "https://vg-cert-videos.pages.dev/grupo-sancionar.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-sancionar.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-sancionar-redes.mp4"
   }
  ]
 }

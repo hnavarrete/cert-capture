@@ -417,7 +417,8 @@ button.link.demo-link:hover { color: var(--blue-dk); }
 .ai-radios { display: flex; flex-direction: column; gap: 6px; }
 .ai-radios label { color: var(--ink) !important; font-size: 14px !important; justify-content: flex-start; }
 /* el estilo general de input (ancho completo) estiraba el círculo y empujaba el texto a la derecha */
-.ai-radios input[type=radio] { width: auto; flex: none; margin: 0; }
+.ai-radios input[type=radio], .qms-check input[type=checkbox], .qms-check input[type=radio] { width: auto; flex: none; margin: 0; }
+.qms-check { justify-content: flex-start; }
 .ai-senal { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 999px; align-self: flex-start; }
 .ai-senal.on { background: var(--ok-bg); color: var(--ok-ink); }
 .ai-senal.off { background: var(--warn-bg); color: var(--warn-ink); }
