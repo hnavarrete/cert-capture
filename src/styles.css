@@ -465,3 +465,10 @@ button.link.demo-link:hover { color: var(--blue-dk); }
   body.ai-imprimiendo .ai-informe .ai-decidir, body.ai-imprimiendo .ai-informe button { display: none !important; }
   body.ai-imprimiendo .ai-todos > *:not(summary) { display: block !important; }
 }
+/* Evidencias de la IFA (QMS parte 3c) */
+.ev-sello { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+.ev-detalle { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.ev-detalle .chips { margin: 0; }
+.ev-puntos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ev-puntos li { border-top: 1px solid var(--line); padding-top: 6px; display: flex; flex-direction: column; gap: 2px; }
+.ev-puntos .ai-punto-cab { justify-content: flex-start; gap: 6px; flex-wrap: wrap; }

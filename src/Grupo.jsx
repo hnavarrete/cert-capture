@@ -8,7 +8,10 @@ import { Icono } from './eudr-react/CertForm.jsx'
 import { CronogramaGrupo } from './AuditoriaInterna.jsx'
 import { Incumplimientos } from './Incumplimientos.jsx'
 import { ReclamosRetiro } from './ReclamosRetiro.jsx'
+import { EvidenciasIfa } from './EvidenciasIfa.jsx'
 import { PUNTOS, calcular, faltantes, pidePlazo } from './qms-auditoria.js'
+import bundle from './schemas.bundle.json'
+const bundleGap = bundle.schemas.filter(s => s.certificacion === 'GLOBAL_GAP')
 
 const ESTADOS = {
   aspirante: { label: 'Aspirante', cls: 'warn' },
@@ -77,7 +80,14 @@ function apiServidor() {
     retiroGuardar: (p) => rpc('cert_qms_retiro_guardar', { p }),
     retiroCerrar: (id, nombre) => rpc('cert_qms_retiro_cerrar', { p_id: id, p_nombre: nombre }),
     balances: (slug) => rpc('cert_qms_balances', { p_slug: slug }),
-    balanceRegistrar: (p) => rpc('cert_qms_balance_registrar', { p })
+    balanceRegistrar: (p) => rpc('cert_qms_balance_registrar', { p }),
+    // parte 3c: evidencias de la IFA en solo lectura (migración 20261026020000)
+    evidenciasIfa: (slug) => rpc('cert_qms_evidencias_ifa', { p_slug: slug }),
+    evidenciaUrl: async (f) => {
+      const { data, error } = await supabase.storage.from(f.bucket || 'cert-evidencias').createSignedUrl(f.path, 3600)
+      if (error || !data?.signedUrl) throw new Error('No se pudo abrir el documento')
+      return data.signedUrl
+    }
   }
 }
 /** La misma API para la pantalla del auditor interno (Mis auditorías), fuera de «Mi grupo». */
@@ -403,8 +413,24 @@ function apiDemo() {
     balanceRegistrar: (p) => {
       if (!p.desde || !p.hasta || p.hasta < p.desde || p.hasta > hoy()) return Promise.reject(new Error('el balance necesita un periodo válido que ya terminó'))
       DEMO.balances.unshift({ ...p, id: 'demo-bal-' + Date.now(), hecho_en: new Date().toISOString() }); return pausa('ok')
-    }
+    },
+    // parte 3c: respuestas SINTÉTICAS de la IFA Smart para dos fincas demo (nunca de clientes)
+    evidenciasIfa: () => pausa(evidenciasDemo()),
+    evidenciaUrl: () => pausa(URL.createObjectURL(new Blob(['Documento de ejemplo (demo): registro de capacitaciones firmado.'], { type: 'text/plain' })))
   }
+}
+
+function evidenciasDemo() {
+  const form = bundleGap.find(s => s.form_key === 'globalgap_fv_smart')
+  const pts = form.secciones.flatMap(sec => sec.campos.filter(c => c.tipo === 'control_point').map(c => `${sec.key}.${c.key}`))
+  const fila = (finca, i, dias, nc) => {
+    const data = {}; pts.forEach((k, j) => { data[k + '.estado'] = j < nc ? 'no_cumple' : j === pts.length - 1 ? 'na' : 'cumple' })
+    return { id: 'demo-ev-' + i, local_id: 'demo-ev-' + i, form_key: 'globalgap_fv_smart', producer_id: null, finca_id: finca, lote_id: null, data,
+      fotos: [{ field: pts[0] + '__evidencia', path: 'demo/' + i + '/registro.pdf', bucket: 'cert-evidencias', name: 'Registro de capacitaciones (demo)' }],
+      estado: 'completado', created_at: new Date(Date.now() - dias * 864e5).toISOString(), audit_chain_seq: i,
+      audit_hash: 'demo' + String(i).repeat(28).slice(0, 28), audit_timestamp_seal: null }
+  }
+  return [fila('Finca demo 1', 1, 30, 0), fila('Finca demo 3', 2, 5, 2), fila('Finca demo 3', 3, 40, 4)]
 }
 
 // Mensajes del servidor → texto para la persona (sin códigos).
@@ -416,7 +442,7 @@ export function mensaje(e) {
   if (/qms_auditores_vence_max_un_anio|un año como máximo/i.test(t)) return 'El permiso de un auditor vence en un año como máximo.'
   if (/qms_miembros_identificacion_check/i.test(t)) return 'La cédula debe tener 10 dígitos, o 13 si es RUC.'
   if (/ggn_check/i.test(t)) return 'El GGN tiene 13 dígitos.'
-  if (/sin acceso|solo la directiva|sin permiso|el cronograma lo ven|los incumplimientos los ven|las sanciones las ven|los reclamos los ven|los retiros los ven|los balances los ven/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
+  if (/sin acceso|solo la directiva|sin permiso|el cronograma lo ven|los incumplimientos los ven|las sanciones las ven|los reclamos los ven|los retiros los ven|los balances los ven|las evidencias de la IFA las ven/i.test(t)) return 'Su rol no permite esta acción en el grupo.'
   if (/Failed to fetch|NetworkError/i.test(t)) return 'Sin conexión: «Mi grupo» necesita señal para guardar. La auditoría en la finca, en cambio, se hace sin señal.'
   return t || 'No se pudo completar.'
 }
@@ -505,6 +531,7 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false,
             <button role="tab" aria-selected={tab === 'auditorias'} className={'chip ' + (tab === 'auditorias' ? 'sel' : '')} onClick={() => setTab('auditorias')}><Icono n="fact_check" className="ic" />Auditorías internas</button>
             <button role="tab" aria-selected={tab === 'incumplimientos'} className={'chip ' + (tab === 'incumplimientos' ? 'sel' : '')} onClick={() => setTab('incumplimientos')}><Icono n="report" className="ic" />Incumplimientos</button>
             <button role="tab" aria-selected={tab === 'reclamos'} className={'chip ' + (tab === 'reclamos' ? 'sel' : '')} onClick={() => setTab('reclamos')}><Icono n="inventory_2" className="ic" />Reclamos y retiro</button>
+            <button role="tab" aria-selected={tab === 'evidencias'} className={'chip ' + (tab === 'evidencias' ? 'sel' : '')} onClick={() => setTab('evidencias')}><Icono n="folder_open" className="ic" />Evidencias IFA</button>
             {gestiona ? <button role="tab" aria-selected={tab === 'auditores'} className={'chip ' + (tab === 'auditores' ? 'sel' : '')} onClick={() => setTab('auditores')}><Icono n="verified" className="ic" />Auditores</button> : null}
           </div>
 
@@ -551,6 +578,8 @@ export default function Grupo({ demo = false, onClose, pantallaCompleta = false,
                 </ul>
               )}
             </>
+          ) : tab === 'evidencias' ? (
+            <EvidenciasIfa slug={slug} api={api} />
           ) : tab === 'reclamos' ? (
             <ReclamosRetiro slug={slug} gestiona={gestiona} api={api} socios={socios || []} onOk={ok} />
           ) : tab === 'incumplimientos' ? (

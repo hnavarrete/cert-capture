@@ -737,6 +737,24 @@ flujo(id='grupo-balance-masas', orden=94, **G,
       nota='Registrado, el balance ya no se edita: si algo cambió, se registra otro (QMS 06 b, k).',
       cierre='Lo certificado, siempre cuadrado')
 
+flujo(id='grupo-evidencias-ifa', orden=95, **G,
+      titulo='Revisar las evidencias de la IFA de cada finca',
+      resumen='Lo que cada finca respondió de la IFA de GlobalG.A.P., punto por punto y con sus documentos, en solo lectura. El auditor externo autorizado ve lo mismo.',
+      gancho='¿Qué respondió cada finca?',
+      pasos=[
+          {'texto': 'Abra «Mi grupo» y toque la pestaña «Evidencias IFA».', 'corto': '«Mi grupo» → «Evidencias IFA».',
+           'acciones': [{'clic': 'Mi grupo'}, {'pausa': 500}, {'pestana': 'Evidencias IFA'}], 'ms': 3000},
+          {'texto': 'Cada finca muestra su última respuesta: cuántos puntos cumplen, no cumplen o no aplican, y sus documentos.',
+           'corto': 'Cumple, no cumple, no aplica y documentos.', 'acciones': [{'ver': 'Finca demo 3'}], 'ms': 3800},
+          {'texto': 'Toque «Ver punto por punto».', 'acciones': [{'clic_css': '.qms-socio:has-text("Finca demo 3") button:has-text("Ver punto por punto")'}], 'ms': 2800},
+          {'texto': 'Filtre «No cumple» para ver solo lo que hay que corregir.', 'corto': 'Solo lo que no cumple.',
+           'acciones': [{'clic_css': '.ev-detalle .chips button:has-text("No cumple")'}, {'pausa': 300}, {'ver': 'FV-Smart 03.02'}], 'ms': 3200},
+          {'texto': 'Con «Con documento», abra cada evidencia que se subió.', 'corto': 'Abra cada documento subido.',
+           'acciones': [{'clic_css': '.ev-detalle .chips button:has-text("Con documento")'}, {'pausa': 300}, {'ver': 'Registro de capacitaciones'}, {'pausa': 600}], 'ms': 4200},
+      ],
+      nota='Nadie edita una respuesta guardada: cada cambio queda como una versión nueva, sellada. Solo se muestran las respuestas de GlobalG.A.P.; las de otras normas del grupo no.',
+      cierre='Las evidencias, a la vista del auditor')
+
 flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', orden=86, solo_texto=True,
       titulo='Revisar un grupo como auditor externo',
       resumen='Con el permiso que le dio la directiva, el auditor ve el registro de socios y su historial, sin modificar nada.',
@@ -750,6 +768,7 @@ flujo(id='auditor-revisar-grupo', actor='auditor', actor_txt='Auditor externo', 
           {'texto': 'En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó.'},
           {'texto': 'En «Incumplimientos» ve cada uno con su acción correctiva, su responsable, su plazo y su cierre, y las sanciones con el aviso al certificador.'},
           {'texto': 'En «Reclamos y retiro» ve los reclamos con su investigación, los simulacros y retiros con su conciliación, y el balance de masas de cada producto.'},
+          {'texto': 'En «Evidencias IFA» ve lo que cada finca respondió de la IFA, punto por punto, y abre sus documentos. Solo ve lo de GlobalG.A.P.'},
       ],
       nota='Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.')
 

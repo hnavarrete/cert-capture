@@ -1,6 +1,6 @@
 {
  "generado_por": "kit_video.py",
- "generado": "2026-10-25T23:32:43",
+ "generado": "2026-10-25T23:48:56",
  "flujos": [
   {
    "id": "cuenta-entrar",
@@ -510,7 +510,8 @@
     "Use «Descargar registro» para llevarse el registro interno de miembros.",
     "En la pestaña «Auditorías internas» ve el cronograma y abre cada informe, con su cálculo, sus incumplimientos, las firmas y quién lo aprobó.",
     "En «Incumplimientos» ve cada uno con su acción correctiva, su responsable, su plazo y su cierre, y las sanciones con el aviso al certificador.",
-    "En «Reclamos y retiro» ve los reclamos con su investigación, los simulacros y retiros con su conciliación, y el balance de masas de cada producto."
+    "En «Reclamos y retiro» ve los reclamos con su investigación, los simulacros y retiros con su conciliación, y el balance de masas de cada producto.",
+    "En «Evidencias IFA» ve lo que cada finca respondió de la IFA, punto por punto, y abre sus documentos. Solo ve lo de GlobalG.A.P."
    ],
    "nota": "Este flujo necesita una cuenta real de auditor autorizada por un grupo: el video está en preparación.",
    "video": null,
@@ -686,6 +687,26 @@
    "video": "https://vg-cert-videos.pages.dev/grupo-balance-masas.mp4",
    "portada": "https://vg-cert-videos.pages.dev/grupo-balance-masas.jpg",
    "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-balance-masas-redes.mp4"
+  },
+  {
+   "id": "grupo-evidencias-ifa",
+   "actor": "grupo",
+   "orden": 95,
+   "titulo": "Revisar las evidencias de la IFA de cada finca",
+   "resumen": "Lo que cada finca respondió de la IFA de GlobalG.A.P., punto por punto y con sus documentos, en solo lectura. El auditor externo autorizado ve lo mismo.",
+   "probar": "https://cert.visiongeografica.com/?demo=1",
+   "segundos": 35,
+   "pasos": [
+    "Abra «Mi grupo» y toque la pestaña «Evidencias IFA».",
+    "Cada finca muestra su última respuesta: cuántos puntos cumplen, no cumplen o no aplican, y sus documentos.",
+    "Toque «Ver punto por punto».",
+    "Filtre «No cumple» para ver solo lo que hay que corregir.",
+    "Con «Con documento», abra cada evidencia que se subió."
+   ],
+   "nota": "Nadie edita una respuesta guardada: cada cambio queda como una versión nueva, sellada. Solo se muestran las respuestas de GlobalG.A.P.; las de otras normas del grupo no.",
+   "video": "https://vg-cert-videos.pages.dev/grupo-evidencias-ifa.mp4",
+   "portada": "https://vg-cert-videos.pages.dev/grupo-evidencias-ifa.jpg",
+   "video_redes": "https://vg-cert-videos.pages.dev/redes/grupo-evidencias-ifa-redes.mp4"
   }
  ]
 }
