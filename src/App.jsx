@@ -314,7 +314,7 @@ function MiPerfilGate({ email, onListo, onOmitir, inicial = null, avisoInicial =
           <option value="Productor" /><option value="Técnico de campo" /><option value="Gerente de finca" />
           <option value="Responsable de certificaciones" /><option value="Supervisor" />
         </datalist>
-        <label>Teléfono (opcional)<input value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="+593…" /></label>
+        <label>Teléfono (opcional)<input value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="+593… (o el código de su país)" /></label>
         <label className="check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
           <span>Autorizo a VG a guardar mis datos para gestionar mis certificaciones. Mis datos son míos; yo decido con quién los comparto.</span></label>
         {msg ? <div className="err">{msg}</div> : null}
