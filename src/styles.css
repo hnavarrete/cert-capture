@@ -186,7 +186,7 @@ button.link.demo-link:hover { color: var(--blue-dk); }
 .vg-cp-nivel { color: #fff; background: var(--muted); font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 6px; text-transform: uppercase; }
 .vg-cp-oficial { margin: 6px 0; }
 .vg-cp-oficial summary { font-size: 11.5px; color: var(--blue-dk); cursor: pointer; font-weight: 600; }
-.vg-cp-texto { font-size: 12px; color: var(--muted); margin: 8px 0; line-height: 1.5; }
+.vg-cp-texto { font-size: 12px; color: var(--muted); margin: 8px 0; line-height: 1.5; overflow-wrap: anywhere; }
 .vg-cp-verifica { margin: 6px 0 2px; }
 .vg-cp-verifica summary { font-size: 11.5px; color: var(--blue-dk); cursor: pointer; font-weight: 600; }
 .vg-cp-checklist { margin: 8px 0 6px; padding-left: 18px; }
@@ -472,3 +472,26 @@ button.link.demo-link:hover { color: var(--blue-dk); }
 .ev-puntos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .ev-puntos li { border-top: 1px solid var(--line); padding-top: 6px; display: flex; flex-direction: column; gap: 2px; }
 .ev-puntos .ai-punto-cab { justify-content: flex-start; gap: 6px; flex-wrap: wrap; }
+
+/* ---- Precios Mínimos y Primas Fairtrade (6-nov-2026): lista en fichas, legible a 360 px ---- */
+.ft-precios .ft-fecha { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; max-width: 220px; margin-bottom: 8px; }
+.ft-precios .ft-nota { margin: 4px 0 10px; }
+.ft-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ft-fila { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--card); }
+.ft-fila.no-calculo { background: var(--surface-alt); border-style: dashed; }
+.ft-que { font-weight: 600; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.ft-cifras { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.ft-cifras span { display: flex; flex-direction: column; font-size: 14px; font-weight: 700; color: var(--navy); overflow-wrap: anywhere; }
+.ft-cifras small { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.ft-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); align-items: center; }
+.ft-meta a { color: var(--blue-dk); overflow-wrap: anywhere; }
+.ft-certeza { border-radius: 999px; padding: 2px 8px; font-weight: 700; font-size: 11px; }
+.ft-certeza.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.ft-certeza.warn { background: var(--warn-bg); color: var(--warn-ink); }
+.ft-certeza.err { background: var(--err-bg); color: var(--err-ink); }
+.ft-notas { margin-top: 6px; font-size: 12px; }
+.ft-proximos { margin-top: 12px; }
+.ft-proximos summary { cursor: pointer; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.ft-fuente { margin-top: 12px; }
+.ft-fuente a { color: var(--blue-dk); }
+@media (max-width: 420px) { .ft-cifras { grid-template-columns: 1fr; } }

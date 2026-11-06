@@ -52,6 +52,9 @@ export default defineConfig({
         // hasta la próxima versión del SW). Los videos viven en otro origen (vg-cert-videos.pages.dev) y el SW
         // no tiene runtimeCaching: no los intercepta.
         globIgnores: ['**/ayuda/ayuda.json', '**/node_modules/**'],
+        // 6-nov-2026: con los 8 formularios Fairtrade el bundle principal pasa de 1,99 a 2,43 MB y el tope por omisión
+        // de Workbox (2 MiB) lo dejaba FUERA del precache: la app no habría arrancado sin red (R3). Se sube a 4 MiB.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
         // /ayuda/ es su propia página: el SW nunca debe contestarla con el index.html de la app.
