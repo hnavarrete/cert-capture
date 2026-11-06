@@ -13,6 +13,7 @@ import { adoptShellSessionIfEmbedded, estamosEmbebidos, consumeHandoffIfPresent 
 const EMBEBIDO = estamosEmbebidos()
 import bundle from './schemas.bundle.json'
 import RoadmapCert from './RoadmapCert.jsx'
+import PreciosFairtrade from './PreciosFairtrade.jsx'
 import Boveda from './Boveda.jsx'
 import Grupo, { apiQms } from './Grupo.jsx'
 import { MisAuditorias } from './AuditoriaInterna.jsx'
@@ -34,7 +35,7 @@ const CERT_LABEL = Object.assign(
 const CERT_ICON = {
   GENERAL: 'assignment', EUDR: 'shield', FSC: 'forest', FSC_FM: 'forest', FSC_CoC: 'link', RFA: 'eco',
   PEFC: 'park', PEFC_FM: 'park', PEFC_CoC: 'link', RSPO: 'nature', ISCC: 'nature', CARBONO: 'co2',
-  USDA_ORGANIC: 'compost', GLOBAL_GAP: 'verified', MARBETE_AGROCALIDAD: 'sell', COMPARTIDO: 'hub'
+  USDA_ORGANIC: 'compost', GLOBAL_GAP: 'verified', MARBETE_AGROCALIDAD: 'sell', COMPARTIDO: 'hub', FAIRTRADE: 'handshake'
 }
 
 /* Estado VIGENTE de cada formulario en el contexto elegido: el mismo pliegue de versiones que usa el
@@ -827,6 +828,9 @@ export default function App() {
           </div>
         </div>
       ) : (
+        <>
+        {/* Fairtrade: los Precios Mínimos y Primas son DATOS con fecha y fuente, fuera de los formularios (6-nov-2026) */}
+        {certSel === 'FAIRTRADE' ? <PreciosFairtrade referencia={(bundle.referencias || {}).fairtrade_precios} conSesion={!!user} /> : null}
         <RoadmapCert
           cert={CERT_LABEL[certSel] || certSel}
           ruta={(bundle.rutas || {})[certSel]}
@@ -834,6 +838,7 @@ export default function App() {
           estadoPorForm={estadoPorForm}
           onPick={(fk) => { setFormKey(fk); window.scrollTo(0, 0) }}
         />
+        </>
       )}
 
       <footer className="foot muted">

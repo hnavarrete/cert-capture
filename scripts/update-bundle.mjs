@@ -17,11 +17,15 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const BUNDLE = path.join(__dirname, '..', 'src', 'schemas.bundle.json')
-const SRC = '../../encuestador-eudr/frontend/src/form-schemas'
+// CERT_SCHEMAS_SRC permite leer la fuente desde otra copia (por ejemplo, el worktree de una rama) sin tocar el repo hermano.
+const SRC_DIR = process.env.CERT_SCHEMAS_SRC
+  ? path.resolve(process.env.CERT_SCHEMAS_SRC)
+  : path.resolve(__dirname, '../../encuestador-eudr/frontend/src/form-schemas')
+const SRC = pathToFileURL(SRC_DIR).href
 
 const { SCHEMA_BY_KEY, ALL_SCHEMAS, CERTIFICACIONES, CERT_USA_CORE } = await import(`${SRC}/_index.js`)
 const { roadmap } = await import(`${SRC}/_roadmap.js`)
@@ -73,7 +77,10 @@ const NUEVOS = [
   'globalgap_fv_gfs', 'globalgap_qms', 'globalgap_fv_smart', 'globalgap_coc',
   'legacy_fertilizacion', 'legacy_fumigacion', 'legacy_nominas', 'legacy_cosecha', 'legacy_siembra',
   'legacy_recoleccion_envase', 'legacy_eudr_finca', 'legacy_eudr_check', 'legacy_clmrs',
-  'guia_agrocalidad_registro_operador'
+  'guia_agrocalidad_registro_operador',
+  // 6-nov-2026: Fairtrade (SPO, HL, Prima y criterios de cacao, café, banano y flores)
+  'fairtrade_spo_organizacion', 'fairtrade_spo_miembro', 'fairtrade_hl_empresa', 'fairtrade_prima_plan',
+  'fairtrade_producto_cacao', 'fairtrade_producto_cafe', 'fairtrade_producto_banano', 'fairtrade_producto_flores'
 ]
 // Reestructuración GLOBAL_GAP: dropear TODOS los globalgap_* del bundle para re-agregarlos frescos
 // desde la fuente (así entran los cambios: nuevos puntos, verifica[]/evidencia del Modo Auditoría).
@@ -134,10 +141,11 @@ const TITULOS_GRUPO = {
   CARBONO: 'Carbono — Proyecto ARR (MRV sobre FSC)',
   GLOBAL_GAP: 'GLOBAL G.A.P. (IFA Fruta y Verdura + QMS + Cadena de Custodia)',
   REGISTROS_CAMPO: 'Registros de campo (EUDR/PV operativo) — portado del legacy Vue/PHP',
-  GUIA_AGROCALIDAD: 'Sistema GUIA — Agrocalidad / AgroServicios (registro de operador EUDR)'
+  GUIA_AGROCALIDAD: 'Sistema GUIA — Agrocalidad / AgroServicios (registro de operador EUDR)',
+  FAIRTRADE: 'Fairtrade (pequeños productores y trabajo contratado)'
 }
-const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'], CARBONO: ['CARBONO'], GLOBAL_GAP: ['GLOBAL_GAP'], REGISTROS_CAMPO: [], GUIA_AGROCALIDAD: [] }
-for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO', 'GLOBAL_GAP', 'REGISTROS_CAMPO', 'GUIA_AGROCALIDAD']) {
+const CORE_KEYS_GRUPO = { PEFC: ['PEFC_FM', 'PEFC_CoC'], RSPO: ['RSPO'], ISCC: ['ISCC'], CARBONO: ['CARBONO'], GLOBAL_GAP: ['GLOBAL_GAP'], REGISTROS_CAMPO: [], GUIA_AGROCALIDAD: [], FAIRTRADE: ['FAIRTRADE'] }
+for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO', 'GLOBAL_GAP', 'REGISTROS_CAMPO', 'GUIA_AGROCALIDAD', 'FAIRTRADE']) {
   const schemas = ALL_SCHEMAS.filter(s => grupoDe(s.certificacion) === grupo)
   if (!schemas.length) continue
   const compartidos = [...new Set((CORE_KEYS_GRUPO[grupo] || []).flatMap(k => CERT_USA_CORE[k] || []))]
@@ -152,17 +160,23 @@ for (const grupo of ['PEFC', 'RSPO', 'ISCC', 'CARBONO', 'GLOBAL_GAP', 'REGISTROS
     if (!bundle.reuso_compartidos[sk].includes(grupo)) bundle.reuso_compartidos[sk].push(grupo)
   }
 }
-for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC', 'CARBONO', 'REGISTROS_CAMPO', 'GUIA_AGROCALIDAD']) {
+for (const key of ['PEFC_FM', 'PEFC_CoC', 'RSPO', 'ISCC', 'CARBONO', 'REGISTROS_CAMPO', 'GUIA_AGROCALIDAD', 'FAIRTRADE']) {
   const cd = CERTIFICACIONES.find(c => c.key === key)
   if (cd && !bundle.certificaciones.some(c => c.key === key)) bundle.certificaciones.push(cd)
 }
 
 // ── 3. rutas precomputadas (solo certs oficiales públicas) ─────────────────
-const CERTS_RUTA = ['GENERAL', 'EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'CARBONO', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD', 'REGISTROS_CAMPO', 'GUIA_AGROCALIDAD']
+const CERTS_RUTA = ['GENERAL', 'EUDR', 'FSC', 'PEFC', 'RSPO', 'ISCC', 'CARBONO', 'RFA', 'USDA_ORGANIC', 'GLOBAL_GAP', 'MARBETE_AGROCALIDAD', 'REGISTROS_CAMPO', 'GUIA_AGROCALIDAD', 'FAIRTRADE']
 bundle.rutas = {}
 for (const cert of CERTS_RUTA) {
   try { bundle.rutas[cert] = roadmap(cert) } catch (e) { console.warn('· ruta falló para', cert, e.message) }
 }
+
+// ── 3 b. Datos de referencia que NO van dentro de un formulario (6-nov-2026) ────
+// Precios Mínimos y Primas Fairtrade: datos con vigencia, fuente y certeza. Una sola fuente
+// (form-schemas/fairtrade/precios_minimos_primas.json) con dos salidas: este bundle y attest.precio_referencia.
+bundle.referencias = bundle.referencias || {}
+bundle.referencias.fairtrade_precios = JSON.parse(fs.readFileSync(path.join(SRC_DIR, 'fairtrade', 'precios_minimos_primas.json'), 'utf8'))
 
 // ── 4. totales aditivos ────────────────────────────────────────────────────
 bundle.totales = {
