@@ -310,6 +310,10 @@ begin
 end $r$;
 
 -- 5. La fila «fairtrade» vuelve a como la dejó el alta del 26-jul (solo si la cambió esta migración).
+-- El disparador trg_certifications_updated pondría updated_at en «ahora»; se apaga solo durante este update para que
+-- la fila quede idéntica a la de antes (medido en producción el 6-nov-2026: sin esto, la huella de la reversa difería
+-- únicamente en updated_at).
+alter table attest.certifications disable trigger trg_certifications_updated;
 update attest.certifications
    set name = 'Fairtrade International - Estandar SPO',
        version = 'SPO v2.x (2019, NEW JAN 2027) / checklist FLOCERT 7.44',
@@ -317,6 +321,7 @@ update attest.certifications
        updated_at = '2026-07-26T13:08:18.861452+00:00'
  where code = 'fairtrade'
    and version = 'SPO 03.04.2019_v2.10 / HL 16.04.2024_v2.4 (vigentes al 6-nov-2026) / checklist FLOCERT 7.44';
+alter table attest.certifications enable trigger trg_certifications_updated;
 
 -- 4. Los 8 formularios salen del catálogo.
 delete from compliance.cert_form_defs
