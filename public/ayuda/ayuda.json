@@ -1,7 +1,7 @@
 {
  "producto": "VG Certificaciones™",
  "version": 1,
- "actualizado": "viernes 6 de noviembre de 2026, 11:21",
+ "actualizado": "viernes 6 de noviembre de 2026, 12:29",
  "generado_por": "kit_video.py (vg-agriops/docs/ayuda-video)",
  "base": "",
  "actores": [
@@ -57,14 +57,14 @@
     "Entre con su cuenta de Google en un toque.",
     "O escriba su correo y contraseña y toque «Entrar».",
     "Sin contraseña: pida un enlace de acceso y ábralo desde su correo.",
-    "Abajo están el modo demostración y esta ayuda en video."
+    "Abajo están el modo demostración y el botón «Ayuda», con estos videos."
    ],
    "probar": "https://cert.visiongeografica.com/",
-   "segundos": 26,
+   "segundos": 27,
    "nota": "Si su cuenta tiene segundo factor, después de la contraseña se pide el código de 6 dígitos (vea «Entrar con segundo factor»).",
-   "video": "https://cert-videos.visiongeografica.com/cuenta-entrar.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/cuenta-entrar.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/cuenta-entrar-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/cuenta-entrar.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/cuenta-entrar.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/cuenta-entrar-redes.mp4?v=202611061233"
   },
   {
    "id": "cuenta-demo",
@@ -81,9 +81,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 24,
    "nota": "Para guardar de verdad en el servidor hay que entrar con una cuenta de VG que tenga acceso a la finca.",
-   "video": "https://cert-videos.visiongeografica.com/cuenta-demo.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/cuenta-demo.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/cuenta-demo-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/cuenta-demo.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/cuenta-demo.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/cuenta-demo-redes.mp4?v=202611061233"
   },
   {
    "id": "cuenta-segundo-factor",
@@ -174,11 +174,11 @@
     "Todo lo que capture desde ahora queda asociado a ese contexto."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 22,
+   "segundos": 23,
    "nota": "Con una cuenta real, la finca se elige de la lista «tus fincas»: son las mismas del visor y del ERP.",
-   "video": "https://cert-videos.visiongeografica.com/productor-contexto.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-contexto.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-contexto-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-contexto.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-contexto.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-contexto-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-hoja-ruta",
@@ -194,11 +194,11 @@
     "Abajo, el tiempo estimado que falta para completar la norma."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 33,
+   "segundos": 34,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-hoja-ruta.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-hoja-ruta.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-hoja-ruta-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-hoja-ruta.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-hoja-ruta.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-hoja-ruta-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-nucleo",
@@ -214,11 +214,11 @@
     "«Ventaja inicial»: lo que ya capturó del núcleo cuenta aquí sin volver a llenarlo."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 33,
+   "segundos": 34,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-nucleo.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-nucleo.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-nucleo-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-nucleo.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-nucleo.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-nucleo-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-llenar",
@@ -235,11 +235,11 @@
     "Para volver a la hoja de ruta, toque otra vez la norma."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 39,
+   "segundos": 40,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-llenar.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-llenar.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-llenar-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-llenar.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-llenar.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-llenar-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-punto-control",
@@ -257,9 +257,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 33,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-punto-control.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-punto-control.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-punto-control-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-punto-control.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-punto-control.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-punto-control-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-adjuntar-documento",
@@ -275,11 +275,11 @@
     "Toque «Guardar (offline)»: la evidencia queda junto a su respuesta."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 31,
+   "segundos": 32,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-adjuntar-documento.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-adjuntar-documento.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-adjuntar-documento-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-adjuntar-documento.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-adjuntar-documento.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-adjuntar-documento-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-retomar",
@@ -298,9 +298,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 45,
    "nota": "En el mismo equipo se retoma siempre, aun sin señal. Con su cuenta y su finca elegida, también desde otro teléfono o computadora: al abrir el formulario, la app trae lo que ya está respaldado en el servidor, con sus evidencias. Lo que quedó solo en el otro equipo, sin respaldar, no se puede traer: revise antes la barra de respaldo.",
-   "video": "https://cert-videos.visiongeografica.com/productor-retomar.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-retomar.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-retomar-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-retomar.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-retomar.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-retomar-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-foto",
@@ -318,9 +318,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 34,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-foto.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-foto.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-foto-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-foto.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-foto.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-foto-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-poligono",
@@ -337,9 +337,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 28,
    "nota": "En la demostración se usa un polígono de ejemplo. Dentro de VG Suite, el botón abre el mapa del visor con el polígono real de la finca.",
-   "video": "https://cert-videos.visiongeografica.com/productor-poligono.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-poligono.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-poligono-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-poligono.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-poligono.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-poligono-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-avance",
@@ -357,9 +357,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 32,
    "nota": "La marca «Listo para la auditoría» aparece cuando todas las obligaciones mayores cumplen y al menos el 95 % de las menores. Un formulario vacío nunca aparece como listo.",
-   "video": "https://cert-videos.visiongeografica.com/productor-avance.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-avance.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-avance-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-avance.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-avance.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-avance-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-sin-senal",
@@ -375,11 +375,11 @@
     "Lo pendiente no se pierde: se sube solo al volver la señal."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 35,
+   "segundos": 36,
    "nota": "En la demostración nada se sube al servidor. Con una cuenta real, al volver la señal la app sube lo pendiente sola, y en la barra de respaldo y en Mi bóveda queda el botón «Respaldar ahora».",
-   "video": "https://cert-videos.visiongeografica.com/productor-sin-senal.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-sin-senal.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-sin-senal-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-sin-senal.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-sin-senal.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-sin-senal-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-respaldo",
@@ -397,9 +397,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 40,
    "nota": "En la demostración nada se sube al servidor: la barra se queda en amarillo con «Modo demo». Con una cuenta con acceso a la finca, la barra se pone en verde («Todo respaldado en el servidor») cuando no queda nada pendiente, y en el formulario aparece «Registro encadenado: íntegro (N versiones)»: un registro encadenado propio, verificable contra sí mismo.",
-   "video": "https://cert-videos.visiongeografica.com/productor-respaldo.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-respaldo.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-respaldo-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-respaldo.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-respaldo.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-respaldo-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-sincronizar",
@@ -436,11 +436,11 @@
     "Toque un formulario para abrirlo directamente."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 28,
+   "segundos": 29,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-mi-progreso.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-mi-progreso.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-mi-progreso-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-mi-progreso.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-mi-progreso.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-mi-progreso-redes.mp4?v=202611061233"
   },
   {
    "id": "productor-vista-previa",
@@ -451,15 +451,15 @@
    "pasos": [
     "Debajo del formulario, toque «Vista previa para el certificador».",
     "Ve el informe con sus respuestas, tal como lo leería el auditor.",
-    "Es un borrador con marca de agua; el informe sin marca requiere un plan de pago.",
+    "Es un borrador con marca de agua; el informe sin marca es una función premium.",
     "Toque «Cerrar» para volver al formulario."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 27,
    "nota": "",
-   "video": "https://cert-videos.visiongeografica.com/productor-vista-previa.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/productor-vista-previa.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-vista-previa-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/productor-vista-previa.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/productor-vista-previa.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/productor-vista-previa-redes.mp4?v=202611061233"
   },
   {
    "id": "lector-solo-lectura",
@@ -497,11 +497,11 @@
     "Toque «Registrar como aspirante». Se activa después de su auditoría interna."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 42,
+   "segundos": 44,
    "nota": "El registro se puede descargar para el auditor con «Descargar registro».",
-   "video": "https://cert-videos.visiongeografica.com/grupo-registrar-socio.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-registrar-socio.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-registrar-socio-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-registrar-socio.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-registrar-socio.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-registrar-socio-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-sancionar-socio",
@@ -519,9 +519,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 32,
    "nota": "Un socio excluido se puede readmitir como aspirante; el historial conserva todo.",
-   "video": "https://cert-videos.visiongeografica.com/grupo-sancionar-socio.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-sancionar-socio.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-sancionar-socio-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-sancionar-socio.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-sancionar-socio.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-sancionar-socio-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-autorizar-auditor",
@@ -540,9 +540,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 36,
    "nota": "Visión Geográfica activa la cuenta del auditor con el rol de auditor. El auditor ve el registro y el historial, pero no edita.",
-   "video": "https://cert-videos.visiongeografica.com/grupo-autorizar-auditor.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-autorizar-auditor.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-autorizar-auditor-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-autorizar-auditor.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-autorizar-auditor.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-autorizar-auditor-redes.mp4?v=202611061233"
   },
   {
    "id": "auditor-revisar-grupo",
@@ -585,9 +585,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 42,
    "nota": "El auditor interno no audita su propio trabajo diario (QMS 05.02 d). Un aspirante se audita y se aprueba antes de activarlo (05.02 e).",
-   "video": "https://cert-videos.visiongeografica.com/grupo-planificar-auditoria.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-planificar-auditoria.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-planificar-auditoria-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-planificar-auditoria.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-planificar-auditoria.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-planificar-auditoria-redes.mp4?v=202611061233"
   },
   {
    "id": "auditor-interno-auditoria-sin-senal",
@@ -607,11 +607,11 @@
     "Al volver la señal, el informe se envía solo."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 59,
+   "segundos": 60,
    "nota": "Después de enviado, el informe ya no se edita (QMS 05.02 f). Si el servidor no lo acepta, la app dice por qué y deja corregirlo y volver a firmar.",
-   "video": "https://cert-videos.visiongeografica.com/auditor-interno-auditoria-sin-senal.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/auditor-interno-auditoria-sin-senal.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/auditor-interno-auditoria-sin-senal-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/auditor-interno-auditoria-sin-senal.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/auditor-interno-auditoria-sin-senal.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/auditor-interno-auditoria-sin-senal-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-decidir-auditoria",
@@ -631,9 +631,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 44,
    "nota": "«Conforme» solo se puede elegir si el cálculo cumple (Major 100 % y Minor 95 %). Quien hizo la auditoría no la aprueba (QMS 12.5 a). El informe se puede imprimir con «Imprimir».",
-   "video": "https://cert-videos.visiongeografica.com/grupo-decidir-auditoria.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-decidir-auditoria.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-decidir-auditoria-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-decidir-auditoria.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-decidir-auditoria.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-decidir-auditoria-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-incumplimiento-seguimiento",
@@ -650,11 +650,11 @@
     "Toque «Cerrar el incumplimiento»: queda con su fecha y ya no cambia."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 47,
+   "segundos": 48,
    "nota": "También se registran a mano los incumplimientos del organismo certificador, de un reclamo o del QMS, con «Registrar incumplimiento» (QMS 05.03 a).",
-   "video": "https://cert-videos.visiongeografica.com/grupo-incumplimiento-seguimiento.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-incumplimiento-seguimiento.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-incumplimiento-seguimiento-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-incumplimiento-seguimiento.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-incumplimiento-seguimiento.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-incumplimiento-seguimiento-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-sancionar",
@@ -672,11 +672,11 @@
     "La suspensión se levanta con «Levantar», cuando su incumplimiento esté cerrado."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 46,
+   "segundos": 47,
    "nota": "Las sanciones no se editan ni se borran (QMS 05.03 g). La cancelación pasa al socio a «excluido».",
-   "video": "https://cert-videos.visiongeografica.com/grupo-sancionar.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-sancionar.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-sancionar-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-sancionar.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-sancionar.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-sancionar-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-reclamo",
@@ -693,11 +693,11 @@
     "Toque «Cerrar», escriba la conclusión y su nombre."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 53,
+   "segundos": 54,
    "nota": "Si el reclamo exige corregir algo, «Abrir incumplimiento» lo lleva a «Incumplimientos», ligado al reclamo (QMS 05.03 a).",
-   "video": "https://cert-videos.visiongeografica.com/grupo-reclamo.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-reclamo.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-reclamo-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-reclamo.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-reclamo.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-reclamo-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-simulacro-retiro",
@@ -713,11 +713,11 @@
     "Toque «Guardar» y luego «Cerrar» con su nombre: queda la hora de fin."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 50,
+   "segundos": 51,
    "nota": "Un retiro real se registra igual con «Registrar retiro real», y se cierra con el aviso al organismo certificador (QMS 07 b). Uno real en los últimos 12 meses cuenta como el ejercicio del año (07 d).",
-   "video": "https://cert-videos.visiongeografica.com/grupo-simulacro-retiro.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-simulacro-retiro.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-simulacro-retiro-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-simulacro-retiro.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-simulacro-retiro.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-simulacro-retiro-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-balance-masas",
@@ -733,11 +733,11 @@
     "Escriba la conclusión y su nombre, y toque «Registrar el balance»."
    ],
    "probar": "https://cert.visiongeografica.com/?demo=1",
-   "segundos": 38,
+   "segundos": 39,
    "nota": "Registrado, el balance ya no se edita: si algo cambió, se registra otro (QMS 06 b, k).",
-   "video": "https://cert-videos.visiongeografica.com/grupo-balance-masas.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-balance-masas.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-balance-masas-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-balance-masas.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-balance-masas.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-balance-masas-redes.mp4?v=202611061233"
   },
   {
    "id": "grupo-evidencias-ifa",
@@ -755,9 +755,9 @@
    "probar": "https://cert.visiongeografica.com/?demo=1",
    "segundos": 35,
    "nota": "Nadie edita una respuesta guardada: cada cambio queda como una versión nueva, sellada. Solo se muestran las respuestas de GlobalG.A.P.; las de otras normas del grupo no.",
-   "video": "https://cert-videos.visiongeografica.com/grupo-evidencias-ifa.mp4",
-   "portada": "https://cert-videos.visiongeografica.com/grupo-evidencias-ifa.jpg",
-   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-evidencias-ifa-redes.mp4"
+   "video": "https://cert-videos.visiongeografica.com/grupo-evidencias-ifa.mp4?v=202611061233",
+   "portada": "https://cert-videos.visiongeografica.com/grupo-evidencias-ifa.jpg?v=202611061233",
+   "video_redes": "https://cert-videos.visiongeografica.com/redes/grupo-evidencias-ifa-redes.mp4?v=202611061233"
   }
  ]
 }

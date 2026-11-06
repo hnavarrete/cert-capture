@@ -43,10 +43,10 @@
    "ms": 3000
   },
   {
-   "texto": "Abajo están el modo demostración y esta ayuda en video.",
+   "texto": "Abajo están el modo demostración y el botón «Ayuda», con estos videos.",
    "acciones": [
     {
-     "ver": "Ayuda en video"
+     "ver": "Explorar en modo demo"
     }
    ],
    "ms": 3000
