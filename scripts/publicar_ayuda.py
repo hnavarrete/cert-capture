@@ -10,13 +10,14 @@ paquete web ni de la APK: se sirven aparte»). Patrón copiado de vg-custody/app
 El token de Cloudflare sale de la bóveda a una variable de entorno; nunca se imprime (R19).
 Uso: python scripts/publicar_ayuda.py   (después: npm run build y copiar dist/ a docs/, que es lo que sirve GitHub Pages)
 """
-import json, os, re, shutil, subprocess, sys, tempfile
+import json, os, re, shutil, subprocess, sys, tempfile, time
 
 AQUI = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SALIDA_KIT = os.path.join(AQUI, 'ayuda-flujos', 'salida')
 SALIDA_REDES = os.path.join(AQUI, 'ayuda-flujos', 'salida-redes')
+KIT = os.environ.get('VG_KIT_AYUDA', r'C:\Users\Usuario\proyectos\vg-agriops\docs\ayuda-video\kit_video.py')
 PROYECTO = 'vg-cert-videos'
-BASE = f'https://{PROYECTO}.pages.dev'
+BASE = 'https://cert-videos.visiongeografica.com'   # dominio propio (encargo a #11 del 6-nov); sirve el mismo proyecto de Pages
 ORIGEN_APP = 'https://cert.visiongeografica.com'
 PROBAR_LOCAL = 'http://localhost:4173'   # los flujos se graban contra vite preview; en el índice va el dominio público
 BOVEDA = os.path.join(r'G:\Mi unidad\PROYECTOS PERSONALES\VG CREDENCIALES', 'cloudflare', 'cloudflare-tokens.txt')
@@ -59,21 +60,30 @@ def main():
     print('\n'.join(l for l in ((r.stdout or '') + (r.stderr or '')).splitlines() if 'Success' in l or 'rror' in l or 'pages.dev' in l))
     if r.returncode:
         raise SystemExit(r.returncode)
+    # Los nombres no cambian entre grabaciones y el sitio de videos cachea un día: la marca ?v= hace que el teléfono
+    # baje la grabación nueva.
+    v = '?v=' + time.strftime('%Y%m%d%H%M')
     for f in indice['flujos']:
         if f.get('video'):
-            f['video'] = f'{BASE}/{os.path.basename(f["video"])}'
+            f['video'] = f'{BASE}/{os.path.basename(f["video"].split("?")[0])}{v}'
         if f.get('portada'):
-            f['portada'] = f'{BASE}/{os.path.basename(f["portada"])}'
+            f['portada'] = f'{BASE}/{os.path.basename(f["portada"].split("?")[0])}{v}'
         if f'{f["id"]}-redes.mp4' in redes:
-            f['video_redes'] = f'{BASE}/redes/{f["id"]}-redes.mp4'
+            f['video_redes'] = f'{BASE}/redes/{f["id"]}-redes.mp4{v}'
         if (f.get('probar') or '').startswith(PROBAR_LOCAL):
             f['probar'] = ORIGEN_APP + f['probar'][len(PROBAR_LOCAL):]
     destino = os.path.join(AQUI, 'public', 'ayuda')
     os.makedirs(destino, exist_ok=True)
-    for f in os.listdir(destino):   # en el paquete web queda SOLO el índice
+    # Línea única de los centros de ayuda (#17, 31-oct-2026): la página es la plantilla común del kit, copiada sin
+    # cambiar un byte; lo propio del producto va solo en ayuda.json.
+    pagina = os.path.join(os.path.dirname(KIT), 'pagina')
+    for f in os.listdir(destino):
         if f != 'ayuda.json':
             os.remove(os.path.join(destino, f))
-    json.dump(indice, open(os.path.join(destino, 'ayuda.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    for f in os.listdir(pagina):
+        shutil.copy2(os.path.join(pagina, f), destino)
+    with open(os.path.join(destino, 'ayuda.json'), 'w', encoding='utf-8', newline='\n') as fh:
+        json.dump(indice, fh, ensure_ascii=False, indent=1)
     shutil.rmtree(tmp, ignore_errors=True)
     print('índice:', len(indice['flujos']), 'flujos ·', sum(1 for f in indice['flujos'] if f.get('video')), 'con video ·', len(redes), 'para redes, en', BASE)
 

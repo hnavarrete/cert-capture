@@ -20,25 +20,10 @@ const AHORA = new Intl.DateTimeFormat('es-EC', {
   timeZone: 'America/Guayaquil', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
 }).format(new Date())
 
-// La página de ayuda NO registra el service worker ni enlaza el manifest: vite-plugin-pwa los inyecta con rutas
-// relativas (./registerSW.js, ./manifest.webmanifest) que desde /ayuda/ apuntarían a archivos inexistentes.
-// El SW de la app (alcance /) ya cubre /ayuda/ cuando el usuario abrió la app antes.
-const ayudaSinPwa = {
-  name: 'ayuda-sin-pwa', apply: 'build', enforce: 'post',
-  generateBundle(_, bundle) {
-    const h = bundle['ayuda/index.html']
-    if (!h) return
-    h.source = String(h.source)
-      .replace(/<link rel="manifest"[^>]*>/g, '')
-      .replace(/<script[^>]*registerSW\.js[^>]*><\/script>/g, '')
-  }
-}
-
 // base relativo para que funcione bajo subcarpeta en GitHub Pages.
 export default defineConfig({
   plugins: [
     react(),
-    ayudaSinPwa,
     // Service Worker (R3: el encuestador DEBE bootear OFFLINE — captura de campo + embebido en el APK).
     // registerType:'autoUpdate' = se actualiza solo y NO sirve bundle viejo silenciosamente (evita la
     // trampa de caché stale que pegó al resto del ecosistema): skipWaiting + clients.claim automáticos.
@@ -49,9 +34,13 @@ export default defineConfig({
         // precachea el app-shell + assets → la app arranca sin red (standalone y embebida en https://localhost).
         globPatterns: ['**/*.{js,css,html,json,svg,png,ico,woff2}'],
         // R-AYUDA: el índice de la ayuda se lee siempre de la red (si se precacheara, mostraría la lista vieja
-        // hasta la próxima versión del SW). Los videos viven en otro origen (vg-cert-videos.pages.dev) y el SW
+        // hasta la próxima versión del SW). Los videos viven en otro origen (cert-videos.visiongeografica.com) y el SW
         // no tiene runtimeCaching: no los intercepta.
         globIgnores: ['**/ayuda/ayuda.json', '**/node_modules/**'],
+        // 6-nov-2026: sin la segunda página de Vite (la ayuda es ahora la plantilla del kit), React ya no va en un
+        // trozo compartido y main pasa de 2 MiB, el tope de Workbox: sin este ajuste NO se precachearía y la app no
+        // arrancaría sin red (R3). Se sube el tope a 3 MiB.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
         // /ayuda/ es su propia página: el SW nunca debe contestarla con el index.html de la app.
@@ -79,7 +68,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist', chunkSizeWarningLimit: 2000,
-    // dos páginas: la app (/) y el centro de ayuda en video (/ayuda/), que GitHub Pages sirve como archivo real
-    rollupOptions: { input: { main: resolve(__dirname, 'index.html'), ayuda: resolve(__dirname, 'ayuda/index.html') } }
+    // El centro de ayuda (/ayuda/) es la plantilla común del kit, en public/ayuda/, copiada sin tocar (línea única
+    // de los centros de ayuda, #17, 31-oct-2026): ya no es una segunda página de Vite.
+    rollupOptions: { input: { main: resolve(__dirname, 'index.html') } }
   }
 })

@@ -1,0 +1,11 @@
+# Centro de ayuda: la plantilla común del kit se sirve idéntica byte a byte (línea única, #17, 31-oct-2026).
+public/ayuda/*.html text eol=lf
+public/ayuda/*.js text eol=lf
+public/ayuda/*.css text eol=lf
+public/ayuda/*.json text eol=lf
+public/ayuda/*.png binary
+docs/ayuda/*.html text eol=lf
+docs/ayuda/*.js text eol=lf
+docs/ayuda/*.css text eol=lf
+docs/ayuda/*.json text eol=lf
+docs/ayuda/*.png binary

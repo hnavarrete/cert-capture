@@ -1,0 +1,9 @@
+{
+ "_que_es": "Cabecera común del ayuda.json de VG Certificaciones™ (línea única de los centros de ayuda, #17, 31-oct-2026). grabar.py se la pasa al kit con --cabecera.",
+ "producto": "VG Certificaciones™",
+ "base": "",
+ "actores": [["cuenta", "Entrar y su cuenta"], ["productor", "Productor o responsable de la finca"], ["grupo", "Directiva del grupo"], ["auditor_interno", "Auditor interno del grupo"], ["auditor", "Auditor externo"], ["lector", "Solo lectura (auditor o consultor)"]],
+ "enlaces": [{"texto": "Entrar", "href": "https://cert.visiongeografica.com/", "icono": "login", "principal": true}, {"texto": "Probar la demo", "href": "https://cert.visiongeografica.com/?demo=1", "icono": "play_circle"}],
+ "entrada": "Cada flujo trae un video corto con subtítulos, que se entiende sin sonido, y el mismo paso a paso escrito. Los videos se grabaron sobre la demostración: las fincas, los grupos y las personas son ficticios.",
+ "buscar_ejemplo": "evidencia, sin conexión, polígono…"
+}
