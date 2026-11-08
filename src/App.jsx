@@ -197,8 +197,8 @@ function Login({ onDemo, onAvisoC1 }) {
       <button type="button" className="link demo-link" style={{ marginTop: 12, display: 'block', width: '100%', textAlign: 'center' }} onClick={onDemo}>
         Explorar en modo demo (captura local, sin sincronizar) <Icono n="arrow_forward" />
       </button>
-      {/* R-AYUDA: el centro de ayuda en video vive dentro del producto (/ayuda/) */}
-      <a className="ayuda-enlace" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
+      {/* R-AYUDA: el centro de ayuda en video vive dentro del producto (/ayuda/); botón común «Ayuda» (línea única, #17) */}
+      <a className="ayuda-enlace" href="ayuda/" title="Ayuda en video: cada flujo en un video corto y su paso a paso"><Icono n="help" />Ayuda</a>
     </div>
   )
 }
@@ -720,7 +720,7 @@ export default function App() {
         <span className="brand"><span className="dot" /> VG · Certificaciones</span>
         <span className="rolbadge lectura">Auditor externo</span>
         <span className="spacer" />
-        <a className="link" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
+        <a className="link" href="ayuda/" title="Ayuda en video: cada flujo en un video corto y su paso a paso"><Icono n="help" />Ayuda</a>
         {!EMBEBIDO ? <button className="link" onClick={() => salir()}>Salir</button> : null}
       </header>
       <Grupo pantallaCompleta />
@@ -749,7 +749,7 @@ export default function App() {
         <button className="link" onClick={() => setBoveda(true)}><Icono n="lock" />Mi bóveda</button>
         {(demo && !user) || (gruposQms || []).length ? <button className="link" onClick={() => setGrupo(true)}><Icono n="hub" />Mi grupo</button> : null}
         {(demo && !user) || hayAuditorias ? <button className="link" onClick={() => setMisAud(true)}><Icono n="fact_check" />Mis auditorías</button> : null}
-        <a className="link" href="ayuda/"><Icono n="play_circle" />Ayuda en video</a>
+        <a className="link" href="ayuda/" title="Ayuda en video: cada flujo en un video corto y su paso a paso"><Icono n="help" />Ayuda</a>
         <SyncBadge status={status} />
         {!EMBEBIDO ? (
           <button className="link" disabled={salida === 'saliendo'} onClick={() => salir()}>{salida === 'saliendo' ? 'Saliendo…' : 'Salir'}</button>
