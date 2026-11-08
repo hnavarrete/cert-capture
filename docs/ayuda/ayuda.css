@@ -1,0 +1,143 @@
+/* Centro de ayuda de VG · plantilla común (R-AYUDA). Orden de Henrry del 31-oct: «nadie debe tener flujos o páginas
+   diferentes del resto». Es la del centro de ayuda de Campo Digital (#06), que toma la estructura del de AgriOps (#14).
+   Marca aprobada por #02 el 31-oct: isotipo oficial, tokens v4 copiados, botón principal con contraste AA.
+   Este archivo no lleva nada propio de un producto. */
+
+/* vg-tokens.css v4 — copiado tal cual de https://www.visiongeografica.com/brand/vg-tokens.css (dueña: #02).
+   No se edita aquí: cuando los tokens suban de versión, se vuelve a copiar el bloque entero. */
+:root {
+  /* — Azules — */
+  --vg-blue:      #1BABE1;  /* primario cross-product (Decisión #50) */
+  --vg-blue-dk:   #0d7a9e;  /* hover / links / texto sobre claro */
+  --vg-blue-2:    #185FA5;  /* azul corporativo profundo (CTAs sólidos, acentos) */
+
+  /* — Navy (UN solo navy en todo el ecosistema; Henrry 5-oct: «#0A1128 de los tokens») — */
+  --vg-navy:      #0A1128;  /* fondo oscuro / texto fuerte */
+  --vg-navy-2:    #141a32;  /* navy claro (hover y superficies sobre fondo oscuro) */
+
+  /* — Verde / energía — */
+  --vg-lime:      #9FC834;  /* acento "vivo" / estados activos (Decisión #50) */
+  --vg-lime-dk:   #6b8a23;  /* lime sobre claro */
+  --vg-lime-hover: #b5dc4a; /* hover de un botón lima (texto --vg-navy: 11,8:1) */
+
+  /* — Neutros / superficies (tema claro familia A) — */
+  --vg-bg:           #f8f9fa;
+  --vg-surface:      #ffffff;
+  --vg-surface-alt:  #f3f4f5;
+  --vg-border:       #e5e7eb;
+  --vg-text:         #0A1128;
+  --vg-text-muted:   #4b5563;
+
+  /* — Tema oscuro (apps de campo, mapas, paneles): el FONDO es siempre --vg-navy — */
+  --vg-dark-bg:          #0A1128;  /* fondo de la app: ningún otro navy (#0c1220, #0b1330, #0f1823…) */
+  --vg-dark-surface:     #141a32;  /* tarjetas y paneles sobre el fondo */
+  --vg-dark-surface-2:   #1b2742;  /* superficie elevada, campos de formulario */
+  --vg-dark-border:      #26314a;
+  --vg-dark-text:        #e8edf6;
+  --vg-dark-text-muted:  #9aa6bd;
+
+  /* — Estados (semáforo; los mismos en claro y oscuro) — */
+  --vg-ok:      #16a34a;  /* verde: listo / dentro de lo permitido */
+  --vg-aviso:   #d97706;  /* ámbar: revisar / con cuidado */
+  --vg-error:   #dc2626;  /* rojo: falta algo / fuera de lo permitido */
+  /* Los tres de arriba sirven para íconos, bordes, rellenos y texto grande. Como TEXTO chico sobre claro no llegan a
+     AA (3,0 a 4,8:1): para eso van estos, que pasan 4,5:1 sobre blanco, sobre #f8f9fa y sobre su fondo tenue. */
+  --vg-ok-texto:     #15803d;  /* 5,0:1 sobre blanco */
+  --vg-aviso-texto:  #b45309;  /* 5,0:1 */
+  --vg-error-texto:  #b91c1c;  /* 6,5:1 */
+  /* Fondos tenues: la fila o la tarjeta de un estado, y la fila seleccionada (tema claro) */
+  --vg-ok-tenue:     #dcfce7;
+  --vg-aviso-tenue:  #fef3c7;
+  --vg-error-tenue:  #fee2e2;
+  --vg-seleccion:    #e0f4fb;  /* tinte del azul VG; texto --vg-navy 16,5:1 */
+  /* Sobre el fondo oscuro, los tenues son el mismo color con transparencia */
+  --vg-dark-ok-tenue:    rgba(22, 163, 74, 0.16);
+  --vg-dark-aviso-tenue: rgba(217, 119, 6, 0.16);
+  --vg-dark-error-tenue: rgba(220, 38, 38, 0.16);
+  --vg-dark-seleccion:   rgba(27, 171, 225, 0.16);
+
+  /* — Tipografía: Inter en TODO (títulos y texto), con su respaldo — */
+  --vg-font: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* — Radios — */
+  --vg-radius:    0.75rem;  /* rounded-xl */
+  --vg-radius-lg: 1rem;     /* rounded-2xl (cards) */
+
+  /* — Peligro (contorno de un botón que borra): cambia con el tema — */
+  --vg-peligro:  #a11c10;   /* 7,8:1 sobre blanco */
+}
+
+/* La plantilla: variables del tema, que apuntan a los tokens. Los --vg-* no se redefinen aquí. */
+:root{--fondo:var(--vg-bg);--sup:var(--vg-surface);--sup2:var(--vg-surface-alt);--borde:var(--vg-border);--texto:var(--vg-text);
+ --tenue:var(--vg-text-muted);--enlace:var(--vg-blue-dk);--seleccion:var(--vg-seleccion);--aviso-tenue:var(--vg-aviso-tenue);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fondo:var(--vg-dark-bg);--sup:var(--vg-dark-surface);
+ --sup2:var(--vg-dark-surface-2);--borde:var(--vg-dark-border);--texto:var(--vg-dark-text);--tenue:var(--vg-dark-text-muted);
+ --enlace:var(--vg-blue);--seleccion:var(--vg-dark-seleccion);--aviso-tenue:var(--vg-dark-aviso-tenue);color-scheme:dark}}
+:root[data-theme="dark"]{--fondo:var(--vg-dark-bg);--sup:var(--vg-dark-surface);--sup2:var(--vg-dark-surface-2);--borde:var(--vg-dark-border);
+ --texto:var(--vg-dark-text);--tenue:var(--vg-dark-text-muted);--enlace:var(--vg-blue);--seleccion:var(--vg-dark-seleccion);
+ --aviso-tenue:var(--vg-dark-aviso-tenue);color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fondo);color:var(--texto);font:16px/1.55 var(--vg-font)}
+a{color:var(--enlace)}
+:focus-visible{outline:3px solid var(--vg-blue);outline-offset:2px;border-radius:6px}
+.ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:1.15em;line-height:1;display:inline-block;vertical-align:-.2em;font-feature-settings:'liga';user-select:none}
+.app{max-width:1080px;margin:0 auto;padding:0 16px 56px}
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:12px 0;background:var(--fondo);border-bottom:1px solid var(--borde);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+#logo{display:block;flex:none}
+.logo{display:block;width:auto;height:32px}
+.brand-name{font-weight:700;font-size:15px}
+.brand-sub{font-size:12px;color:var(--tenue)}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;font-weight:600;padding:8px 14px;border-radius:var(--vg-radius);border:1px solid var(--borde);background:var(--sup);color:var(--texto);text-decoration:none;cursor:pointer}
+/* Blanco sobre #0d7a9e: 4,9:1 (#02, 31-oct; sobre #1BABE1 daba 2,6:1) */
+.btn-primary{background:var(--vg-blue-dk);border-color:var(--vg-blue-dk);color:#fff}
+.btn-primary:hover{background:var(--vg-blue-2);border-color:var(--vg-blue-2)}
+.btn-lima{background:var(--vg-lime);border-color:var(--vg-lime);color:var(--vg-navy)}
+.contenido{display:grid;gap:14px;margin-top:18px}
+.card{background:var(--sup);border:1px solid var(--borde);border-radius:var(--vg-radius-lg);padding:16px}
+.entrada{color:var(--tenue);max-width:64ch;margin:0 0 12px;font-size:15px}
+.buscar{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+.buscar input{font:inherit;font-weight:400;padding:10px 12px;border:1px solid var(--borde);border-radius:8px;max-width:440px;background:var(--sup);color:var(--texto)}
+.conteo{margin:10px 0 0;font-size:13px;color:var(--tenue)}
+.conteo:empty{display:none}
+.actores{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.chip{border:1px solid var(--borde);background:var(--sup);color:var(--texto);border-radius:20px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--vg-blue);background:var(--seleccion);color:var(--enlace);font-weight:600}
+#contenido{display:grid;gap:8px}
+section.grupo h2{font-size:18px;margin:10px 0 8px;text-wrap:balance}
+.lista{display:grid;gap:10px}
+details.flujo{background:var(--sup);border:1px solid var(--borde);border-radius:var(--vg-radius-lg);overflow:hidden;scroll-margin-top:calc(var(--alto-cabecera,80px) + 10px)}
+details.flujo[open]{border-color:var(--vg-blue)}
+details.flujo summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:12px 14px}
+details.flujo summary::-webkit-details-marker{display:none}
+.mini{width:48px;height:86px;border-radius:8px;object-fit:cover;background:var(--sup2);border:1px solid var(--borde)}
+.mini.texto{display:grid;place-items:center;color:var(--tenue);font-size:22px}
+.cab-t b{display:block;font-weight:700;line-height:1.3}
+.cab-t span{display:block;color:var(--tenue);font-size:13px;margin-top:2px}
+.dur{font-size:12px;color:var(--tenue);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cuerpo{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:18px;padding:0 16px 16px;align-items:start}
+.cuerpo video{width:100%;aspect-ratio:828/1876;border-radius:12px;background:#000;border:1px solid var(--borde);display:block}
+ol.pasos{margin:0 0 10px;padding-left:20px;display:grid;gap:6px}
+ol.pasos li{line-height:1.45}
+ol.pasos li::marker{color:var(--vg-lime-dk);font-weight:700}
+.sin-video{border:1px dashed var(--borde);border-radius:12px;padding:14px;color:var(--tenue);font-size:13px;margin:0}
+.nota{background:var(--aviso-tenue);border-left:3px solid var(--vg-aviso);padding:8px 12px;border-radius:6px;color:var(--tenue);font-size:14px;margin:10px 0 0}
+.acciones{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.vacio{color:var(--tenue)}
+footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--borde);color:var(--tenue);font-size:13px}
+@media (max-width:640px){.cuerpo{grid-template-columns:minmax(0,1fr)}.cuerpo video{max-width:320px;justify-self:center}
+ /* Cabecera en el teléfono (#17, 31-oct, salida 1): logo y botones arriba, el nombre debajo, sin subtítulo.
+    Así la cabecera fija no pasa de unos 120 px. Los íconos de los botones se ocultan y el logo baja a 28 px para que quepan dos botones en 360 px. */
+ .topbar{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"logo nav" "nombre nombre";gap:8px 12px;align-items:center}
+ .brand{display:contents}
+ #logo{grid-area:logo}
+ .logo{height:28px}
+ .brand>div{grid-area:nombre;min-width:0}
+ .brand-sub{display:none}
+ .nav{grid-area:nav;justify-self:end;justify-content:flex-end;margin-left:0;gap:6px}
+ .nav .btn{padding:7px 12px;font-size:13px}
+ .nav .btn .ms{display:none}}
+@media (max-width:340px){.logo{height:24px}.nav .btn{padding:6px 9px;font-size:12px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
